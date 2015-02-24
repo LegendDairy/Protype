@@ -1,0 +1,10 @@
+Protype is an x86-based microkernel mostly written in C. 
+The microkernel has it's own two stage bootloader (i.e. the Pre-IPL and IPL).
+The kernel is written in C and x86-assembler.
+I will try to add documentation in the DOCS folders for every part of the microkernel to clarify the code.
+
+Current realease number: r1,00 codenamed Hydrogen
+
+/bin  : Contains the Floppy image
+/boot : Contains Pre-IPL code, i.e. stage 1 of the bootloader
+/ipl  : Contains the IPL code, i.e. stage 2 of the bootloader

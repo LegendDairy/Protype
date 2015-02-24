@@ -53,7 +53,7 @@ xor bx, bx                          ; Erase bx
 mov si, Stage2                      ; Argument: Filename
 call LoadFile                       ; Load KRNLDR.SYS
 or ax, ax                           ; Test return value
-;jnz failure                        ; If ax=!0: Fail
+jnz failure                        ; If ax=!0: Fail
 
 .DONE:
 push WORD 0x0050
@@ -65,7 +65,7 @@ mov si, MsgError
 call Print
 hlt
 
-Stage2      db "KRNLDR  SYS"
+Stage2      db "IPL     SYS"
 MsgBoot     db 0x0D, 0x0A, "Loading IPL", 0x0D, 0x0A, 0x00
 MsgError    db 0x0D, 0x0A, "Pre IPL: Error 0x0001: Failed to load IPL! ", 0x0D, 0x0A, "Press Anykey to reboot",  0x0D, 0x0A, 0x00
 cluster     dw 0

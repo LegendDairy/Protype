@@ -46,8 +46,8 @@ LoadFile:
   pop cx                              ; Nope load counter
   add di, 0x20                        ; Next entry
   loop .loop                          ; Try again
-  ;mov ax, 0x1                        ; E1: File not found
-  ;ret                                ; return(1);
+  mov ax, 0x1                        ; E1: File not found
+  ret                                ; return(1);
 
 LoadFAT:
   pop cx                              ; Fix stack

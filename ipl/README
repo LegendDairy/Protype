@@ -1,0 +1,8 @@
+The IPL or Intial Program Loader, loads the kernel module.
+The IPL is loaded by the Pre-IPL at 0x500.
+The IPL uses 0x4500 for loading the root directory and FATs of the FAT12 filesystem. 
+So the IPL can't be bigger than 16KB.
+The IPL starts in 16 bit realmode, loads the kernel at 0x10000. 
+So the kernel module has to be smaller than 448KB.
+The IPL also enables A20 to access all the memory and sets up GDT and finaly jumps in to protected mode.
+Finaly the IPL copies the kernel image to 0x100000, parses the module, and then it calls the main.

@@ -18,6 +18,8 @@ LoadFile:
   push ax                             ; Save buffer segment
   push bx                             ; Save buffer offset
   push si                             ; Save Filename
+  mov ax, 0x0450                      ; 0x4500=>FAT and root
+  mov es, ax                          ; Set segment
   xor cx, cx                          ; Erase cx
   xor dx, dx                          ; Erase dx
   mov ax, 0x0020                      ; 32 byte directory entry
@@ -29,10 +31,10 @@ LoadFile:
   add ax, WORD [bpbReservedSectors]   ; Adjust for bootsector
   mov WORD [dataregion], ax           ; Offset of root directory
   add WORD [dataregion], cx           ; Offset of the dataregion
-  mov bx, 0x0200                      ; Copy root dir above bootcode
+  xor bx, bx                          ; Copy root dir above bootcode
   call ReadFloppy                     ; Read Root Directory
   mov cx, WORD [bpbRootEntries]       ; Set up loop counter
-  mov di, 0x0200                      ; Locate first root entry en ram
+  mov di, 0x0300                      ; Locate first root entry en ram
   
 .loop:
   pop si                              ; Load Filename
@@ -59,12 +61,13 @@ LoadFAT:
   mul WORD [bpbSectorsPerFAT]         ; Sectors used by FATs
   mov cx, ax                          ; Amount of sectors to load
   mov ax, WORD [bpbReservedSectors]   ; Adjust for bootsector
-  mov bx, 0x0200                      ; Copy FAT above bootcode
+  xor bx, bx                          ; Copy FAT above bootcode
   call ReadFloppy                     ; Load the FATs
   pop bx                              ; Load buffer offset
   pop ax                              ; Load buffer segment
   mov es, ax                          ; Set the right segment
-
+  xor cx, cx
+  push cx
 
 LOAD_IMAGE:                            
   mov ax, WORD [cluster]              ; Load clusternumber
@@ -72,6 +75,9 @@ LOAD_IMAGE:
   xor cx, cx                          ; Erase ax
   mov cl, BYTE [bpbSectorsPerCluster] ; Amount of sectors
   call ReadFloppy                     ; Load first sector of file
+  pop cx
+  inc cx
+  push cx
   mov ax, WORD [cluster]              ; Load clusternumber
   mov dx, ax                          ; Load clusternumber
   mov cx, ax                          ; Load clusternumber
@@ -94,7 +100,8 @@ LOAD_IMAGE:
   mov WORD [cluster], dx              ; Save real 12bit cluster
   cmp dx, 0x0FF0                      ; End of file?
   jb LOAD_IMAGE                       ; Nope, continue...
-  mov ax, 0                           ; No errors
+  pop cx                              ; File size in sectors
+  xor ax, ax                          ; No errors
   ret                                 ; return(0);
 
 %endif

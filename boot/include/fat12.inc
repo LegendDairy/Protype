@@ -63,6 +63,8 @@ LoadFAT:
   call ReadFloppy                     ; Load the FATs
   pop bx                              ; Load buffer offset
   pop ax                              ; Load buffer segment
+  xor bx, bx
+  mov ax, 0x50
   mov es, ax                          ; Set the right segment
 
 
@@ -77,9 +79,11 @@ LOAD_IMAGE:
   mov cx, ax                          ; Load clusternumber
   shr dx, 0x0001                      ; Divide by two (fast)
   add cx, dx                          ; Add for 3/2
+  push bx
   mov bx, 0x200                       ; FAT addres
   add bx, cx                          ; Next clusternumber
   mov dx, WORD [bx]                   ; Read two bytes from FAT
+  pop bx
   test ax, 0x0001                     ; This word = 16bits
   jnz .ODD_CLUSTER                    ; We only need 12 bits
 

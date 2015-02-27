@@ -15,6 +15,7 @@ ClusterLBA:                           ; Converts a clusternumber to a LBA
 ; Load file at ax:bx ;
 ; 11 byte Filename: [si]
 LoadFile:
+
   push ax                             ; Save buffer segment
   push bx                             ; Save buffer offset
   push si                             ; Save Filename
@@ -34,13 +35,15 @@ LoadFile:
   xor bx, bx                          ; Copy root dir above bootcode
   call ReadFloppy                     ; Read Root Directory
   mov cx, WORD [bpbRootEntries]       ; Set up loop counter
-  mov di, 0x0300                      ; Locate first root entry en ram
+  mov ax, 0x450
+  mov es, ax
+  mov di, 0                     ; Locate first root entry en ram
   
 .loop:
   pop si                              ; Load Filename
-  push cx                             ; Save counter for now
-  mov cx, 0xB                         ; Character counter
   push si                             ; Save for later
+  push cx                             ; Save counter for now 0x640
+  mov cx, 0xB                         ; Character counter
   push di                             ; Save current entry
   rep cmpsb                           ; Compare strings
   pop di                              ; Load entry
@@ -49,12 +52,16 @@ LoadFile:
   add di, 0x20                        ; Next entry
   loop .loop                          ; Try again
   mov ax, 0x1                         ; E1: File not found
-  ret                                 ; return(1);
-
+  mov si, msgError
+  call Print
+  hlt
+  jmp $
+  
 LoadFAT:
-  pop cx                              ; Fix stack
+  pop cx                              ; Fix stack 0x65d
   pop si                              ; Fix stack (maybe try add sp, 4?)
-  mov dx, WORD [di + 0x001A]          ; First cluster
+  add di, 0x001A
+  mov dx, [es:di]			      ; First cluster
   mov WORD [cluster], dx              ; Save for later
   xor ax, ax                          ; Erase ax
   mov al, BYTE [bpbNumberOfFATS]      ; Number of FATs
@@ -64,8 +71,10 @@ LoadFAT:
   xor bx, bx                          ; Copy FAT above bootcode
   call ReadFloppy                     ; Load the FATs
   pop bx                              ; Load buffer offset
-  pop ax                              ; Load buffer segment
-  mov es, ax                          ; Set the right segment
+  pop ax                              ; Load buffer segment 0x684
+  mov ax, 0x1000                          ; Set the right segment
+  xor bx, bx
+  mov es, ax
   xor cx, cx
   push cx
 
@@ -83,9 +92,12 @@ LOAD_IMAGE:
   mov cx, ax                          ; Load clusternumber
   shr dx, 0x0001                      ; Divide by two (fast)
   add cx, dx                          ; Add for 3/2
-  mov bx, 0x200                       ; FAT addres
-  add bx, cx                          ; Next clusternumber
-  mov dx, WORD [bx]                   ; Read two bytes from FAT
+  mov di, cx				;0x6aa
+  push bx
+  mov bx, 0x4500
+  add bx, di
+  mov dx, WORD [bx]		              ; Read two bytes from FAT
+  pop bx
   test ax, 0x0001                     ; This word = 16bits
   jnz .ODD_CLUSTER                    ; We only need 12 bits
 
@@ -104,4 +116,6 @@ LOAD_IMAGE:
   xor ax, ax                          ; No errors
   ret                                 ; return(0);
 
+
+msgError db "Error", 0
 %endif

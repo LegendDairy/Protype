@@ -2,6 +2,7 @@
 %define __PRINT_INC_67343546FDCC56AAB872_INCLUDED__
 
 [BITS 16]
+org 0x500
 
 Print:
   lodsb   				                    ; Load next byte from string from SI to AL

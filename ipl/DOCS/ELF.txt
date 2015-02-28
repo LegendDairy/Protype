@@ -18,12 +18,12 @@ typedef struct {
         Elf32_Half      e_shstrndx; 		//0x32
 } Elf32_Ehdr;
 typedef struct {
-        Elf32_Word      p_type; 	//0x00
-        Elf32_Off       p_offset; 	//0x04
-        Elf32_Addr      p_vaddr; 	//0x08
-        Elf32_Addr      p_paddr;  	//0x0c
-        Elf32_Word      p_filesz; 	//0x10
-        Elf32_Word      p_memsz; 	//0x14
-        Elf32_Word      p_flags; 	//0x18
-        Elf32_Word      p_align; 	//0x1C
+        Elf32_Word      p_type; 	        //0x00
+        Elf32_Off       p_offset; 	        //0x04
+        Elf32_Addr      p_vaddr; 	        //0x08
+        Elf32_Addr      p_paddr;  	        //0x0c
+        Elf32_Word      p_filesz; 	        //0x10
+        Elf32_Word      p_memsz;        	//0x14
+        Elf32_Word      p_flags; 	        //0x18
+        Elf32_Word      p_align; 	        //0x1C
 } Elf32_Phdr;

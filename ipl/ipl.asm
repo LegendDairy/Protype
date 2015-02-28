@@ -4,10 +4,15 @@
 jmp main
 
 %include "gdt.inc"
-%include "a20.inc"
+%include "a20.inc" ;0x51f
 %include "floppy.inc"		
+<<<<<<< HEAD
 %include "fat12.inc"	
 %include "print.inc"
+=======
+%include "fat12.inc" ;0x604		
+%include "print.inc" ;0x6cb
+>>>>>>> origin/master
 
 %define kernel_buffer    0x100000     ; Load kernel at 1mb
 %define image_buffer     0x10000      ; 448 KiB for file
@@ -15,6 +20,7 @@ jmp main
 %define BytesPerSector   512          ; Floppy=512
 
 main:
+<<<<<<< HEAD
   xor ax, ax                          ; Erase ax
   mov ds, ax                          ; Set up the segments
   mov es, ax
@@ -24,6 +30,17 @@ main:
   mov sp, 0xFFFF		                  ; Stack from 0x7E00-0xFFFF      		
 
   mov si, MsgIPL                      ; IPL Message
+=======
+xor ax, ax                            ; Erase ax
+mov ds, ax
+mov es, ax
+mov fs, ax
+mov ax, 0x0000				                ; Set the stack 0xF000-0xFFFF.
+mov ss, ax                            ;
+mov sp, 0xFFFF		      		;
+
+mov si, MsgIPL                        ; IPL Message
+>>>>>>> origin/master
   call Print                          ; Print Message
   
   call a20_kb                         ; Enable A20
@@ -32,7 +49,11 @@ main:
   mov ax, image_seg                   ; Buffer segment
   xor bx, bx                          ; Buffer offset
   call LoadFile                       ; Load kernel module
+<<<<<<< HEAD
   mov word [FileSize], cx	      ; 0x703                 
+=======
+  mov word [FileSize], cx                  ; 0x720
+>>>>>>> origin/master
   
   cli                                 ; Dissable interupts
   pusha
@@ -42,6 +63,7 @@ main:
 
   cli
   mov eax, cr0                        ; Read cr0
+<<<<<<< HEAD
   or eax, 1                           ; Set PM bit
   mov cr0, eax                        ; Write cr0 0x714s
   jmp 0x8:pm                          ; Far jump in PM 0x721
@@ -114,6 +136,36 @@ call_kernel:
   
   ;mov eax, [kernel_buffer + 60]       ; e_lfanew
   ;add eax, kernel_buffer              ; Address of File Header
+=======
+  or eax, 1                           ; Set PM bit 0x731
+  mov cr0, eax                        ; Write cr0
+  jmp 0x8:pm                          ; Far jump in PM 
+  
+[BITS 32]  
+pm:
+  mov ax, 0x10                        ; Set data descriptors 0x73D
+  mov ds, ax                          ; 
+  mov es, ax                          ; 
+  ;mov fs, ax                         ;
+  mov	ss, ax                          ; Set up Stack descriptor
+	
+	mov	esp, 90000h                     ; New stack at 0x90000
+  xor eax, eax                        ;
+  mov	ax, word [FileSize]             ;
+  movzx	ebx, word [bpbBytesPerSector] ;
+  mul	ebx                             ;
+  mov	ebx, 4                          ;
+  div	ebx                             ; Size in dwords
+                                      ; Set up the counter
+  mov esi, image_buffer               ; Source
+  mov edi, kernel_buffer              ; Destination
+  cld                                 ; Clear direction flag
+  mov ecx, eax
+  rep movsd                           ; Repeat til ecx=0
+  
+  mov eax, [kernel_buffer + 60]       ; e_lfanew
+  add eax, kernel_buffer              ; Address of File Header
+>>>>>>> origin/master
   ;Check sig?                         ; Check PE00 sig
   ;add eax, 24                         ; Optional header
   ;add eax, 16                         ; Address of Entrypoint
@@ -123,9 +175,15 @@ call_kernel:
   ;add ebp, ebx                        ; Calculate
   ;call ebp                            ; Start kernel module
   
+<<<<<<< HEAD
   ;cli                                 ; Halt the system
   ;hlt
   ;jmp $  
+=======
+  cli                                 ; Halt the system
+  hlt
+jmp $  
+>>>>>>> origin/master
   
   
 FileSize:   dw 0

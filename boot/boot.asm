@@ -70,7 +70,11 @@ call Print
 hlt
 
 Stage2      db "IPL     SYS"
+<<<<<<< HEAD
 MsgBoot     db "[Pre IPL]: Loading IPL...", 0x0D, 0x0A, 0x00
+=======
+MsgBoot     db 0x0D, 0x0A, "[Pre IPL]: Loading IPL...", 0x0D, 0x0A, 0x00
+>>>>>>> origin/master
 MsgError    db 0x0D, 0x0A, "[Pre IPL]: Error 0x0001: Failed to load IPL!", 0x0D, 0x0A, 00
 cluster     dw 0
 dataregion  dw 0

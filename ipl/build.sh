@@ -7,5 +7,8 @@ sudo mount -t msdos /dev/loop0 /media/floppy1/
 sudo cp bin/ipl.sys /media/floppy1/
 sudo umount /dev/loop0
 sudo losetup -d /dev/loop0
+<<<<<<< HEAD
 sudo rm bin/ipl.sys
+=======
+>>>>>>> origin/master
 echo "Done"

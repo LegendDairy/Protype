@@ -58,12 +58,7 @@ LoadFile:
   jmp $
   
 LoadFAT:
-<<<<<<< HEAD
   add sp, 4			      ; Fix the stack
-=======
-  pop cx                              ; Fix stack 0x65d
-  pop si                              ; Fix stack (maybe try add sp, 4?)
->>>>>>> origin/master
   add di, 0x001A
   mov dx, [es:di]			      ; First cluster
   mov WORD [cluster], dx              ; Save for later

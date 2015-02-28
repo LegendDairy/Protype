@@ -44,6 +44,10 @@ mov sp, 0xFFFF                      ;
 
 sti						                      ; Restore interrupts.
 
+xor ah, ah
+mov al, 0x3
+int 0x10
+
 mov si, MsgBoot                     ; Print a boot message.
 call Print                          ;
 
@@ -66,8 +70,8 @@ call Print
 hlt
 
 Stage2      db "IPL     SYS"
-MsgBoot     db 0x0D, 0x0A, "[Pre IPL]: Loading IPL...", 0x0D, 0x0A, 0x00
-MsgError    db 0x0D, 0x0A, "[Pre IPL]: Error 0x0001: Failed to load IPL!", 0x0D, 0x0A, "Press Anykey to reboot",  0x0D, 0x0A, 0x00
+MsgBoot     db "[Pre IPL]: Loading IPL...", 0x0D, 0x0A, 0x00
+MsgError    db 0x0D, 0x0A, "[Pre IPL]: Error 0x0001: Failed to load IPL!", 0x0D, 0x0A, 00
 cluster     dw 0
 dataregion  dw 0
 Cylinder    db 0

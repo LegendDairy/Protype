@@ -50,8 +50,7 @@ LoadFile:
   ret                                 ; return(1);
 
 LoadFAT:
-  pop cx                              ; Fix stack
-  pop si                              ; Fix stack (maybe try add sp, 4?)
+  add sp, 4			      ; Fix the stack
   mov dx, WORD [di + 0x001A]          ; First cluster
   mov WORD [cluster], dx              ; Save for later
   xor ax, ax                          ; Erase ax
@@ -63,6 +62,8 @@ LoadFAT:
   call ReadFloppy                     ; Load the FATs
   pop bx                              ; Load buffer offset
   pop ax                              ; Load buffer segment
+  xor bx, bx
+  mov ax, 0x50
   mov es, ax                          ; Set the right segment
 
 
@@ -77,9 +78,11 @@ LOAD_IMAGE:
   mov cx, ax                          ; Load clusternumber
   shr dx, 0x0001                      ; Divide by two (fast)
   add cx, dx                          ; Add for 3/2
+  push bx
   mov bx, 0x200                       ; FAT addres
   add bx, cx                          ; Next clusternumber
   mov dx, WORD [bx]                   ; Read two bytes from FAT
+  pop bx
   test ax, 0x0001                     ; This word = 16bits
   jnz .ODD_CLUSTER                    ; We only need 12 bits
 
@@ -90,7 +93,7 @@ LOAD_IMAGE:
   .ODD_CLUSTER:                       ; If odd only the high 12 bits
     shr dx, 0x0004                    ; Take high twelve bits
 
-.DONE                                 
+.DONE:                                 
   mov WORD [cluster], dx              ; Save real 12bit cluster
   cmp dx, 0x0FF0                      ; End of file?
   jb LOAD_IMAGE                       ; Nope, continue...

@@ -25,6 +25,6 @@ gdt_end:
     
 gdt_ptr:
   dw gdt_end - gdt_start - 1
-  dw gdt_start
+  dd gdt_start
   
 %endif

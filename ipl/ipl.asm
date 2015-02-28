@@ -1,4 +1,4 @@
-[BITS 16]
+[BITS	16]
 [ORG 0x500]
 
 jmp main
@@ -6,24 +6,23 @@ jmp main
 %include "gdt.inc"
 %include "a20.inc"
 %include "floppy.inc"		
-%include "fat12.inc"		
+%include "fat12.inc"	
 %include "print.inc"
 
 %define kernel_buffer    0x100000     ; Load kernel at 1mb
 %define image_buffer     0x10000      ; 448 KiB for file
-%define image_seg        0x4000       ; Segment (es)
+%define image_seg        0x1000       ; Segment (es)
 %define BytesPerSector   512          ; Floppy=512
 
 main:
-  cli                                 ; Critical point
-  xor ax, ax                          ; Set up segments
-  mov ds, ax                          ; 
-  mov es, ax                          ;
-  mov fs, ax                          ;
-  mov ss, ax                          ;
-  mov sp, 0xFFFF                      ; New stack 2BFF-7BFF
-  sti                                 ; Enable interupts
-  
+  xor ax, ax                          ; Erase ax
+  mov ds, ax                          ; Set up the segments
+  mov es, ax
+  mov fs, ax
+  mov gs, ax				             
+  mov ss, ax                          
+  mov sp, 0xFFFF		                  ; Stack from 0x7E00-0xFFFF      		
+
   mov si, MsgIPL                      ; IPL Message
   call Print                          ; Print Message
   
@@ -33,55 +32,103 @@ main:
   mov ax, image_seg                   ; Buffer segment
   xor bx, bx                          ; Buffer offset
   call LoadFile                       ; Load kernel module
-  mov [FileSize], cx
+  mov word [FileSize], cx	      ; 0x703                 
   
   cli                                 ; Dissable interupts
+  pusha
   lgdt [gdt_ptr]                      ; Load the GDT
   sti                                 ; Enable interupts
-  
+  popa
+
   cli
   mov eax, cr0                        ; Read cr0
   or eax, 1                           ; Set PM bit
-  mov cr0, eax                        ; Write cr0
-  jmp 0x8:pm                          ; Far jump in PM
+  mov cr0, eax                        ; Write cr0 0x714s
+  jmp 0x8:pm                          ; Far jump in PM 0x721
   
 [BITS 32]  
 pm:
-  mov ax, 0x10                        ; Set data descriptors
+  mov ax, 0x10                        ; Set data descriptors 0x720
   mov ds, ax                          ; 
-  mov es, ax                          ;
+  mov es, ax                          ; 
   mov fs, ax                          ;
-	mov	ss, ax                          ; Set up Stack descriptor
-	
-	mov	esp, 90000h                     ; New stack at 0x90000
+  mov gs, ax
+  mov	ss, ax                          ; Set up Stack descriptor
+  
+  mov eax, DWORD [0x10000 + 0x1C]           ; e_phoff
+  mov ebx, DWORD [0x10000 + 0x18]           ; e_entry
+  xor ecx, ecx
+  mov cx, WORD [0x10000 + 0x2C]           ; e_phnum
+  xor edx, edx
+  mov dx, WORD [0x10000 + 0x2A]           ; e_phentsize
+  add eax, 0x10000                    ; Set base
+  ;push ecx                            ; Arg of main
 
-  mov eax, dword [FileSize]           ; Size of the image we loaded
-  mov ebx, BytesPerSector             ; Assume floppy=512
-  mul ebx                             ; Calculate size in bytes
-  mov	ebx, 4                          ; We'll be moving dwords
-  div	ebx                             ; Size in dwords
-  mov ecx, eax                        ; Set up the counter
-  mov esi, image_buffer               ; Source
-  mov edi, kernel_buffer              ; Destination
-  cld                                 ; Clear direction flag
-  rep movsd                           ; Repeat til ecx=0
+load_kernel:  
+  .loop:                               ; Loop through headers
+    push ecx
+    mov esi, [eax + 0x00]
+    mov edi, 0x00001
+    std
+    cmpsd				; 0x754
+    jne .skip
   
-  mov eax, [kernel_buffer + 60]       ; e_lfanew
-  add eax, kernel_buffer              ; Address of File Header
+    mov esi, [eax + 0x04]
+    add esi, 0x10000
+    mov edi, [eax + 0x0c]
+    mov ecx, [eax + 0x10]
+    cld
+    ;mov ecx, [eax + 0x14]             ; Kernelsz in mem                       ; Argument of main
+    rep movsd
+  
+  .skip:
+    pop ecx
+    dec ecx ;0x774
+    add eax, edx 
+    loop .loop
+  
+call_kernel:    
+  mov ebp, 0x100000
+  call ebp
+  cli
+  hlt
+  jmp $
+  
+  
+  
+  
+  
+	
+  ;xor eax, eax                        ;
+  ;mov	ax, word [FileSize]             ;
+  ;movzx	ebx, word [bpbBytesPerSector] ;
+  ;mul	ebx                             ;
+  ;mov	ebx, 4                          ;
+  ;div	ebx                             ; Size in dwords
+                                      ; Set up the counter
+  ;mov esi, image_buffer               ; Source
+  ;mov edi, kernel_buffer              ; Destination
+  ;cld                                 ; Clear direction flag
+  ;mov ecx, eax                        ; Set up counter
+  ;rep movsd                           ; Repeat til ecx=0
+  
+  ;mov eax, [kernel_buffer + 60]       ; e_lfanew
+  ;add eax, kernel_buffer              ; Address of File Header
   ;Check sig?                         ; Check PE00 sig
-  add eax, 24                         ; Optional header
-  add eax, 16                         ; Address of Entrypoint
-  mov ebp, dword [eax]                ; For debugging
-  add eax, 12                         ; ImageBase
-  mov ebx, dword [eax]                ; Address = imagebase+entry
-  add ebp, ebx                        ; Calculate
-  call ebp                            ; Start kernel module
+  ;add eax, 24                         ; Optional header
+  ;add eax, 16                         ; Address of Entrypoint
+  ;mov ebp, dword [eax]                ; For debugging
+  ;add eax, 12                         ; ImageBase
+  ;mov ebx, dword [eax]                ; Address = imagebase+entry
+  ;add ebp, ebx                        ; Calculate
+  ;call ebp                            ; Start kernel module
   
-  cli                                 ; Halt the system
-  hlt                                 
+  ;cli                                 ; Halt the system
+  ;hlt
+  ;jmp $  
   
   
 FileSize:   dw 0
-KRNL        db "kernel  sys"  
-MsgIPL      db "[IPL]: Loading kernel module...", 0x0D, 0x0A, 0x00
+KRNL        db "KERNEL  SYS"  
+MsgIPL 	    db "[IPL]: Loading kernel module...", 0x0D, 0x0A, 0x00
 

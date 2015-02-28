@@ -3,6 +3,30 @@
 
 [BITS 16]
 
+;;;;;;;;;;BIOS Parameter Block;;;;;;;;;;;
+bpbOEM:                 db "PROTYPE "   ;
+bpbBytesPerSector:      dw 512          ;
+bpbSectorsPerCluster:   db 1            ;
+bpbReservedSectors:     dw 1            ;
+bpbNumberOfFATS:        db 2            ;
+bpbRootEntries:         dw 224          ;
+bpbNumberOfSectors:     dw 2880         ;
+bpbMediaDescriptor:     db 0xF8         ;
+bpbSectorsPerFAT:       dw 9            ;
+bpbSectorsPerTrack:     dw 18           ;
+bpbHeadsPerCylinder:    dw 2            ;
+bpbHiddenSectors:       dd 0            ;
+bpbSectorsLarge:        dd 0            ;
+;;;;;;;;;;Extended Boot Record;;;;;;;;;;;
+ebrDriveNumber          db 0            ;
+ebrNTFlags              db 0            ;
+ebrSignature            db 0x29         ;
+ebrSerialNumber:        dd 0x12345678   ;
+ebrVolumeLabel          db "PROTYPE 1  ";
+ebrFileSystem:          db "FAT12   "   ;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;Converts an LBA to CHS format              ;
 ;Results stored in datastructure            ;
@@ -25,9 +49,9 @@ LBACHS:                                     ;
 ;ES:bx Buffer to write to                   ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ReadFloppy:                                 ;
-  .Main                                     ;
+  .Main:                                     ;
     mov di, 0x0005                          ;
-  .ReadSector                               ;
+  .ReadSector:                              ;
     push ax                                 ;
     push bx                                 ;
     push cx                                 ;
@@ -50,10 +74,7 @@ ReadFloppy:                                 ;
     int     0x18                            ;
                                             ;
   .Success:                                 ;
-    add bl, BYTE [bpbBytesPerSector]        ;
-    mov al, 0x2E                            ; ASCII '.'
-    mov	ah, 0x0E			                      ; Print Char
-    int	10h                                 ;
+    add bl, BYTE [bpbBytesPerSector]        ;                                ;
     pop cx                                  ;
     pop bx                                  ;
     pop ax                                  ;
@@ -62,5 +83,12 @@ ReadFloppy:                                 ;
     loop .ReadSector                        ;
     ret                                     ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+cluster     dw 0
+dataregion  dw 0
+Cylinder    db 0
+Sector      db 0
+Head        db 0
+
 
 %endif

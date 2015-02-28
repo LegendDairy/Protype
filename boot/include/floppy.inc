@@ -25,9 +25,9 @@ LBACHS:                                     ;
 ;ES:bx Buffer to write to                   ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ReadFloppy:                                 ;
-  .Main                                     ;
+  .Main:                                     ;
     mov di, 0x0005                          ;
-  .ReadSector                               ;
+  .ReadSector:                               ;
     push ax                                 ;
     push bx                                 ;
     push cx                                 ;
@@ -50,10 +50,7 @@ ReadFloppy:                                 ;
     int     0x18                            ;
                                             ;
   .Success:                                 ;
-    add bl, BYTE [bpbBytesPerSector]        ;
-    mov al, 0x2E                            ; ASCII '.'
-    mov	ah, 0x0E			                      ; Print Char
-    int	10h                                 ;
+    add bl, BYTE [bpbBytesPerSector]        ;                                ;
     pop cx                                  ;
     pop bx                                  ;
     pop ax                                  ;

@@ -4,7 +4,7 @@
 
 cd $HOME/Protype/kernel
 make
-rm *.o
+make clean
 cd $HOME/Protype
 sudo losetup /dev/loop0 bin/floppy.img
 sudo mount -t msdos /dev/loop0 /media/floppy1/

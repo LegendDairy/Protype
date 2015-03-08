@@ -1,3 +1,7 @@
+;Pro-Type Kernel v1.3 ;
+;IPL v0.2             ;
+;by LegendMythe       ;
+
 [BITS	16]
 [ORG 0x500]
 
@@ -32,7 +36,7 @@ main:
   mov ax, image_seg                   ; Buffer segment
   xor bx, bx                          ; Buffer offset
   call LoadFile                       ; Load kernel module
-  mov word [FileSize], cx	      ; 0x703                 
+  mov word [FileSize], cx	                 
   
   cli                                 ; Dissable interupts
   pusha
@@ -43,89 +47,129 @@ main:
   cli
   mov eax, cr0                        ; Read cr0
   or eax, 1                           ; Set PM bit
-  mov cr0, eax                        ; Write cr0 0x714s
-  jmp 0x8:pm                          ; Far jump in PM 0x721
+  mov cr0, eax                        ; Write cr0
+  jmp 0x8:pm                          ; Far jump in PM
   
 [BITS 32]  
 pm:
-  mov ax, 0x10                        ; Set data descriptors 0x720
+  mov ax, 0x10                        ; Set data descriptors
   mov ds, ax                          ; 
   mov es, ax                          ; 
   mov fs, ax                          ;
+
   mov gs, ax
-  mov	ss, ax                          ; Set up Stack descriptor
+  mov ss, ax                          ; Set up Stack descriptor
   
-  mov eax, DWORD [0x10000 + 0x1C]           ; e_phoff
-  mov ebx, DWORD [0x10000 + 0x18]           ; e_entry
+  mov eax, DWORD [0x10000 + 0x20]     ; e_phoff
+  mov ebp, DWORD [0x10000 + 0x18]     ; e_entry
   xor ecx, ecx
-  mov cx, WORD [0x10000 + 0x2C]           ; e_phnum
+  mov cx, WORD [0x10000 + 0x38]       ; e_phnum
   xor edx, edx
-  mov dx, WORD [0x10000 + 0x2A]           ; e_phentsize
+  mov dx, WORD [0x10000 + 0x36]       ; e_phentsize
   add eax, 0x10000                    ; Set base
-  ;push ecx                            ; Arg of main
+  ;push ecx                           ; Arg of main
 
 load_kernel:  
-  .loop:                               ; Loop through headers
+  .loop:                              ; Loop through headers
     push ecx
-    mov esi, [eax + 0x00]
-    mov edi, 0x00001
-    std
-    cmpsd				; 0x754
-    jne .skip
+    mov esi, [eax + 0x00]             ; p_type
+    mov edi, 0x00001                  ; PT_LOAD: Loadable segment
+    std                               ; Increment esi and edi
+    cmpsd				; 0x754               ; Check for PT_LOAD
+    jne .skip                         ; Not loadable?=>Not interested!
   
-    mov esi, [eax + 0x04]
-    add esi, 0x10000
-    mov edi, [eax + 0x0c]
-    mov ecx, [eax + 0x10]
+    mov esi, [eax + 0x08]             ; p_offset
+    add esi, 0x10000                  ; address of section
+    mov edi, [eax + 0x10]             ; p_vaddr
+    mov ecx, [eax + 0x20]             ; p_filesz
     cld
-    ;mov ecx, [eax + 0x14]             ; Kernelsz in mem                       ; Argument of main
-    rep movsd
+    ;mov ecx, [eax + 0x28]            ; Kernelsz in mem
+    rep movsd                         ; Copy section in memory
   
   .skip:
-    pop ecx
-    dec ecx ;0x774
-    add eax, edx 
-    loop .loop
+    pop ecx                           ; Reload counter
+    add eax, edx                      ; Address of next header
+    loop .loop                        ; Loop
   
-call_kernel:    
-  mov ebp, 0x100000
-  call ebp
+jump_long_mode:
+
+  mov ecx, 0x1800                     ; Size to erase /4
+  mov eax, 0x10000                    ; Base of paging structs
+  
+  mov cr3, eax                        ; Set PML4T_ptr in cr3
+  
+  .l1:
+  mov DWORD [eax], 0x00               ; Erase Page directories
+  add eax, 4                          ; Per DWORD
+  loop .l1                            ; 4*0x1800=>0x6000
+    
+  mov DWORD [0x10000], 0x11003        ; PML4T[0] = &PD_ptr[0]
+  mov DWORD [0x11000], 0x12003        ; PDT[0]   = &PD_ptr[0]
+  mov DWORD [0x11018], 0x15003        ; PDT[3]   = &PD_ptr[3]
+  
+  mov DWORD [0x12000], 0x16003        ; PD0[0]   = &PT_ptr[0]
+  mov DWORD [0x15FB0], 0x17003        ; PD3[502] = &PT_ptr[502]
+  mov DWORD [0x15FB8], 0x18003        ; PD3[503] = &PT_ptr[503]
+  
+  mov ecx, 512                        ; 512 PT entries
+  mov eax, 0x00003                    ; Physical address
+  mov ebx, 0x16000                    ; Pagetable address
+  
+  .l2:                                ; Fill table
+  mov DWORD [ebx], eax                ; Physical address
+  mov DWORD [ebx + 4], 0              ; Physical address
+  add eax, 0x1000                     ; Next page
+  add ebx, 8                          ; 8 byte entries
+  loop .l2                            ; loop till full
+    
+  mov ecx, 512                        ; 512 PT entries       
+  mov eax, 0xFEC00003                 ; Physical address of IOAPIC
+  mov ebx, 0x17000                    ; Pagetable address of table
+  
+  .l4:                                ; Fill table 
+  mov DWORD [ebx], eax                ; Physical address
+  mov DWORD [ebx + 4], 0              ; Physical address
+  add eax, 0x1000                     ; Next page
+  add ebx, 8                          ; 8 byte entries
+  loop .l4                            ; loop till full
+    
+  mov ecx, 512                        ; 512 PT entries
+          
+  mov eax, 0xFEE00003                 ; Physical address of LAPIC
+  mov ebx, 0x18000                    ; Pagetable address of table
+    
+  .l3:                                ; Fill table 
+  mov DWORD [ebx + 4], 0              ; Physical address
+  mov DWORD [ebx], eax                ; Physical address
+  add eax, 0x1000                     ; Next page
+  add ebx, 8                          ; 8 byte entries
+  loop .l3                            ; loop till full
+    
+  mov eax, cr4                        ; Load cr4
+  or eax, 1 << 5                      ; Set PAE-bit
+  mov cr4, eax                        ; Enable PAE
+  
+
+  
+  mov ecx, 0xC0000080                 ; Register to read
+  rdmsr                               ; Read EFER MSR
+  or eax, 1 << 8                      ; Set LM-bit
+  wrmsr                               ; Write EFER MSR
+    
+  mov eax, cr0                        ; Read current cr0
+  or eax, 1 << 31                     ; Set Paging bit
+  mov cr0, eax                        ; Enable paging
+  
+  lgdt[gdt_64_ptr]                    ; Load 64 bit GDT
+  jmp 0x08:longmode                   ; Jump into longmode
+  
+[BITS 64]  
+longmode:
+  mov rbp, 0x100000
+  call rbp
   cli
   hlt
   jmp $
-  
-  
-  
-  
-  
-	
-  ;xor eax, eax                        ;
-  ;mov	ax, word [FileSize]             ;
-  ;movzx	ebx, word [bpbBytesPerSector] ;
-  ;mul	ebx                             ;
-  ;mov	ebx, 4                          ;
-  ;div	ebx                             ; Size in dwords
-                                      ; Set up the counter
-  ;mov esi, image_buffer               ; Source
-  ;mov edi, kernel_buffer              ; Destination
-  ;cld                                 ; Clear direction flag
-  ;mov ecx, eax                        ; Set up counter
-  ;rep movsd                           ; Repeat til ecx=0
-  
-  ;mov eax, [kernel_buffer + 60]       ; e_lfanew
-  ;add eax, kernel_buffer              ; Address of File Header
-  ;Check sig?                         ; Check PE00 sig
-  ;add eax, 24                         ; Optional header
-  ;add eax, 16                         ; Address of Entrypoint
-  ;mov ebp, dword [eax]                ; For debugging
-  ;add eax, 12                         ; ImageBase
-  ;mov ebx, dword [eax]                ; Address = imagebase+entry
-  ;add ebp, ebx                        ; Calculate
-  ;call ebp                            ; Start kernel module
-  
-  ;cli                                 ; Halt the system
-  ;hlt
-  ;jmp $  
   
   
 FileSize:   dw 0

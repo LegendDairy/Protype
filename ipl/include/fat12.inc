@@ -37,7 +37,7 @@ LoadFile:
   mov cx, WORD [bpbRootEntries]       ; Set up loop counter
   mov ax, 0x450
   mov es, ax
-  mov di, 0                     ; Locate first root entry en ram
+  mov di, 0                           ; Locate first root entry en ram
   
 .loop:
   pop si                              ; Load Filename
@@ -58,9 +58,9 @@ LoadFile:
   jmp $
   
 LoadFAT:
-  add sp, 4			      ; Fix the stack
+  add sp, 4			                      ; Fix the stack
   add di, 0x001A
-  mov dx, [es:di]			      ; First cluster
+  mov dx, [es:di]			                ; First cluster
   mov WORD [cluster], dx              ; Save for later
   xor ax, ax                          ; Erase ax
   mov al, BYTE [bpbNumberOfFATS]      ; Number of FATs
@@ -71,7 +71,7 @@ LoadFAT:
   call ReadFloppy                     ; Load the FATs
   pop bx                              ; Load buffer offset
   pop ax                              ; Load buffer segment 0x684
-  mov ax, 0x1000                          ; Set the right segment
+  mov ax, 0x1000                      ; Set the right segment
   xor bx, bx
   mov es, ax
   xor cx, cx
@@ -91,11 +91,11 @@ LOAD_IMAGE:
   mov cx, ax                          ; Load clusternumber
   shr dx, 0x0001                      ; Divide by two (fast)
   add cx, dx                          ; Add for 3/2
-  mov di, cx				;0x6aa
+  mov di, cx				
   push bx
   mov bx, 0x4500
   add bx, di
-  mov dx, WORD [bx]		              ; Read two bytes from FAT
+  mov dx, WORD [bx]		                ; Read two bytes from FAT
   pop bx
   test ax, 0x0001                     ; This word = 16bits
   jnz .ODD_CLUSTER                    ; We only need 12 bits

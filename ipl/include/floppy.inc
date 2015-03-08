@@ -49,7 +49,7 @@ LBACHS:                                     ;
 ;ES:bx Buffer to write to                   ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ReadFloppy:                                 ;
-  .Main:                                     ;
+  .Main:                                    ;
     mov di, 0x0005                          ;
   .ReadSector:                              ;
     push ax                                 ;

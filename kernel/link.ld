@@ -1,8 +1,9 @@
 /* Pro-Type Kernel v1.3       */
 /* Linkerscript               */
-/* Bran's Kernel Development  */
+/* From Bran's Kernel Dev     */
 
-OUTPUT_FORMAT("elf32-i386")
+OUTPUT_FORMAT(elf64-x86-64)
+OUTPUT_ARCH(i386:x86-64)
 ENTRY(main)
 SECTIONS
 {

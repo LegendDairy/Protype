@@ -12,7 +12,7 @@ ClusterLBA:                           ; Converts a clusternumber to a LBA
   ret                                 ; Return
 
 
-; Load file at ax:bx ;
+; Load file at ax:bx
 ; 11 byte Filename: [si]
 LoadFile:
   push ax                             ; Save buffer segment
@@ -50,7 +50,7 @@ LoadFile:
   ret                                 ; return(1);
 
 LoadFAT:
-  add sp, 4			      ; Fix the stack
+  add sp, 4			                      ; Fix the stack
   mov dx, WORD [di + 0x001A]          ; First cluster
   mov WORD [cluster], dx              ; Save for later
   xor ax, ax                          ; Erase ax

@@ -1,3 +1,7 @@
+;Pro-Type Kernel v1.3 ;
+;Pre IPL v0.1         ;
+;by LegendMythe       ;
+
 [BITS 16]
 [ORG 0x00]
 

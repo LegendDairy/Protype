@@ -1,9 +1,23 @@
+/* Pro-Type Kernel v1.3		*/
+/* Main Kernel function		*/
+/* By LegendMythe			*/
+
+#include <text.h>
+
 int main(void)
 {
 
-volatile unsigned char *videoram = (unsigned char *)0xB8000;
-   videoram[0] = 66; /* character 'A' */
-   videoram[1] = 0x07; /* light grey (7) on black (0). */
+	DebugClearScreen();
+	DebugSetTextColour(0x2, 0);
+	DebugPuts("Protype");
+	DebugSetTextColour(0xF, 0);
+	
+	init_idt();
+	//setup_apic();
+	
+	asm volatile("sti");
+	
+	for (;;);
 
-return 0;
+	return 0;
 }

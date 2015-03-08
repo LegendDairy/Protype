@@ -1,10 +1,34 @@
-Protype is an x86-based microkernel mostly written in C. 
+Protype is an x86_64-based microkernel mostly written in C. 
 The microkernel has it's own two stage bootloader (i.e. the Pre-IPL and IPL).
 The kernel is written in C and x86-assembler.
 I will try to add documentation in the DOCS folders for every part of the microkernel to clarify the code.
 
-Current realease number: r1,00 codenamed Hydrogen
+The goal is to write a lightweight and fast kernel and use all the options that the x86_64 platform has to offer.
+The code is not meant to be portable at all because that zould either overcomplicate things or make the code slow.
+The kernel will support Long Mode and SMP, in fact it demands support for Long Mode and features like an IOAPIC.
+The target cpu is a 2600k
 
-/bin  : Contains the Floppy image
-/boot : Contains Pre-IPL code, i.e. stage 1 of the bootloader
-/ipl  : Contains the IPL code, i.e. stage 2 of the bootloader
+Current realease number: r1,3 codenamed Hydrogen
+
+/bin  :   Contains the binaries, i.e. the Floppy image, modules...
+/boot :   Contains Pre-IPL code, i.e. stage 1 of the bootloader
+/ipl  :   Contains the IPL code, i.e. stage 2 of the bootloader
+/kernel:  Contains the actual kernel, mainly in C
+
+
+To build the kernel, you can use the build.sh script, irst you'll need to give it per;ission on Linux:
+chmod 777 build.sh
+Then you can run it, if you copy to Protype folder to your home directory
+./build.sh
+
+
+Tools:
+GNU gcc crosscompiler
+NASM Netwide Assembler
+LD
+
+
+I wrote most of the code myself, but I also took some code from the internet, because I was to lazy to write it. 
+For example the printscreen code.
+About me:
+My real name is Frederic, and I'm from Belgium

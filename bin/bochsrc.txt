@@ -4,8 +4,7 @@ romimage: file=/usr/share/bochs/BIOS-bochs-latest, address=0x0
 vga: extension = vbe
 floppya: 1_44=bin/floppy.img, status=inserted
 boot: a
-#log: bochsout.txt
+log: bin/bochsout.txt
 mouse: enabled=0
 clock: sync=realtime
-cpu: count=1, ips=10000000
-
+cpu: count=1:4

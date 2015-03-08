@@ -1,0 +1,21 @@
+/* Pro-Type Kernel v1.3       */
+/* Standard library ports     */
+/* By LegendMythe             */
+
+#ifndef ISO646_H
+#define ISO646_H
+
+#define and &&
+#define and_eq &= 
+#define bitand & 
+#define bitor | 
+#define compl ~ 
+#define not ! 
+#define not_eq != 
+#define or || 
+#define or_eq |=
+#define xor ^
+#define xor_eq ^=
+#define NULL ((void*)0)
+
+#endif

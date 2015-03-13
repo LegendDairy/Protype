@@ -1,9 +1,5 @@
 ;Pro-Type Kernel v1.3 ;
-<<<<<<< HEAD
 ;IPL v1.1             ;
-=======
-;IPL v1.2             ;
->>>>>>> origin/master
 ;by LegendMythe       ;
 
 [BITS	16]
@@ -69,11 +65,7 @@ pm:
   mov ds, ax                          ; 
   mov es, ax                          ; 
   mov fs, ax                          ;
-<<<<<<< HEAD
   mov gs, ax
-=======
-  mov gs, ax                          ;
->>>>>>> origin/master
   mov ss, ax                          ; Set up Stack descriptor
   
   mov eax, DWORD [0x10000 + 0x20]     ; e_phoff
@@ -178,14 +170,7 @@ jump_long_mode:
   lgdt[gdt_64_ptr]                    ; Load 64 bit GDT
   jmp 0x08:longmode                   ; Jump into longmode
   
-[BITS 64]  
-<<<<<<< HEAD
-longmode:
-  call rbp
-  cli
-  hlt
-  jmp $
-=======
+[BITS 64] 
 longmode:                             ; Longmode entry
   mov rbp, 0x100000                   ; Setup for backtrace
   call rbp                            ; Call the 64bit Kernel

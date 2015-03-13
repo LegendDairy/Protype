@@ -9,11 +9,11 @@ int main(void)
 
 	DebugClearScreen();
 	DebugSetTextColour(0x2, 0);
-	DebugPuts("Protype");
+	DebugPuts("Protype\n");
 	DebugSetTextColour(0xF, 0);
 	
 	init_idt();
-	//setup_apic();
+	setup_apic();
 	
 	asm volatile("sti");
 	

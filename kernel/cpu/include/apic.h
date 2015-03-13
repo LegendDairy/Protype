@@ -1,65 +1,85 @@
 /* Pro-Type Kernel v1.3	*/
-/* Advanced PIC	   v0.1	*/
+/* Advanced PIC	   v0.2	*/
 /* By LegendMythe		*/
 
 #ifndef APIC_H
 #define APIC_H
 
-#include<common.h>
+#include <common.h>
+#include <mutex.h>
 
 
-/* Initialises the Local APIC. */
+/* Reads a specified register from the LAPIC */
+u32int lapic_read(u32int r);
+/* Writes val to a specified register of the LAPIC */
+void lapic_write(u32int r, u32int val);
+/* Initialises the Local and IO APIC. */
 void setup_apic(void);
-
-/* Reads/writes to a register of the Local APIC. */
-u32int	apic_read_reg(u32int reg);
-void	apic_write_reg(u32int reg, u32int val);
 
 #define CPUID_FLAG_MSR 0x20
 #define CPUID_FLAG_APIC 0x200
 
+typedef struct
+{
+	//threadlist_t *current_thread;
+	u32int *lapic_base;
+	u32int *ioapic_base;
+	mutex_t lock;
+	u32int id;
+	u32int flags;
+} processor_t;
+
+typedef struct
+{
+	processor_t *current;
+	processor_t *prev;
+	mutex_t lock;
+	processor_t *next;
+} processor_list_t;
+
+#define CPU_FLAG_BOOTSTRAP					0x1
 
 /* Local APIC register map */
-#define apic_id								0x0020		//R/W
-#define apic_version						0x0030		//RO
-#define	apic_task_priority					0x0080		//R/W
-#define apic_arbitration_priority			0x0090		//RO
-#define apic_processor_priority				0x00A0		//RO
-#define apic_eoi							0x00B0		//WO
-#define apic_remote_read					0x00C0		//RO
-#define apic_logical_dest					0x00D0		//R/W
-#define apic_dest_format					0x00E0		//R/W
-#define apic_spur_int_vect					0x00F0		//R/W
+#define apic_reg_id								0x0020		//R/W
+#define apic_reg_version						0x0030		//RO
+#define	apic_reg_task_priority					0x0080		//R/W
+#define apic_reg_arbitration_priority			0x0090		//RO
+#define apic_reg_processor_priority				0x00A0		//RO
+#define apic_reg_eoi							0x00B0		//WO
+#define apic_reg_remote_read					0x00C0		//RO
+#define apic_reg_logical_dest					0x00D0		//R/W
+#define apic_reg_dest_format					0x00E0		//R/W
+#define apic_reg_spur_int_vect					0x00F0		//R/W
 
 /* In-Service Register */
-#define apic_ISR_0_31						0x0100		//RO
-#define apic_ISR_32_63						0x0110		//RO
-#define apic_ISR_64_95						0x0120		//RO
-#define apic_ISR_96_127						0x0130		//RO
-#define apic_ISR_128_159					0x0140		//RO
-#define apic_ISR_160_191					0x0150		//RO
-#define apic_ISR_192_223					0x0160		//RO
-#define apic_ISR_224_255					0x0170		//RO
+#define APIC_ISR_0_31						0x0100		//RO
+#define APIC_ISR_32_63						0x0110		//RO
+#define APIC_ISR_64_95						0x0120		//RO
+#define APIC_ISR_96_127						0x0130		//RO
+#define APIC_ISR_128_159					0x0140		//RO
+#define APIC_ISR_160_191					0x0150		//RO
+#define APIC_ISR_192_223					0x0160		//RO
+#define APIC_ISR_224_255					0x0170		//RO
 
 /* Trigger Mode Register */
-#define apic_TMR _0_31						0x0180		//RO
-#define apic_TMR_32_63						0x0190		//RO
-#define apic_TMR_64_95						0x01A0		//RO
-#define apic_TMR_96_127						0x01B0		//RO
-#define apic_TMR_128_159					0x01C0		//RO
-#define apic_TMR_160_191					0x01D0		//RO
-#define apic_TMR_192_223					0x01E0		//RO
-#define apic_TMR_224_255					0x01F0		//RO
+#define APIC_TMR_0_31						0x0180		//RO
+#define APIC_TMR_32_63						0x0190		//RO
+#define APIC_TMR_64_95						0x01A0		//RO
+#define APIC_TMR_96_127						0x01B0		//RO
+#define APIC_TMR_128_159					0x01C0		//RO
+#define APIC_TMR_160_191					0x01D0		//RO
+#define APIC_TMR_192_223					0x01E0		//RO
+#define APIC_TMR_224_255					0x01F0		//RO
 
 /* LAPIC Interrupt Request Register */
-#define apic_IRR_0_31						0x0200		//RO
-#define apic_IRR_32_63						0x0210		//RO
-#define apic_IRR_64_95						0x0220		//RO
-#define apic_IRR_96_127						0x0230		//RO
-#define apic_IRR_128_159					0x0240		//RO
-#define apic_IRR_160_191					0x0250		//RO
-#define apic_IRR_192_223					0x0260		//RO
-#define apic_IRR_224_255					0x0270		//RO
+#define APIC_IRR_0_31						0x0200		//RO
+#define APIC_IRR_32_63						0x0210		//RO
+#define APIC_IRR_64_95						0x0220		//RO
+#define APIC_IRR_96_127						0x0230		//RO
+#define APIC_IRR_128_159					0x0240		//RO
+#define APIC_IRR_160_191					0x0250		//RO
+#define APIC_IRR_192_223					0x0260		//RO
+#define APIC_IRR_224_255					0x0270		//RO
 
 #define apic_error_status_reg				0x0280		//RO
 #define apic_LVT_CMCI_reg					0x02F0		//R/W
@@ -92,10 +112,6 @@ void	apic_write_reg(u32int reg, u32int val);
 #define apic_timer_one_shot					0x00
 #define apic_timer_period					0x20000
 #define apic_timer_tsc_dead					0x40000
-
-
-
-
 
 #define apic_base_msr 0x1B
 #define apic_base_msr_bsp 0x100

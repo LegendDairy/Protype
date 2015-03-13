@@ -3,7 +3,7 @@
 # by LegendMythe	      #
 
 SOURCES=\
-main.o video/text.o cpu/apic.o cpu/acpi.o video/printf.o hardware/idt.o hardware/interrupts.o memory/string.o\
+main.o video/text.o cpu/apic.o cpu/acpi.o cpu/lock.o cpu/mutex.o hardware/idt.o hardware/interrupts.o memory/string.o\
 
 CFLAGS=\
 -nostdlib -nostdinc -fno-builtin -fno-stack-protector -g -m64 -ffreestanding -mno-red-zone -mno-mmx -mno-sse -mno-sse2 -fomit-frame-pointer\

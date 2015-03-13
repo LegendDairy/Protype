@@ -43,7 +43,7 @@ LoadFile:
   rep cmpsb                           ; Compare strings
   pop di                              ; Load entry
   je LoadFAT                          ; Equal?
-  pop cx                              ; Nope load counter
+  pop cx                              ; Nope load counter WTTTFFFF111111
   add di, 0x20                        ; Next entry
   loop .loop                          ; Try again
   mov ax, 0x1                         ; E1: File not found

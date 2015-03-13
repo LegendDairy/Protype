@@ -51,6 +51,7 @@ void scroll (void)
         // Make a blank line at y = 24
         memsetw(video_memory+80*(25-temp), (0 | (attribute << 8) ), 80);
         y_csr = 24;           // Get y back at 24.
+	x_csr = 0;
     }
 }
 /** Changes the foreground and background colour **/
@@ -58,7 +59,6 @@ void DebugSetTextColour(u8int foreground,u8int background)
 {
 	attribute = (foreground | (background << 4) );
 }
-
 /** Puts a single char on the screen **/
 void putch(char c)
 {
@@ -110,12 +110,13 @@ void DebugPuts(u8int *str)
 		putch(str[i]);
 	}
 }
+
 /** Prints a hexadecimal on the screen. **/
 void DebugPutHex(u32int n)
 {
 	s32int tmp;
 
-	puts("0x");
+	DebugPuts("0x");
 
 	char noZeroes = 1;
 
@@ -179,7 +180,7 @@ void DebugPutDec(u32int n)
 	{
 		c2[i--] = c[j++];
 	}
-	puts(c2);
+	DebugPuts(c2);
 
 }
 /** Prints an integer as a binairy on the screen. **/
@@ -210,6 +211,6 @@ void DebugPutBin(u32int n)
 	{
 		c2[i--] = c[j++];
 	}
-	puts(c2);
+	DebugPuts(c2);
 
 }

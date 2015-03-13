@@ -1,79 +1,79 @@
-;Pro-Type Kernel v1.3  ;
-;Interrupts v0.3       ;
+;Pro-Type Kernel v1.0  ;
+;Interrupts v1.2       ;
 ;by LegendMythe        ;
 
 [BITS 64]
 %define apic_eoi	0x00B0
 
-[GLOBAL flush_idt]                ; Allows the C code to call idt_flush().
+[GLOBAL flush_idt]                  ; Allows the C code to call idt_flush().
 [EXTERN idt_ptr]
 flush_idt:
-    mov rax, idt_ptr              ; Get the pointer to the IDT, passed as a parameter. 
-    lidt [rax]                    ; Load the IDT pointer.
+    mov rax, idt_ptr                ; Get the pointer to the IDT, passed as a parameter. 
+    lidt [rax]                      ; Load the IDT pointer.
     ret
 
 [GLOBAL isr_common_stub]
 [EXTERN isr_handler]
 isr_common_stub:
-    push rax                      ; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
-    push rbx                      ; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
-    push rcx                      ; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
-    push rdx                      ; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
-    push rdi                      ; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
-    push rsi                      ; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
-    push rbp                      ; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
-    push rsp                      ; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
+    push rax                        ; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
+    push rbx                        ; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
+    push rcx                        ; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
+    push rdx                        ; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
+    push rdi                        ; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
+    push rsi                        ; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
+    push rbp                        ; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
+    push rsp                        ; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
 
     mov rdi, rsp
 
 
-    call isr_handler              ; Call into our C code.
+    call isr_handler                ; Call into our C code.
 
-    pop rsp                      ; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
-    pop rbp                      ; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
-    pop rsi                      ; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
-    pop rdi                      ; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
-    pop rdx                      ; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
-    pop rcx                      ; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
-    pop rbx                      ; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
-    pop rax                      ; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
-
-    add rsp, 16                    ; Cleans up the pushed error code and pushed ISR number    
-    iretq                          ; pops 5 things at once: CS, EIP, EFLAGS, SS, and ESP   
+    pop rsp                         ; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
+    pop rbp                         ; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
+    pop rsi                         ; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
+    pop rdi                         ; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
+    pop rdx                         ; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
+    pop rcx                         ; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
+    pop rbx                         ; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
+    pop rax                         ; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
+    
+    add rsp, 16                     ; Cleans up the pushed error code and pushed ISR number    
+    iretq                           ; pops 5 things at once: CS, EIP, EFLAGS, SS, and ESP   
 
 [GLOBAL apic_routine]
 [EXTERN apic_base]
 [EXTERN apic_timer]
 apic_routine:
-  cli                             ; Dissable interrupts                           
-
-  mov eax, [apic_base]            ; Apic Base in C-code
-  mov dword [eax + apic_eoi],  0  ; Send EOI to LAPIC
-  
-  call apic_timer                 ; Call C function                      
-  
-  iretq                            ; Return to code
+  cli                               ; Dissable interrupts                           
+    
+  mov eax, [apic_base]              ; Apic Base in C-code
+  mov dword [eax + apic_eoi],  0    ; Send EOI to LAPIC
+    
+  call apic_timer                   ; Call C function                      
+    
+  iretq                             ; Return to code
 
 [GLOBAL apic_spurious]
-apic_spurious:                    ; Spurious Interrupt for IOAPIC
-iretq                             ; No EOI
+apic_spurious:                      ; Spurious Interrupt for IOAPIC
+iretq                               ; No EOI
 
 
 
-%macro ISR_NOERRCODE 1
+%macro ISR_NOERRCODE 1              ; NAM Macros are awesome
 global isr%1
   isr%1:
-    cli                         ; Disable interrupts firstly
-    push 0                      ; Push a dummy error code.
-    push %1                     ; Push the interrupt number.
-    jmp isr_common_stub         ; Go to our common handler code.
-%endmacro
+    cli                             ; Disable interrupts firstly
+    push 0                          ; Push a dummy error code.
+    push %1                         ; Push the interrupt number.
+    jmp isr_common_stub             ; Go to our common handler code.
+%endmacro   
 
 %macro ISR_ERRCODE 1
 global isr%1
   isr%1:
-    cli                         ; Disable interrupts.
-    push %1                     ; Push the interrupt number
+    cli                             ; Disable interrupts.
+    push %1                         ; Push the interrupt number
     jmp isr_common_stub
 %endmacro
 

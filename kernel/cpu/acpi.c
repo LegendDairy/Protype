@@ -1,6 +1,6 @@
 /* Pro-Type Kernel v1.3	*/
 /* ACPI Table	   v0.1	*/
-/* By LegendMythe		*/
+/* By LegendMythe	*/
 
 #include<acpi.h>
 

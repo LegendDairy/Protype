@@ -1,6 +1,6 @@
 /* Pro-Type Kernel v1.3	*/
 /* Advanced PIC	   v0.2	*/
-/* By LegendMythe		*/
+/* By LegendMythe	*/
 
 #include<apic.h>
 

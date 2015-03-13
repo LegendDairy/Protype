@@ -1,5 +1,9 @@
 ;Pro-Type Kernel v1.3 ;
+<<<<<<< HEAD
 ;IPL v1.1             ;
+=======
+;IPL v1.2             ;
+>>>>>>> origin/master
 ;by LegendMythe       ;
 
 [BITS	16]
@@ -47,7 +51,7 @@ entry:
   mov ax, image_seg                   ; Buffer segment
   xor bx, bx                          ; Buffer offset
   call LoadFile                       ; Load kernel module
-  mov word [FileSize], cx	                 
+  mov word [FileSize], cx	            ; Store file size for later               
   
   cli                                 ; Dissable interupts
   lgdt [gdt_ptr]                      ; Load the GDT
@@ -65,7 +69,11 @@ pm:
   mov ds, ax                          ; 
   mov es, ax                          ; 
   mov fs, ax                          ;
+<<<<<<< HEAD
   mov gs, ax
+=======
+  mov gs, ax                          ;
+>>>>>>> origin/master
   mov ss, ax                          ; Set up Stack descriptor
   
   mov eax, DWORD [0x10000 + 0x20]     ; e_phoff
@@ -171,11 +179,20 @@ jump_long_mode:
   jmp 0x08:longmode                   ; Jump into longmode
   
 [BITS 64]  
+<<<<<<< HEAD
 longmode:
   call rbp
   cli
   hlt
   jmp $
+=======
+longmode:                             ; Longmode entry
+  mov rbp, 0x100000                   ; Setup for backtrace
+  call rbp                            ; Call the 64bit Kernel
+  cli                                 ; Stop interrupts
+  hlt                                 ; Halt CPU
+  jmp $                               ; Qemu resets on hlt
+>>>>>>> origin/master
   
   
 FileSize:   dw 0

@@ -1,6 +1,6 @@
 /* Pro-Type Kernel v1.3		*/
-/* IDT						*/
-/* By LegendMythe			*/
+/* IDT v1.0			*/
+/* By LegendMythe		*/
 
 #include <idt.h>
 
@@ -35,8 +35,8 @@ void init_idt(void)
 	outb(0x21, 0xff);	// Mask all interrupts, ie dissable master
 	outb(0xA1, 0xff);	// Mask all interrupts, ie dissable slave
 
-	/*outb(0x22, 0x70);	// SMP Mode
-	outb(0x23, 0x01);	*/
+	/*outb(0x22, 0x70);	// SMP Mode old hardware
+	outb(0x23, 0x01);	// We should read the ACPI */
 
 	idt_set_gate ( 0, (u64int)isr0 , 0x08, 0xEE);
 	idt_set_gate ( 1, (u64int)isr1 , 0x08, 0xEE);
@@ -143,7 +143,7 @@ void isr_handler(regs_t * regs)
 		DebugSetTextColour(0xF, 0);
 		DebugPuts("]");
 		DebugPuts(exception_messages[regs->int_no]);
-		
+		DebugPuts("\n[");
 		DebugSetTextColour(0x4, 0);
 		DebugPuts("Kernel");
 		DebugSetTextColour(0xF, 0);

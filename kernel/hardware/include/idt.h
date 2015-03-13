@@ -1,6 +1,6 @@
 /* Pro-Type Kernel v1.3		*/
-/* IDT						*/
-/* By LegendMythe			*/
+/* IDT	v1.0			*/
+/* By LegendMythe		*/
 
 #ifndef IDT_H
 #define IDT_H
@@ -39,6 +39,7 @@ typedef void (*idt_handler_t)(regs_t *);
 void init_idt(void);
 void isr_install_handler(idt_handler_t fn, int no);
 
+/* Reference to interrupt.s */
 extern void isr0();
 extern void isr1();
 extern void isr2();
@@ -89,6 +90,5 @@ extern void irq14();
 extern void irq15();
 extern void apic_routine();
 extern void apic_spurious();
-
 
 #endif

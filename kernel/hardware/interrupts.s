@@ -1,4 +1,4 @@
-;Pro-Type Kernel v1.0  ;
+;Pro-Type Kernel v1.3  ;
 ;Interrupts v1.2       ;
 ;by LegendMythe        ;
 

@@ -1,6 +1,6 @@
 /* Pro-Type Kernel v1.3		*/
-/* Main Kernel function		*/
-/* By LegendMythe			*/
+/* Kernel Entry Point		*/
+/* By LegendMythe		*/
 
 #include <text.h>
 

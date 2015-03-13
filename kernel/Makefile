@@ -1,6 +1,6 @@
 # Pro-Type Kernel v1.3	#
-# Makefile		          #
-# by LegendMythe	      #
+# Makefile		#
+# by LegendMythe	#
 
 SOURCES=\
 main.o video/text.o cpu/apic.o cpu/acpi.o cpu/lock.o cpu/mutex.o hardware/idt.o hardware/interrupts.o memory/string.o\
@@ -27,7 +27,3 @@ link:
 
 .s.o:
 	nasm $(ASFLAGS) $<
-
-# To make a kernel.pe:
-# LDFLAGS=-T link.ld -melf_i386 => -melf: emulate 32bit hardware
-# link.ld OUTPUT_FORMAT("pei-i386")

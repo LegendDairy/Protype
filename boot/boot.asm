@@ -34,17 +34,17 @@ ebrFileSystem:          db "FAT12   "   ;
 %include "fat12.inc"		
 %include "print.inc"		
 
-loader:                             ; Loads stage2.
-cli						                      ; Disable interrupts.
-mov ax, 0x07C0				              ; Set up segments.
-mov ds, ax                          ; 
-mov es, ax                          ;
-mov fs, ax                          ;
-mov gs, ax                          ;
-mov ax, 0x0000				              ; Set the stack 0xF000-0xFFFF.
-mov ss, ax                          ;
-mov sp, 0xFFFF                      ;
-sti                                 ; Restore interrupts.
+loader:           									; Loads stage2.
+cli						    									; Disable interrupts.
+mov ax, 0x07C0											; Set up segments.
+mov ds, ax        									; 
+mov es, ax        									;
+mov fs, ax        									;
+mov gs, ax        									;
+mov ax, 0x0000											; Set the stack 0xF000-0xFFFF.
+mov ss, ax        									;
+mov sp, 0xFFFF    									;
+sti               									; Restore interrupts.
 
 xor ah, ah
 mov al, 0x3

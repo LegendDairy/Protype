@@ -4,7 +4,7 @@
 
 #include<apic.h>
 
-extern uint32_t tick;
+extern volatile uint32_t tick;
 uint32_t apic_base;
 void pit_sleep(uint32_t millis);
 

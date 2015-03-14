@@ -1,6 +1,6 @@
 /* Pro-Type Kernel v1.3	*/
 /* ACPI Table	   v0.1	*/
-/* By LegendMythe		*/
+/* By LegendMythe	*/
 
 #include<common.h>
 
@@ -9,7 +9,7 @@
 #define ACPI_MADT_OVERRIDE					2
 #define ACPI_MADT_NMI						3
 #define ACPI_MADT_LAPIC_NMI					4
-#define ACPI_MADT_LAPIC_ADDR_OVERRIDE		5
+#define ACPI_MADT_LAPIC_ADDR_OVERRIDE				5
 #define ACPI_MADT_IO_SAPIC					6
 
 typedef struct

@@ -1,6 +1,6 @@
 /* Pro-Type Kernel v1.3	*/
-/* CPUID				*/
-/* By LegendMythe		*/
+/* CPUID				        */
+/* By LegendMythe		    */
 
 #ifndef CPUID_H
 #define CPUID_H

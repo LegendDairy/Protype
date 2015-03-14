@@ -41,12 +41,10 @@ mov ds, ax                          ;
 mov es, ax                          ;
 mov fs, ax                          ;
 mov gs, ax                          ;
-
 mov ax, 0x0000				              ; Set the stack 0xF000-0xFFFF.
 mov ss, ax                          ;
 mov sp, 0xFFFF                      ;
-
-sti						                      ; Restore interrupts.
+sti                                 ; Restore interrupts.
 
 xor ah, ah
 mov al, 0x3
@@ -54,7 +52,6 @@ int 0x10
 
 mov si, MsgBoot                     ; Print a boot message.
 call Print                          ;
-
 
 mov ax, 0x0050                      ; Load stage 2 at 0x50:00
 xor bx, bx                          ; Erase bx

@@ -1,6 +1,6 @@
 /* Pro-Type Kernel v1.3		*/
-/* Spinlocks v0.1			*/
-/* By LegendMythe			*/
+/* Spinlocks v0.1		*/
+/* By LegendMythe		*/
 
 #include <mutex.h>
 
@@ -27,4 +27,12 @@ void mutex_lock(mutex_t *m)
 void mutex_unlock(mutex_t *m)
 {
 	m->lock = 0;
+	/*
+	if(m->waiting)
+	{
+		ProWakeThread(m->waiting);
+		m->waiting = m->waiting->next;
+		m->waiting->prev = 0;
+	}
+	*/
 }

@@ -72,7 +72,7 @@ void setup_apic(void)
 		DebugPuts("[APIC]: Enabling APIC...");
 		lapic_write(apic_reg_task_priority, 0x00);			// Accept all interrupts
 		lapic_write(apic_lvt_timer_reg, 0x10000);			// Disable timer interrupts
-		lapic_write(apic_lvt_thermal_reg, 0x10000);		// Dissable Thermal monitor
+		lapic_write(apic_lvt_thermal_reg, 0x10000);			// Dissable Thermal monitor
 		lapic_write(apic_lvt_perf_reg, 0x10000);			// Disable performance counter interrupts
 		lapic_write(apic_lvt_lint0_reg, 0x08700);			// Enable normal external interrupts
 		lapic_write(apic_lvt_lint1_reg, 0x00400);			// Enable normal NMI processing
@@ -80,7 +80,7 @@ void setup_apic(void)
 		lapic_write(apic_reg_spur_int_vect, 0x00131);			// Enable the APIC and set spurious vector to 48
 		lapic_write(apic_lvt_lint0_reg, 0x08700);			// Enable normal external interrupts
 		lapic_write(apic_lvt_lint1_reg, 0x00400);			// Enable normal NMI processing
-		lapic_write(apic_reg_eoi, 0x00);						// Make sure no interrupts are left
+		lapic_write(apic_reg_eoi, 0x00);				// Make sure no interrupts are left
 		DebugPuts("		Done\n");
 
 		/* Set up IO APIC */
@@ -102,8 +102,8 @@ void setup_apic(void)
 void setup_lapic_timer(void)
 {
 	/* Set LAPIC timer as reg int 32 */
-	lapic_write(apic_lvt_timer_reg, 0x00030);			// int 18
-	lapic_write(apic_div_conf, 0x01);					// Divide by 1
+	lapic_write(apic_lvt_timer_reg, 0x00030);				// int 32
+	lapic_write(apic_div_conf, 0x01);					// Divide by 4
 
 	/* Setup LAPIC Counter */
 	lapic_write(apic_init_count, 0xFFFFFFFF);

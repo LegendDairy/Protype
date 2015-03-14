@@ -6,16 +6,16 @@
 
 ACPISDTHeader_t *find_rsdt(void)
 {
-	u8int *curr = (u8int *)0xE0000;
+	uint8_t *curr = (uint8_t *)0xE0000;
 
 	int i;
 	for (i = 0; i < 0x10000; i++)
 	{
-		if (!(strncmp("RSD PTR ", (u8int *)curr, 8)))
+		if (!(strncmp("RSD PTR ", (uint8_t *)curr, 8)))
 		{
-			return  (ACPISDTHeader_t *)(*(u32int*)(curr + 16));
+			return  (ACPISDTHeader_t *)(*(uint32_t*)(curr + 16));
 		}
-		curr = (u8int *)(curr + 0x10);
+		curr = (uint8_t *)(curr + 0x10);
 	}
 }
 
@@ -23,12 +23,12 @@ RSDT_t *findMADT(ACPISDTHeader_t *RootSDT)
 {
 	ACPISDTHeader_t *curr = (RSDT_t *)(RootSDT);
 	int i = 0;
-	u32int *tmp = (u32int *)curr;
+	uint32_t *tmp = (uint32_t *)curr;
 
 	for (i = 0; i < 0x5000; i++)
 	{
 
-		if (*tmp == (u32int) 0x43495041)
+		if (*tmp == (uint32_t) 0x43495041)
 		{
 			DebugPuts("[ACPI]: Found APIC Table at: ");
 			DebugPutHex(tmp);
@@ -46,8 +46,8 @@ RSDT_t *findMADT(ACPISDTHeader_t *RootSDT)
 void parse_madt(void)
 {
 	RSDT_t *mad = findMADT((RSDT_t *)find_rsdt());
-	u32int i = 0;
-	madt_entry_t *curr = (u32int)((u32int)mad + 44);
+	uint32_t i = 0;
+	madt_entry_t *curr = (uint32_t)((uint32_t)mad + 44);
 	while (i < mad->Length - 44)
 	{
 		if (curr->entry_type == ACPI_MADT_PROC)
@@ -93,6 +93,6 @@ void parse_madt(void)
 		
 		
 
-		curr = ((u32int)((u32int)curr + (u32int)curr->length));
+		curr = ((uint32_t)((uint32_t)curr + (uint32_t)curr->length));
 	}
 }

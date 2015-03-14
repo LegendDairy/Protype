@@ -4,22 +4,22 @@
 
 #include<apic.h>
 
-extern u32int tick;
-u32int apic_base;
-void pit_sleep(u32int millis);
+extern uint32_t tick;
+uint32_t apic_base;
+void pit_sleep(uint32_t millis);
 
 processor_t current_cpu;
 processor_list_t processors;
 
 
-u8int apic_check(void)
+uint8_t apic_check(void)
 {
-	u32int eax, edx;
+	uint32_t eax, edx;
 	asm volatile("cpuid":"=a"(eax),"=d"(edx):"a"(1):"ecx","ebx");
 	return edx & CPUID_FLAG_APIC;
 }
 
-u32int toc;
+uint32_t toc;
 void apic_timer(void)
 {
 	DebugPuts("i");
@@ -27,14 +27,14 @@ void apic_timer(void)
 
 extern void parse_madt(void);
 
-u32int lapic_read(u32int r)
+uint32_t lapic_read(uint32_t r)
 {
-	return ((u32int)(current_cpu.lapic_base[r / 4]));
+	return ((uint32_t)(current_cpu.lapic_base[r / 4]));
 }
 
-void lapic_write(u32int r, u32int val)
+void lapic_write(uint32_t r, uint32_t val)
 {
-	current_cpu.lapic_base[r / 4] = (u32int)val;
+	current_cpu.lapic_base[r / 4] = (uint32_t)val;
 }
 
 void setup_apic(void)
@@ -53,8 +53,8 @@ void setup_apic(void)
 	{
 		/* Fill CPU form */
 		mutex_lock(&current_cpu.lock);
-		asm volatile ("rdmsr": "=a"((u32int *)current_cpu.lapic_base) : "c"(apic_base_msr));
-		current_cpu.lapic_base = (u32int*)((u32int)0xfffff000 & (u32int)current_cpu.lapic_base);
+		asm volatile ("rdmsr": "=a"((uint32_t *)current_cpu.lapic_base) : "c"(apic_base_msr));
+		current_cpu.lapic_base = (uint32_t*)((uint32_t)0xfffff000 & (uint32_t)current_cpu.lapic_base);
 		apic_base = current_cpu.lapic_base;
 		current_cpu.id = lapic_read(apic_reg_id);
 		current_cpu.flags = CPU_FLAG_BOOTSTRAP;
@@ -85,13 +85,13 @@ void setup_apic(void)
 		DebugPuts("		Done\n");
 
 		/* Set up IO APIC */
-		u32int *ioapic_reg 	= (u32int*)0xfec00000;
-		u32int *ioapic_io 	= (u32int*)0xfec00010;
+		uint32_t *ioapic_reg 	= (uint32_t*)0xfec00000;
+		uint32_t *ioapic_io 	= (uint32_t*)0xfec00010;
 
-		*(u32int*)ioapic_reg = (u32int)0x12;
-		*ioapic_io = (u32int)0x30 ;
-		*(u32int*)ioapic_reg = (u32int)0x13;
-		*ioapic_io = (u32int)0x00;
+		*(uint32_t*)ioapic_reg = (uint32_t)0x12;
+		*ioapic_io = (uint32_t)0x30 ;
+		*(uint32_t*)ioapic_reg = (uint32_t)0x13;
+		*ioapic_io = (uint32_t)0x00;
 	
 		//parse_madt();
 
@@ -114,7 +114,7 @@ void setup_lapic_timer(void)
 
 	/* Calculate divisor */
 	lapic_write(apic_lvt_timer_reg, 0x10030);
-	u32int freq = lapic_read(apic_cur_count);
+	uint32_t freq = lapic_read(apic_cur_count);
 	freq = 0xFFFFFFFF - freq;
 	freq = freq*4;
 
@@ -125,5 +125,5 @@ void setup_lapic_timer(void)
 
 	/* Setup intial count */
 	lapic_write(apic_init_count, 10000);
-	lapic_write(apic_lvt_timer_reg, (u32int)(0x30 | apic_timer_period));
+	lapic_write(apic_lvt_timer_reg, (uint32_t)(0x30 | apic_timer_period));
 }

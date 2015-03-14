@@ -10,9 +10,9 @@
 
 
 /* Reads a specified register from the LAPIC */
-uint32_t lapic_read(uint32_t r);
+u32int lapic_read(u32int r);
 /* Writes val to a specified register of the LAPIC */
-void lapic_write(uint32_t r, uint32_t val);
+void lapic_write(u32int r, u32int val);
 /* Initialises the Local and IO APIC. */
 void setup_apic(void);
 
@@ -22,11 +22,11 @@ void setup_apic(void);
 typedef struct
 {
 	//threadlist_t *current_thread;
-	uint32_t *lapic_base;
-	uint32_t *ioapic_base;
+	u32int *lapic_base;
+	u32int *ioapic_base;
 	mutex_t lock;
-	uint32_t id;
-	uint32_t flags;
+	u32int id;
+	u32int flags;
 } processor_t;
 
 typedef struct

@@ -4,7 +4,7 @@
 
 #include <mutex.h>
 
-static u64int atomic_test_and_set (volatile spinlock_t *lock) 
+static uint64_t atomic_test_and_set (volatile spinlock_t *lock) 
 {
         register spinlock_t value = SPINLOCK_UNLOCKED;
        

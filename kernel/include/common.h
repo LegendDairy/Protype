@@ -8,7 +8,7 @@
 #include <text.h>
 #include <stdint.h>
 #include <iso646.h>
-#include <string.h>
+
 
 #endif
 

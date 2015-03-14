@@ -19,7 +19,7 @@ int strcmp(const char *str1, const char *str2)
 	}
 	return 0;
 }
-int strncmp(const char *str1, const char *str2, u32int n)
+int strncmp(const char *str1, const char *str2, uint32_t n)
 {
 	int i = 0;
 	while(i<n)
@@ -58,29 +58,29 @@ return str - start;
 }
 
 // Copy len bytes from src to dest.
-void memcpy(u8int *dest, const u8int *src, u32int len)
+void memcpy(uint8_t *dest, const uint8_t *src, uint32_t len)
 {
     for(; len != 0; len--) dest[len - 1] = src[len - 1];
 }
 
 // Write len copies of val into dest.
-void memset(u8int *dest, u8int val, u32int len)
+void memset(uint8_t *dest, uint8_t val, uint32_t len)
 {
     for ( ; len != 0; len--) dest[len - 1] = val;
 }
 
 // Write len copies of val into dest.
-void memsetw(u16int *dest, u16int val, u32int len)
+void memsetw(uint16_t *dest, uint16_t val, uint32_t len)
 {
     for ( ; len != 0; len--) dest[len - 1] = val;
 }
 // Write len copies of val into dest.
-void memsetdw(u32int *dest, u32int val, u32int len)
+void memsetdw(uint32_t *dest, uint32_t val, uint32_t len)
 {
 	for (; len != 0; len--) dest[len - 1] = val;
 }
 // Write len copies of val into dest.
-void memsetqw(u64int *dest, u64int val, u32int len)
+void memsetqw(uint64_t *dest, uint64_t val, uint32_t len)
 {
 	for (; len != 0; len--) dest[len - 1] = val;
 }

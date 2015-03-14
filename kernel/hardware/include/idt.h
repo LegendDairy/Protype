@@ -10,28 +10,28 @@
 // Structure for an idt entry
 typedef struct
 {
-	u16int baselow;
-	u16int selector;
-	u8int res;
-	u8int flags;
-	u16int basemid;
-	u32int basehigh;
-	u32int zero;
+	uint16_t baselow;
+	uint16_t selector;
+	uint8_t res;
+	uint8_t flags;
+	uint16_t basemid;
+	uint32_t basehigh;
+	uint32_t zero;
 }__attribute__((packed)) idt_entry_t;
 
 // Pointer structure for lidt
 typedef struct
 {
-	u16int limit;
-	u64int base;
+	uint16_t limit;
+	uint64_t base;
 } __attribute__ ((packed)) idt_ptr_t;
 
 // Structure containing register values when the CPU was interrupted.
 typedef struct
 {
-	u64int esp, ebp, esi, edi, edx, ecx, ebx, eax;
-	u64int int_no, err_code;							
-	u64int eip, cs, eflags, useresp, ss;				// Pushed by the processor automatically.
+	uint64_t esp, ebp, esi, edi, edx, ecx, ebx, eax;
+	uint64_t int_no, err_code;							
+	uint64_t eip, cs, eflags, useresp, ss;				// Pushed by the processor automatically.
 }__attribute__((packed)) regs_t;
 
 typedef void (*idt_handler_t)(regs_t *);

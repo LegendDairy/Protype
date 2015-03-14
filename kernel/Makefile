@@ -3,27 +3,23 @@
 # by LegendMythe	#
 
 SOURCES=\
-main.o video/text.o cpu/apic.o cpu/acpi.o cpu/lock.o cpu/mutex.o hardware/idt.o hardware/interrupts.o memory/string.o\
+main.o video/text.o cpu/apic.o cpu/acpi.o cpu/mutex.o hardware/idt.o hardware/interrupts.o memory/string.o\
 
+CC = x86_64-elf-gcc
 CFLAGS=\
--nostdlib -nostdinc -fno-builtin -fno-stack-protector -g -m64 -ffreestanding -mno-red-zone -mno-mmx -mno-sse -mno-sse2 -fomit-frame-pointer\
+-nostdlib -lgcc -ffreestanding -mno-red-zone -fno-exceptions -mno-mmx -mno-sse -mno-sse2\
 -I./memory/include -I./cpu/include -I./video/include -I./include/stdinc -I./include -I./hardware/include\
 
-LDFLAGS=-T link.ld -z max-page-size=0x1000 -melf_x86_64
+AS = nasm
+
+LDFLAGS=-T link.ld -z
 ASFLAGS=-f elf64
 
 all: $(SOURCES) link
 
-clean:
-	-rm *.o
-	-rm cpu/*.o
-	-rm memory/*.o
-	-rm video/*.o
-	-rm hardware/*.o
-
 
 link:
-	ld $(LDFLAGS) -o ~/Protype/bin/kernel.sys  $(SOURCES)
+	x86_64-elf-gcc -T link.ld -o ~/Protype/bin/kernel.sys -ffreestanding -O2 -nostdlib -z max-page-size=0x1000 $(SOURCES) -lgcc
 
-.s.o:
-	nasm $(ASFLAGS) $<
+clean:
+	-rm $(SOURCES) 

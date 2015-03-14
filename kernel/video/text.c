@@ -5,12 +5,12 @@
 #include <text.h>
 #include <stdint.h>
 
-u16int *video_memory = 0xB8000;
+uint16_t *video_memory = 0xB8000;
 unsigned char x_csr = 0;
 unsigned char y_csr = 0;
 unsigned char attribute = 0x0F;
 
-void outb(u16int port, u8int byte)
+void outb(uint16_t port, uint8_t byte)
 {
     asm volatile("outb %1, %0":: "dN" (port), "a" (byte));
 }
@@ -19,7 +19,7 @@ void outb(u16int port, u8int byte)
 /** Updates the hardware cursor. **/
 void move_cursor(void)
 {
-	u16int tmp = (y_csr * 80) + x_csr;
+	uint16_t tmp = (y_csr * 80) + x_csr;
 
 	outb(0x3D4, 14);
 	outb(0x3D5, tmp >> 8);
@@ -44,7 +44,7 @@ void scroll (void)
 {
     if (y_csr>=25)
     {
-        u16int temp;
+        uint16_t temp;
         temp = y_csr - 25 + 1;// Protection against y>25
         // Write line 2-23 to line 1-22, copies in bytes -> *2
         memcpy(video_memory, video_memory+80*temp,(25-temp)*80*2);
@@ -55,14 +55,14 @@ void scroll (void)
     }
 }
 /** Changes the foreground and background colour **/
-void DebugSetTextColour(u8int foreground,u8int background)
+void DebugSetTextColour(uint8_t foreground,uint8_t background)
 {
 	attribute = (foreground | (background << 4) );
 }
 /** Puts a single char on the screen **/
 void putch(char c)
 {
-u16int attword = attribute << 8;
+uint16_t attword = attribute << 8;
     // Handle newline by moving cursor back to left and increasing the row
     if(c=='\n')
     {
@@ -89,7 +89,7 @@ u16int attword = attribute << 8;
     // Handle any other printable character.
     else if(c >= ' ')
     {
-        u16int val = c | attword;
+        uint16_t val = c | attword;
         video_memory[x_csr+y_csr*80] = val;
         x_csr++;
     }
@@ -102,7 +102,7 @@ u16int attword = attribute << 8;
     move_cursor();
 }
 
-void DebugPuts(u8int *str)
+void DebugPuts(uint8_t *str)
 {
 	int i;
 	for (i = 0; i<strlen(str); i++)
@@ -112,7 +112,7 @@ void DebugPuts(u8int *str)
 }
 
 /** Prints a hexadecimal on the screen. **/
-void DebugPutHex(u32int n)
+void DebugPutHex(uint32_t n)
 {
 	s32int tmp;
 
@@ -153,7 +153,7 @@ void DebugPutHex(u32int n)
 
 }
 /** Prints a decimal number on the screen. **/
-void DebugPutDec(u32int n)
+void DebugPutDec(uint32_t n)
 {
 
 	if (n == 0)
@@ -184,7 +184,7 @@ void DebugPutDec(u32int n)
 
 }
 /** Prints an integer as a binairy on the screen. **/
-void DebugPutBin(u32int n)
+void DebugPutBin(uint32_t n)
 {
 
 	if (n == 0)

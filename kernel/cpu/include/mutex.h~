@@ -10,7 +10,7 @@
 #define SPINLOCK_LOCKED 0
 #define SPINLOCK_UNLOCKED 1
 
-typedef volatile uint64_t spinlock_t;
+typedef volatile u64int spinlock_t;
 
 typedef struct
 {

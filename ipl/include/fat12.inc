@@ -60,8 +60,8 @@ LoadFile:
 LoadFAT:
   add sp, 4			                      ; Fix the stack
   add di, 0x001A
-  mov edx, DWORD [es:di]			        ; First cluster
-  mov DWORD [cluster], edx            ; Save for later
+  mov dx, [es:di]			                ; First cluster
+  mov WORD [cluster], dx              ; Save for later
   xor ax, ax                          ; Erase ax
   mov al, BYTE [bpbNumberOfFATS]      ; Number of FATs
   mul WORD [bpbSectorsPerFAT]         ; Sectors used by FATs

@@ -9,7 +9,7 @@ int main(void)
 
 	DebugClearScreen();
 	DebugSetTextColour(0x2, 0);
-	DebugPuts("Protype\n");
+	DebugPuts("Protype v1.3\n");
 	DebugSetTextColour(0xF, 0);
 	
 	init_idt();

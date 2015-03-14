@@ -37,15 +37,15 @@ typedef struct
 	processor_t *next;
 } processor_list_t;
 
-#define CPU_FLAG_BOOTSTRAP					0x1
+#define CPU_FLAG_BOOTSTRAP					0x0001
 
 /* Local APIC register map */
-#define apic_reg_id								0x0020		//R/W
-#define apic_reg_version						0x0030		//RO
+#define apic_reg_id						0x0020		//R/W
+#define apic_reg_version					0x0030		//RO
 #define	apic_reg_task_priority					0x0080		//R/W
-#define apic_reg_arbitration_priority			0x0090		//RO
+#define apic_reg_arbitration_priority				0x0090		//RO
 #define apic_reg_processor_priority				0x00A0		//RO
-#define apic_reg_eoi							0x00B0		//WO
+#define apic_reg_eoi						0x00B0		//WO
 #define apic_reg_remote_read					0x00C0		//RO
 #define apic_reg_logical_dest					0x00D0		//R/W
 #define apic_reg_dest_format					0x00E0		//R/W
@@ -81,7 +81,7 @@ typedef struct
 #define APIC_IRR_192_223					0x0260		//RO
 #define APIC_IRR_224_255					0x0270		//RO
 
-#define apic_error_status_reg				0x0280		//RO
+#define apic_error_status_reg					0x0280		//RO
 #define apic_LVT_CMCI_reg					0x02F0		//R/W
 
 /* LAPIC Interrupt Command Register */

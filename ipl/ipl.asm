@@ -1,5 +1,5 @@
 ;Pro-Type Kernel v1.3 ;
-;IPL v0.2             ;
+;IPL v1.1             ;
 ;by LegendMythe       ;
 
 [BITS	16]

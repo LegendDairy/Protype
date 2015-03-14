@@ -61,7 +61,7 @@ xor bx, bx                          ; Erase bx
 mov si, Stage2                      ; Argument: Filename
 call LoadFile                       ; Load KRNLDR.SYS
 or ax, ax                           ; Test return value
-jnz failure                        ; If ax=!0: Fail
+jnz failure                         ; If ax=!0: Fail
 
 .DONE:
 push WORD 0x0050

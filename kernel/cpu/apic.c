@@ -4,7 +4,7 @@
 
 #include<apic.h>
 
-extern volatile uint32_t tick;
+volatile uint32_t tick;
 uint32_t apic_base;
 void pit_sleep(uint32_t millis);
 
@@ -19,7 +19,6 @@ uint8_t apic_check(void)
 	return edx & CPUID_FLAG_APIC;
 }
 
-uint32_t toc;
 void apic_timer(void)
 {
 	DebugPuts("i");

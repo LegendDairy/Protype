@@ -7,7 +7,7 @@ main.o video/text.o cpu/apic.o cpu/acpi.o cpu/mutex.o hardware/idt.o hardware/in
 
 CC = x86_64-elf-gcc
 CFLAGS=\
--nostdlib -lgcc -ffreestanding -mno-red-zone -fno-exceptions -mno-mmx -mno-sse -mno-sse2\
+-nostdlib -lgcc -ffreestanding -mno-red-zone -fno-exceptions -mno-mmx -mno-sse -mno-sse2 -O2 -Wall -Wextra\
 -I./memory/include -I./cpu/include -I./video/include -I./include/stdinc -I./include -I./hardware/include\
 
 AS = nasm

@@ -13,13 +13,13 @@ int main(uint64_t *memorymap, uint64_t map_entries)
 	DebugSetTextColour(0xF, 0);
 	DebugPutHex(memorymap);
 	DebugPuts("\n");
-	DebugPutHex(entries);
+	DebugPutHex(map_entries);
 	init_idt();
 	setup_apic();
 	
-	asm volatile("sti");
+	//asm volatile("sti");
 	
 	for (;;);
-
+	while(1);
 	return 0;
 }

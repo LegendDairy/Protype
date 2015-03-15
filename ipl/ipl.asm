@@ -18,7 +18,7 @@ jmp main
 %define image_buffer     0x10000      ; 444 KiB for file
 %define image_seg        0x1000       ; Segment (es)
 %define BytesPerSector   512          ; Floppy=512
-%define memorymap        0xFE000
+%define memorymap        0x20000
 
 main:
   xor ax, ax                          ; Erase ax
@@ -27,16 +27,16 @@ main:
   mov fs, ax
   mov gs, ax				             
   mov ss, ax                          
-  mov sp, 0xFFFF		                  ; Stack from 0x7E00-0xFFFF      		
+  mov sp, 0xFFFF		      ; Stack from 0x7E00-0xFFFF      		
 
   mov si, MsgIPL                      ; IPL Message
   call Print                          ; Print Message
   
   call a20_kb                         ; Enable A20
   
-  mov ax, 0xFE00
+  mov ax, 0x2000
   mov es, ax
-  xor si, si
+  xor di, di
   call do_e820
   xor ax, ax
   mov es, ax
@@ -74,7 +74,6 @@ pm:
   xor edx, edx
   mov dx, WORD [0x10000 + 0x36]       ; e_phentsize
   add eax, 0x10000                    ; Set base
-  ;push ecx                           ; Arg of main
 
 load_kernel:  
   .loop:                              ; Loop through headers
@@ -90,8 +89,7 @@ load_kernel:
     mov edi, [eax + 0x10]             ; p_vaddr
     mov ecx, [eax + 0x20]             ; p_filesz
     cld
-    ;mov ecx, [eax + 0x28]            ; Kernelsz in mem
-    rep movsd                         ; Copy section in memory
+    rep movsb                         ; Copy section in memory
   
   .skip:
     pop ecx                           ; Reload counter
@@ -170,7 +168,6 @@ longmode:
   mov rdi, memorymap
   xor rsi, rsi
   mov si, WORD [FileSize]
-  mov rbp, 0x100000
   call rbp
   cli
   hlt

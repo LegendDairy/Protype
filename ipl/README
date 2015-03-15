@@ -19,7 +19,7 @@ Before far jump(in RM):
 
 After far jump(in LM):
 0x00000500 -> 0x000044FF:       GDT somewhere...
-0x00005000 ->	0x0000FFFF:       Kernel Stack ~44k
+0x00005000 -> 0x0000FFFF:       Kernel Stack ~44k
 0x00010000 -> 0x00018FFF:       Kernel Page dir and some tables
 
 Changelog

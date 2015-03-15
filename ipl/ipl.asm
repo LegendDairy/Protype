@@ -1,5 +1,5 @@
 ;Pro-Type Kernel v1.3 ;
-;IPL v1.1             ;
+;IPL v0.25            ;
 ;by LegendMythe       ;
 
 [BITS	16]
@@ -12,11 +12,13 @@ jmp main
 %include "floppy.inc"		
 %include "fat12.inc"	
 %include "print.inc"
+%include "e820.inc"
 
 %define kernel_buffer    0x100000     ; Load kernel at 1mb
-%define image_buffer     0x10000      ; 448 KiB for file
+%define image_buffer     0x10000      ; 444 KiB for file
 %define image_seg        0x1000       ; Segment (es)
 %define BytesPerSector   512          ; Floppy=512
+%define memorymap        0xFE000
 
 main:
   xor ax, ax                          ; Erase ax
@@ -31,6 +33,13 @@ main:
   call Print                          ; Print Message
   
   call a20_kb                         ; Enable A20
+  
+  mov ax, 0xFE00
+  mov es, ax
+  xor si, si
+  call do_e820
+  xor ax, ax
+  mov es, ax
   
   mov si, KRNL                        ; Load filename
   mov ax, image_seg                   ; Buffer segment
@@ -90,10 +99,8 @@ load_kernel:
     loop .loop                        ; Loop
   
 jump_long_mode:
-
   mov ecx, 0x1800                     ; Size to erase /4
   mov eax, 0x10000                    ; Base of paging structs
-  
   mov cr3, eax                        ; Set PML4T_ptr in cr3
   
   .l1:
@@ -131,8 +138,7 @@ jump_long_mode:
   add ebx, 8                          ; 8 byte entries
   loop .l4                            ; loop till full
     
-  mov ecx, 512                        ; 512 PT entries
-          
+  mov ecx, 512                        ; 512 PT entries        
   mov eax, 0xFEE00003                 ; Physical address of LAPIC
   mov ebx, 0x18000                    ; Pagetable address of table
     
@@ -146,8 +152,6 @@ jump_long_mode:
   mov eax, cr4                        ; Load cr4
   or eax, 1 << 5                      ; Set PAE-bit
   mov cr4, eax                        ; Enable PAE
-  
-
   
   mov ecx, 0xC0000080                 ; Register to read
   rdmsr                               ; Read EFER MSR
@@ -163,6 +167,9 @@ jump_long_mode:
   
 [BITS 64]  
 longmode:
+  mov rdi, memorymap
+  xor rsi, rsi
+  mov si, WORD [FileSize]
   mov rbp, 0x100000
   call rbp
   cli
@@ -171,6 +178,7 @@ longmode:
   
   
 FileSize:   dw 0
+mmap_ent:   dw 0
 KRNL        db "KERNEL  SYS"  
 MsgIPL 	    db "[IPL]: Loading kernel module...", 0x0D, 0x0A, 0x00
 

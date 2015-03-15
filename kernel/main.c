@@ -4,14 +4,16 @@
 
 #include <text.h>
 
-int main(void)
+int main(uint64_t *memorymap, uint64_t map_entries)
 {
 
 	DebugClearScreen();
 	DebugSetTextColour(0x2, 0);
 	DebugPuts("Protype v1.3\n");
 	DebugSetTextColour(0xF, 0);
-	
+	DebugPutHex(memorymap);
+	DebugPuts("\n");
+	DebugPutHex(entries);
 	init_idt();
 	setup_apic();
 	

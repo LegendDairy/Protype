@@ -8,6 +8,7 @@
 #include <common.h>
 #include <stdint.h>
 #include <string.h>
+#include <stdarg.h>
 
 /** Clears the screen. **/
 void DebugClearScreen(void);
@@ -23,5 +24,6 @@ void DebugPutDec(uint32_t n);
 void DebugPutBin(uint32_t n);
 /** Puts a single char on the screen **/
 void putch(char c);
+
 void outb(uint16_t port, uint8_t byte);
 #endif

@@ -3,7 +3,6 @@
 /* From the Internet	*/
 
 #include <text.h>
-#include <stdint.h>
 
 uint16_t *video_memory = (uint16_t *)0xB8000;
 unsigned char x_csr = 0;

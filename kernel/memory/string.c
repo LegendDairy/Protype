@@ -21,7 +21,7 @@ int strcmp(const char *str1, const char *str2)
 }
 int strncmp(const char *str1, const char *str2, uint32_t n)
 {
-	int i = 0;
+	uint32_t i = 0;
 	while(i<n)
     {
 		if(str1[i] != str2[i])
@@ -44,6 +44,7 @@ char *strcpy(char *dest, const char *src)
       dest[i] = src[i];
  	i++;
     }
+	return dest;
 }
 
 // Counts a NULL-terminated string.

@@ -38,30 +38,24 @@ void lapic_write(uint32_t r, uint32_t val)
 
 void setup_apic(void)
 {
-	mutex_lock(&processors.lock);
+	mutex_unlock(&processors.lock);
+	mutex_unlock(&current_cpu.lock);
 	processors.prev = 0;
 	processors.current = &current_cpu;
 	processors.next = 0;
-	mutex_unlock(&processors.lock);
 
-	if (!apic_check)
-	{
-		DebugPuts("\nERROR: APIC: 0x1: No APIC found!");
-	}
-	else
-	{
 		/* Fill CPU form */
 		mutex_lock(&current_cpu.lock);
 		asm volatile ("rdmsr": "=a"((uint32_t *)current_cpu.lapic_base) : "c"(apic_base_msr));
-		current_cpu.lapic_base = (uint32_t*)((uint32_t)0xfffff000 & (uint32_t)current_cpu.lapic_base);
-		apic_base = current_cpu.lapic_base;
+		current_cpu.lapic_base = (uint32_t *)(0xfffff000 & (uint64_t)current_cpu.lapic_base);
+		apic_base = (uint64_t)current_cpu.lapic_base;
 		current_cpu.id = lapic_read(apic_reg_id);
 		current_cpu.flags = CPU_FLAG_BOOTSTRAP;
 		mutex_unlock(&current_cpu.lock);
 
-		/* Give information to the user */
+		/* Give information to the user */ 
 		DebugPuts("[APIC]: Found Local apic at ");
-		DebugPutHex(current_cpu.lapic_base);
+		DebugPutHex((uint64_t)current_cpu.lapic_base);
 		DebugPuts(", ID: ");
 		DebugPutDec(current_cpu.id);
 		DebugPuts(", Version: ");
@@ -96,7 +90,7 @@ void setup_apic(void)
 
 		/* Set up LAPIC Timer*/
 		setup_lapic_timer();
-	}
+	
 }
 
 void setup_lapic_timer(void)

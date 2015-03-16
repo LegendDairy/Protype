@@ -15,6 +15,7 @@ uint32_t lapic_read(uint32_t r);
 void lapic_write(uint32_t r, uint32_t val);
 /* Initialises the Local and IO APIC. */
 void setup_apic(void);
+void setup_lapic_timer(void);
 
 #define CPUID_FLAG_MSR 0x20
 #define CPUID_FLAG_APIC 0x200

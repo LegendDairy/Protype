@@ -10,11 +10,13 @@
 
 /** Compare two strings. Should return -1 if str1 < str2. **/
 int strcmp(const char *str1, const char *str2);
+int strncmp(const char *str1, const char *str2, uint32_t n);
 /** Copy the NULL-terminated string src into dest, and return dest. **/
 char *strcpy(char *dest, const char *src);
 /** Concatenate the NULL-terminated string src onto the end of dest, and return dest.**/
 char *strcat(char *dest, const char *src);
 
+int strlen(const char *str);
 
 /*** Simpel Memory functions to copy. ***/
 /*** bytes and set certain value's in ***/

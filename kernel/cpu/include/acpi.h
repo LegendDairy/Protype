@@ -3,6 +3,8 @@
 /* By LegendMythe	*/
 
 #include<common.h>
+#include<string.h>
+
 
 #define ACPI_MADT_PROC						0
 #define ACPI_MADT_IOAP						1

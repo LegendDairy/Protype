@@ -3,9 +3,8 @@
 /* From the Internet	*/
 
 #include <text.h>
-#include <stdint.h>
 
-uint16_t *video_memory = 0xB8000;
+uint16_t *video_memory = (uint16_t *)0xB8000;
 unsigned char x_csr = 0;
 unsigned char y_csr = 0;
 unsigned char attribute = 0x0F;
@@ -47,7 +46,7 @@ void scroll (void)
         uint16_t temp;
         temp = y_csr - 25 + 1;// Protection against y>25
         // Write line 2-23 to line 1-22, copies in bytes -> *2
-        memcpy(video_memory, video_memory+80*temp,(25-temp)*80*2);
+        memcpy((uint8_t *)video_memory, (const uint8_t *)video_memory+80*temp,(25-temp)*80*2);
         // Make a blank line at y = 24
         memsetw(video_memory+80*(25-temp), (0 | (attribute << 8) ), 80);
         y_csr = 24;           // Get y back at 24.
@@ -102,7 +101,7 @@ uint16_t attword = attribute << 8;
     move_cursor();
 }
 
-void DebugPuts(uint8_t *str)
+void DebugPuts(char *str)
 {
 	int i;
 	for (i = 0; i<strlen(str); i++)

@@ -14,14 +14,14 @@ void pit_handler(regs_t *r);
 void init_idt(void)
 {
 	/* Zero all interrupt handlers initially. */
-	 memset (&interrupt_handlers, 0, sizeof (idt_handler_t) * 256);
+	 memset ((uint8_t*)&interrupt_handlers, 0, sizeof (idt_handler_t) * 256);
 
 	/* Prepare pointer. */
 	idt_ptr.limit = sizeof (idt_entry_t) * 256 - 1;
 	idt_ptr.base  = (uint64_t) &idt_entry;
 
 	/* Errase all entries. */
-	memset (&idt_entry, 0, sizeof (idt_entry_t) * 255);
+	memset ((uint8_t *)&idt_entry, 0, sizeof (idt_entry_t) * 255);
 
 	/* Remap the 8259A PIC */
 	outb(0x20, 0x11);	// starts the initialization sequence (in cascade mode)
@@ -89,7 +89,7 @@ void idt_set_gate(uint8_t num, uint64_t base, uint16_t sel, uint8_t flags)
 	idt_entry[num].flags   = flags;
 }
 
-unsigned char *exception_messages[] =
+char *exception_messages[] =
 {
 	"Division By Zero",
 	"Debug",
@@ -136,7 +136,6 @@ void isr_handler(regs_t * regs)
 	}
 	else
 	{
-		uint32_t n = (uint32_t)regs->int_no;
 		DebugPuts("\n[");
 		DebugSetTextColour(0x4, 0);
 		DebugPuts("ISR");

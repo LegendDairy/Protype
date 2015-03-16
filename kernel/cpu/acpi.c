@@ -3,6 +3,7 @@
 /* By LegendMythe	*/
 
 #include<acpi.h>
+#include<string.h>
 
 ACPISDTHeader_t *find_rsdt(void)
 {
@@ -13,7 +14,7 @@ ACPISDTHeader_t *find_rsdt(void)
 	{
 		if (!(strncmp("RSD PTR ", (const char *)curr, 8)))
 		{
-		return  (ACPISDTHeader_t *)((u64int)(*(uint32_t*)(curr + 16)));
+		return  (ACPISDTHeader_t *)((uint64_t)(*(uint32_t*)(curr + 16)));
 		}
 		curr = (uint8_t *)(curr + 0x10);
 	}

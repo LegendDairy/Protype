@@ -3,6 +3,7 @@
 /* By LegendMythe		*/
 
 #include <idt.h>
+#include <text.h>
 
 idt_entry_t idt_entry[256];
 idt_ptr_t	idt_ptr;
@@ -10,6 +11,8 @@ idt_handler_t interrupt_handlers[256];
 
 extern void flush_idt(uint32_t);
 void pit_handler(regs_t *r);
+
+void idt_set_gate(uint8_t num, uint64_t base, uint16_t sel, uint8_t flags);
 
 void init_idt(void)
 {

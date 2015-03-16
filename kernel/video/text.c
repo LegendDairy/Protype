@@ -3,6 +3,7 @@
 /* From the Internet	*/
 
 #include <text.h>
+#include <stdint.h>
 
 uint16_t *video_memory = (uint16_t *)0xB8000;
 unsigned char x_csr = 0;
@@ -113,7 +114,7 @@ void DebugPuts(char *str)
 /** Prints a hexadecimal on the screen. **/
 void DebugPutHex(uint32_t n)
 {
-	s32int tmp;
+	int32_t tmp;
 
 	DebugPuts("0x");
 
@@ -161,7 +162,7 @@ void DebugPutDec(uint32_t n)
 		return;
 	}
 
-	s32int acc = n;
+	int32_t acc = n;
 	char c[32];
 	int i = 0;
 	while (acc > 0)
@@ -192,7 +193,7 @@ void DebugPutBin(uint32_t n)
 		return;
 	}
 
-	s32int acc = n;
+	int32_t acc = n;
 	char c[32];
 	int i = 0;
 	while (acc > 0)

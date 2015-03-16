@@ -6,8 +6,6 @@
 #define IDT_H
 
 #include <common.h>
-#include <text.h>
-
 
 // Structure for an idt entry
 typedef struct
@@ -40,8 +38,6 @@ typedef void (*idt_handler_t)(regs_t *);
 
 void init_idt(void);
 void isr_install_handler(idt_handler_t fn, int no);
-void idt_set_gate(uint8_t num, uint64_t base, uint16_t sel, uint8_t flags);
-
 
 /* Reference to interrupt.s */
 extern void isr0();

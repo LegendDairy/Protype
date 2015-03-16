@@ -1,6 +1,6 @@
 /* Pro-Type Kernel v1.3		*/
 /* Physical Memory v2.0		*/
-/* By LegendMythe			*/
+/* By LegendMythe		*/
 
 #include <pmm.h>
 

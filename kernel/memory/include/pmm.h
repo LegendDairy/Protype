@@ -5,7 +5,7 @@
 #ifndef PMM_H
 #define PMM_H
 
-#include <common.h>
+#include <stdint.h>
 
 typedef struct
 {
@@ -15,18 +15,20 @@ typedef struct
 	uint32_t acpi;
 } map_entry_t;
 
+extern uint64_t *end;
+
 /** Initialises the Physical Memory Manager.	**/
 /** Param1: The end of the kernel.		**/
 /** Param2: The total memory size.		**/
 /** Hybrid model: Bitmap + Stack.		**/
-void setup_pmm(u32int start, u32int total);
+void setup_pmm(map_entry_t *mmap, uint64_t entries, uint64_t msize);
 
 /** Pushes the page and clears the bit.		**/
 /** Arg1: the physical address of the page.	**/
-void pmm_free_page(u32int addr);
+void pmm_free_page(uint64_t address);
 
 /** Pops the page and sets the bit.		**/
 /** Returns the physical address of the page.	**/
-u32int pmm_alloc_page(void);
+uint64_t pmm_alloc_page(void);
 
 #endif

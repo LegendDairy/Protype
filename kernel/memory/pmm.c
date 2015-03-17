@@ -8,8 +8,6 @@ uint64_t *pmm_bmap;
 uint64_t *pmm_stack;
 u64int_t pmm_nframes;
 
-extern uint64_t *end;
-
 void setup_pmm(map_entry_t *mmap, uint64_t entries, uint64_t msize)
 {
 	
@@ -18,6 +16,9 @@ void setup_pmm(map_entry_t *mmap, uint64_t entries, uint64_t msize)
 	uint64_t start	= (uint64_t)pmm_bmap + pmm_nframes/8;
 	pmm_stack		= (uint64_t *)start + pmm_nframes*8;
 	start			= pmm_stack + 8;
+
+	memset(pmm_bmap, 0, pmm_nframes / 8);
+	memset(pmm_stack, 0, pmm_nframes*8);
 	
 	if (start & 0xFFF) 
 	{ 
@@ -35,7 +36,11 @@ void setup_pmm(map_entry_t *mmap, uint64_t entries, uint64_t msize)
 				if (mmap->size > start + 0x1000)
 				{
 					mmap->size -= start;
-					mmap->base += (start - mmap->base);
+					mmap->base	= start;
+				}
+				else
+				{
+					mmap->size = 0;
 				}
 			}
 			if (mmap->base & 0xFFF)
@@ -52,7 +57,46 @@ void setup_pmm(map_entry_t *mmap, uint64_t entries, uint64_t msize)
 				mmap_size -= 1;
 			}
 		}
-		mmap += sizeof(map_entry_t);
+		mmap++;
 		i--;
 	}
+}
+
+void pmm_free_page(uint64_t address)
+{
+	if (!pmm_test_bmap(address))
+	{
+		pmm_bclear(address);
+		*pmm_stack = address;
+		pmm_stack--;
+	}
+}
+
+uint64_t pmm_alloc_page(void)
+{
+	pmm_stack++;
+	uint64_t address = *pmm_stack;
+	pmm_bset(address);
+	return address;
+}
+
+uint64_t pmm_test_bmap(uint64_t address)
+{
+	uint8_t i = address / 0x1000;
+	uint8_t b = 1 << (i % 64);
+	return (pmm_bmap[i / 64] &= b);
+}
+
+void pmm_bset(uint64_t address)
+{
+	uint8_t i = address / 0x1000;
+	uint8_t b = 1 << (i%64);
+	pmm_bmap[i / 64] |= b;
+}
+
+void pmm_bclear(uint64_t address)
+{
+	uint8_t i = address / 0x1000;
+	uint8_t b = 1 << (i % 64);
+	pmm_bmap[i / 64] &= ~b;
 }

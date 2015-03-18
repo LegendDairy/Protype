@@ -54,16 +54,10 @@ void setup_apic(void)
 		mutex_unlock(&current_cpu.lock);
 
 		/* Give information to the user */ 
-		DebugPuts("[APIC]: Found Local apic at ");
-		DebugPutHex((uint64_t)current_cpu.lapic_base);
-		DebugPuts(", ID: ");
-		DebugPutDec(current_cpu.id);
-		DebugPuts(", Version: ");
-		DebugPutDec(lapic_read(apic_reg_version));
-		DebugPuts("\n");
+		printf("[APIC]: Found Local apic at %x, ID: %d, Version: %x\n", (uint64_t)current_cpu.lapic_base, current_cpu.id, lapic_read(apic_reg_version));
 
 		/* Set up Local APIC */
-		DebugPuts("[APIC]: Enabling APIC...");
+		printf("[APIC]: Enabling APIC...");
 		lapic_write(apic_reg_task_priority, 0x00);			// Accept all interrupts
 		lapic_write(apic_lvt_timer_reg, 0x10000);			// Disable timer interrupts
 		lapic_write(apic_lvt_thermal_reg, 0x10000);			// Dissable Thermal monitor
@@ -75,7 +69,7 @@ void setup_apic(void)
 		lapic_write(apic_lvt_lint0_reg, 0x08700);			// Enable normal external interrupts
 		lapic_write(apic_lvt_lint1_reg, 0x00400);			// Enable normal NMI processing
 		lapic_write(apic_reg_eoi, 0x00);				// Make sure no interrupts are left
-		DebugPuts("		Done\n");
+		printf("		Done\n");
 
 		/* Set up IO APIC */
 		uint32_t *ioapic_reg 	= (uint32_t*)0xfec00000;
@@ -97,7 +91,7 @@ void setup_lapic_timer(void)
 {
 	/* Set LAPIC timer as reg int 32 */
 	lapic_write(apic_lvt_timer_reg, 0x00030);				// int 32
-	lapic_write(apic_div_conf, 0x01);					// Divide by 4
+	lapic_write(apic_div_conf, 0x01);						// Divide by 4
 
 	/* Setup LAPIC Counter */
 	lapic_write(apic_init_count, 0xFFFFFFFF);
@@ -112,9 +106,7 @@ void setup_lapic_timer(void)
 	freq = freq*4;
 
 	/* Give information to the user */
-	DebugPuts("[APIC]: Bus frequency: ");
-	DebugPutDec(freq / 1000);
-	DebugPuts(" %dMHz\n");
+	printf("[APIC]: Bus frequency:  %dMHz\n", freq / 1000);
 
 	/* Setup intial count */
 	lapic_write(apic_init_count, 10000);

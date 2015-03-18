@@ -3,7 +3,7 @@
 /* By LegendMythe	*/
 
 #include<acpi.h>
-#include<string.h>
+
 
 ACPISDTHeader_t *find_rsdt(void)
 {
@@ -32,15 +32,13 @@ ACPISDTHeader_t *findMADT(ACPISDTHeader_t *RootSDT)
 
 		if (*tmp == (uint32_t) 0x43495041)
 		{
-			DebugPuts("[ACPI]: Found APIC Table at: ");
-			DebugPutHex((uint64_t)tmp);
-			DebugPuts("\n");
+			printf("[ACPI]: Found APIC Table at: %x\n", (uint64_t)tmp);
 			return (ACPISDTHeader_t*)tmp;
 		}
 		tmp++;
 			
 	}
-	DebugPuts("[ACPI]: No APIC Table found!");
+	printf("[ACPI]: No APIC Table found!\n");
 	// No MADT found
 	return NULL;
 }
@@ -56,45 +54,21 @@ void parse_madt(void)
 		{
 			madt_proc_t *tmp = (madt_proc_t *)curr;
 
-			DebugPuts("[ACPI] Found processor: ");
-			DebugPutDec(tmp->proc_id);
-			DebugPuts(", apic id: ");
-			DebugPutDec(tmp->apic_id);
-			DebugPuts(", flags: ");
-			DebugPutDec(tmp->flags);
-			DebugPuts("\n");
-
+			printf("[ACPI] Found processor: %d, apic id: %d, flags: %x\n", tmp->proc_id, tmp->apic_id, tmp->flags);
 			i += 8;
 		}
 		if (curr->entry_type == ACPI_MADT_IOAP)
 		{
 			madt_ioap_t *tmp = (madt_ioap_t *)curr;
-			
-			DebugPuts("[ACPI] Found IO APIC ID: ");
-			DebugPutDec(tmp->ioap_id);
-			DebugPuts(", address: ");
-			DebugPutHex(tmp->address);
-			DebugPuts(", int base:");
-			DebugPutHex(tmp->int_base);
-			DebugPuts("\n");
-
+			printf("[ACPI] Found IO APIC ID: %d, address: %x, int base: %x\n", tmp->ioap_id, tmp->address, tmp->int_base);
 			i += 12;
 		}
 		if (curr->entry_type == ACPI_MADT_OVERRIDE)
 		{
 			madt_overide_t *tmp = (madt_overide_t *)curr;
-
-			DebugPuts("[ACPI] Found Interrupt Source Override: IRQ: ");
-			DebugPutDec(tmp->irq);
-			DebugPuts(", Global int: ");
-			DebugPutDec(tmp->interrupt);
-			DebugPuts("\n");
-
+			printf("[ACPI] Found Interrupt Source Override: IRQ: %d, , Global int: %d\n", tmp->irq, tmp->interrupt);
 			i += 10;
 		}
-		
-		
-
 		curr = (madt_entry_t *)((uint64_t)curr + (uint32_t)curr->length);
 	}
 }

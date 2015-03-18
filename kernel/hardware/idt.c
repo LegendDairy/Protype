@@ -92,7 +92,7 @@ void idt_set_gate(uint8_t num, uint64_t base, uint16_t sel, uint8_t flags)
 	idt_entry[num].flags   = flags;
 }
 
-char *exception_messages[] =
+const char *exception_messages[] =
 {
 	"Division By Zero",
 	"Debug",
@@ -139,18 +139,15 @@ void isr_handler(regs_t * regs)
 	}
 	else
 	{
-		DebugPuts("\n[");
+		printf("\n[");
 		DebugSetTextColour(0x4, 0);
-		DebugPuts("ISR");
+		printf("ISR");
 		DebugSetTextColour(0xF, 0);
-		DebugPuts("]");
-		DebugPuts(exception_messages[regs->int_no]);
-		DebugPuts("\n[");
+		printf("] %s: Errorcode: %x\n[", (const char *)exception_messages[regs->int_no], regs->err_code);
 		DebugSetTextColour(0x4, 0);
-		DebugPuts("Kernel");
+		printf("Kernel");
 		DebugSetTextColour(0xF, 0);
-		DebugPuts("]\nHalted.\n");
-
+		printf("]\nHalted.\n");
 		for (;;);
 	}
 }

@@ -6,6 +6,7 @@
 #define IDT_H
 
 #include <common.h>
+#include <stdio.h>
 
 // Structure for an idt entry
 typedef struct
@@ -29,10 +30,10 @@ typedef struct
 // Structure containing register values when the CPU was interrupted.
 typedef struct
 {
-	uint64_t esp, ebp, esi, edi, edx, ecx, ebx, eax;
+	uint64_t rsp, rbp, rsi, rdi, rdx, rcx, rbx, rax;
 	uint64_t int_no, err_code;							
-	uint64_t eip, cs, eflags, useresp, ss;				// Pushed by the processor automatically.
-}__attribute__((packed)) regs_t;
+	uint64_t rip, cs, rflags, userrsp, ss;				// Pushed by the processor automatically.
+} regs_t;
 
 typedef void (*idt_handler_t)(regs_t *);
 

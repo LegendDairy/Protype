@@ -7,6 +7,7 @@
 
 #include <common.h>
 #include <mutex.h>
+#include <stdio.h>
 
 
 /* Reads a specified register from the LAPIC */

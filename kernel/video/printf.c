@@ -2,7 +2,7 @@
 /* Print Formatted	v0.1*/
 /* By LegendDairy		*/
 
-#include <stdio.c>
+#include <stdio.h>
 
 void printf(const char *str, ...)
 {

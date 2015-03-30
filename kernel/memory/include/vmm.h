@@ -21,23 +21,23 @@
 #define PD_INDEX(a)			                ((uint64_t)a)/((uint64_t)2*1024*1024)
 #define PT_INDEX(a)			                ((uint64_t)a)/((uint64_t)4096)
 
-#define PAGE_PRESENT					  0x1
-#define PAGE_WRITE				          0x2
-#define PAGE_USER				          0x4
-#define PAGE_WRITE_THROUGH			          0x8
-#define PAGE_CACHE_DISSABLED		                  0x10
-#define PAGE_ACCESSED					  0x20
-#define PAGE_DIRTY					  0x40
-#define PAGE_GLOBAL					  0x80
+#define PAGE_PRESENT					0x1
+#define PAGE_WRITE				        0x2
+#define PAGE_USER				        0x4
+#define PAGE_WRITE_THROUGH			        0x8
+#define PAGE_CACHE_DISSABLED		                0x10
+#define PAGE_ACCESSED					0x20
+#define PAGE_DIRTY					0x40
+#define PAGE_GLOBAL					0x80
 
-#define TABLE_PRESENT					  0x1
-#define TABLE_WRITE					  0x2
-#define TABLE_USER					  0x4
-#define TABLE_WRITE_THROUGH			          0x8
-#define TABLE_CACHE_DISSABLED		                  0x10
-#define TABLE_ACCESSED					  0x20
-#define TABLE_LARGE_SZ					  0x40
-#define TABLE_IGNORED					  0x80
+#define TABLE_PRESENT					0x1
+#define TABLE_WRITE					0x2
+#define TABLE_USER					0x4
+#define TABLE_WRITE_THROUGH			        0x8
+#define TABLE_CACHE_DISSABLED		                0x10
+#define TABLE_ACCESSED					0x20
+#define TABLE_LARGE_SZ					0x40
+#define TABLE_IGNORED					0x80
 
 
 

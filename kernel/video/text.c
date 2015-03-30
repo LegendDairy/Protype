@@ -111,9 +111,10 @@ void DebugPuts(char *str)
 }
 
 /** Prints a hexadecimal on the screen. **/
-void DebugPutHex(uint32_t n)
+/** TODO make it 64 bit capable... */
+void DebugPutHex(uint64_t n)
 {
-	int32_t tmp;
+	int64_t tmp;
 
 	DebugPuts("0x");
 

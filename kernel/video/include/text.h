@@ -17,7 +17,7 @@ void DebugSetTextColour(uint8_t foreground, uint8_t background);
 /** Displays a null-terminated string on the screen. **/
 void DebugPuts(char *str);
 /** Prints a hexadecimal on the screen. **/
-void DebugPutHex(uint32_t n);
+void DebugPutHex(uint64_t n);
 /** Prints a decimal number on the screen. **/
 void DebugPutDec(uint32_t n);
 /** Prints an integer as a binairy number on the screen. **/

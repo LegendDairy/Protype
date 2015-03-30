@@ -4,9 +4,15 @@ The kernel is written in C and x86-assembler.
 I will try to add documentation in the DOCS folders for every part of the microkernel to clarify the code.
 
 The goal is to write a lightweight and fast kernel and use all the options that the x86_64 platform has to offer.
-The code is not meant to be portable at all because that zould either overcomplicate things or make the code slow.
+The code is not meant to be portable at all because that would either overcomplicate things or make the code slow.
 The kernel will support Long Mode and SMP, in fact it demands support for Long Mode and features like an IOAPIC.
 The target cpu is a 2600k
+
+Future Ideas:
+-unmap pages arround the stack to detect stack overruns
+-Possibility to allign heap structures
+-mutex the shit out of mem-managers!
+
 
 Current realease number: r1,3 codenamed Hydrogen
 
@@ -23,9 +29,8 @@ Then you can run it, if you copy to Protype folder to your home directory
 
 
 Tools:
-GNU gcc crosscompiler
-NASM Netwide Assembler
-LD
+GNU gcc crosscompiler with x86_64-elf as target
+NASM Netwide Assembler, that came with my distribution
 
 
 I wrote most of the code myself, but I also took some code from the internet, because I was to lazy to write it. 

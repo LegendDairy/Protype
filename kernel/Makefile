@@ -3,11 +3,11 @@
 # by LegendMythe	#
 
 SOURCES=\
-main.o video/text.o video/printf.o cpu/apic.o cpu/acpi.o cpu/mutex.o hardware/idt.o hardware/interrupts.o memory/string.o memory/pmm.o\
+main.o video/text.o video/printf.o cpu/apic.o cpu/acpi.o cpu/mutex.o hardware/idt.o hardware/interrupts.o memory/string.o memory/pmm.o memory/vmm.o\
 
 CC = x86_64-elf-gcc
 CFLAGS=\
--nostdlib -lgcc -ffreestanding -mno-red-zone -fno-exceptions -O2 -Wall -Wextra\
+-nostdlib -lgcc -ffreestanding -mno-red-zone -fno-exceptions -O2 -Wall -Wextra   -mcmodel=large\
 -I./memory/include -I./cpu/include -I./video/include -I./include/stdinc -I./include -I./hardware/include\
 
 AS = nasm
@@ -19,7 +19,7 @@ all: $(SOURCES) link
 
 
 link:
-	x86_64-elf-gcc -T link.ld -o ~/Protype/bin/kernel.sys -ffreestanding -O2 -nostdlib -z max-page-size=0x1000 $(SOURCES) -lgcc
+	x86_64-elf-gcc -T link.ld -o ~/Protype/bin/kernel.sys -ffreestanding -O2 -nostdlib  -mcmodel=large  -z max-page-size=0x1000 $(SOURCES) -lgcc
 
 clean:
 	-rm $(SOURCES) 

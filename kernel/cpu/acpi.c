@@ -9,14 +9,26 @@ ACPISDTHeader_t *find_rsdt(void)
 {
 	uint8_t *curr = (uint8_t *)0xE0000;
 
-	int i;
-	for (i = 0; i < 0x10000; i++)
+	int i, j;
+	uint8_t check = 0;
+
+	for (i = 0; i < 0x2000; i++)
 	{
 		if (!(strncmp("RSD PTR ", (const char *)curr, 8)))
 		{
-		return  (ACPISDTHeader_t *)((uint64_t)(*(uint32_t*)(curr + 16)));
+			for (j = 0; j < 20; i++)
+			{
+				check += *curr;
+				curr++;
+			}
+			if (check == 0)
+			{
+
+				return  (ACPISDTHeader_t *)((uint64_t)(*(uint32_t*)(curr - 4)));
+			}
+			
 		}
-		curr = (uint8_t *)(curr + 0x10);
+		curr = (uint8_t *)(curr + 0x10); // RSD_PTR has to be 0x10 alligned
 	}
 return NULL;
 }

@@ -112,7 +112,7 @@ jump_long_mode:
   loop .l1                            ; 4*0x1800=>0x6000
     
   mov DWORD [0x10000], 0x11003        ; PML4T[0] = &PD_ptr[0]
-  mov DWORD [0x10FF8], 0x10003        ; PML4T[0] = &PML4T
+  mov DWORD [0x1FFF8], 0x10003        ; PML4T[0] = &PML4T
   mov DWORD [0x11000], 0x12003        ; PDT[0]   = &PD_ptr[0]
   mov DWORD [0x11018], 0x15003        ; PDT[3]   = &PD_ptr[3]
   

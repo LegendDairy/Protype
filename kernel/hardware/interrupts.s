@@ -26,7 +26,7 @@ isr_common_stub:
 
     mov rdi, rsp
 
-
+  cld                               ; ABI neeeds cld
     call isr_handler                ; Call into our C code.
 
     pop rsp                         ; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax

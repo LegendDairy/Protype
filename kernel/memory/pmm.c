@@ -4,21 +4,21 @@
 
 #include <pmm.h>
 
-uint64_t *pmm_bmap					= 0;
-uint64_t *pmm_stack					= 0;
+uint64_t *pmm_bmap				= 0;
+uint64_t *pmm_stack				= 0;
 
-uint64_t pmm_top					= 0;
+uint64_t pmm_top				= 0;
 uint64_t pmm_nframes				= 0;
 mutex_t  pmm_lock;
 
 map_entry_t *pre_pmm_heap			= 0;
 uint64_t pre_pmm_entries			= 0;
 
-/* TODO MUTEX the shit out of alloc/free */
+/* TODO MUTEX the shit out of alloc/free 	*/
 
-/* Current BUGS: */
-/* -mcmodel=large, maybe alternatives?*/
-/* Bitmap just doesn't work wtf... */
+/* Current BUGS/TODO: 				*/
+/* -mcmodel=large, maybe alternatives?		*/
+/* Bitmap just doesn't work wtf... 		*/
 
 void setup_pmm(ipl_info_t *info)
 {

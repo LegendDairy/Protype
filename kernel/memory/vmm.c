@@ -80,7 +80,7 @@ void vmm_map_frame(uint64_t va, uint64_t pa, uint64_t flags)
 
 	if ((vmm_tables[PT_INDEX(va)] & 0x1))
 	{
-		printf("[VMM] Error 0x1: Trying to remap a page!\n");
+		printf("[VMM] Error 0x1: Trying to remap a page!: %x\n", va);
 		printf("[VMM] Kernel halted...\n");
 		for (;;);
 	}

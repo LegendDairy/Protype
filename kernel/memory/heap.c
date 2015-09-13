@@ -4,9 +4,13 @@
 
 #include <heap.h>
 
+/* NOT properly tested, shit is like some wanky Jenga-tower. */
+
+
+
 /* Headers that point to the start and end. */
-header_t *heap_start	= 0;
-header_t *heap_end		= 0;
+volatile header_t *heap_start	= 0;
+volatile uint64_t heap_end	= 0;
 
 /* Internal function, shouldn't be called from outside!*/
 
@@ -21,6 +25,7 @@ void *malloc(uint64_t sz)
 	/* Heap hasn't been initialised, create a simple block of 4k. */
 	if(heap_start == 0)
 	{
+		printf("Making Heap...");
 		/* Map the first entry. */
 		vmm_map_frame(HEAP_START, pmm_alloc_page, 0x3);
 
@@ -36,6 +41,7 @@ void *malloc(uint64_t sz)
 		heap_start->magic0 = MAGIC;
 		heap_start->magic1 = MAGIC;
 		heap_start->size = (0x1000 - sizeof(header_t));
+		printf("   Done.\n");
 	}
 
 	/* Iterate through the linked list. */
@@ -80,11 +86,12 @@ void *malloc(uint64_t sz)
 	}
 
 	/* No fitting holes found! Expand.	*/
-
+	printf("Expanding...\n");
 	header_t *chunk = (header_t *)create_chunk(sz);
-
+	printf("Splitting size: %x, %x\n", chunk->size, sz);
 	/* Make the chunk fit perfectly.	*/
 	split_chunk(chunk, sz);
+	printf("Allocating...\n");
 	/* Allocate it!						*/
 	chunk->allocated = 1;
 
@@ -117,9 +124,11 @@ void split_chunk(header_t *chunk, uint64_t sz)
 	/* Find the address of the new chunk */
 
 	uint64_t addr = (header_t*)(chunk);
+
 	addr += (uint64_t)sizeof(header_t);
 	addr += sz;
 
+	printf("Splitchuck address:%x\n", addr);
 	/* Create new chunk. */
 	header_t *new_chunk = addr;
 
@@ -161,12 +170,16 @@ header_t *create_chunk(uint64_t sz)
 	iterator->next = chunk;
 	
 
-	uint64_t i;
+	uint64_t i,k;
+	k = heap_end;
 	/* Block will atleast be 0x1000 bytes bigger. */
 	for(i=0;i<((sz / 0x1000)+1);i++)
 	{
+	printf(" %x", (uint64_t)heap_end);
 	/* Create a virtual address for the heap. */
-	vmm_map_frame((heap_end + (0x1000*i)), pmm_alloc_page, 0x3);
+	vmm_map_frame(heap_end, pmm_alloc_page, 0x3);
+	heap_end += 0x1000;
+
 	}
 
 	/* Fill in the new header. */
@@ -178,9 +191,6 @@ header_t *create_chunk(uint64_t sz)
 	chunk->allocated = 0;								
 	
 	/* Change end variable. */
-	i = i * 0x1000;
-
-	heap_end = (uint64_t)heap_end + (i);				
 
 	/* Return the new chunk. */
 	return chunk;

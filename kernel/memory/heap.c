@@ -9,13 +9,9 @@ header_t *heap_start	= 0;
 header_t *heap_end		= 0;
 
 /* Internal function, shouldn't be called from outside!*/
-<<<<<<< HEAD
+
 static header_t *create_chunk(uint64_t sz);
 static void split_chunk(header_t *chunk, uint64_t sz);
-=======
-static header_t *create_chunk(u32int sz);
-static void split_chunk(header_t *chunk, u32int sz);
->>>>>>> 31c8e74bcd477645971f6257b3be365c96210422
 static void free_chunk (header_t *chunk);
 static void glue_chunk (header_t *chunk);
 

@@ -46,26 +46,35 @@ void pre_vmm_map_frame(uint64_t va, uint64_t pa, uint64_t flags)
 
 	
 }
-/*
+
+uint64_t vmm_get_mapping(uint64_t va, uint64_t *pa)
+{
+	if(pa)
+	{
+		*pa = (vmm_tables[PT_INDEX(va)] & (!0xFFF));
+	}
+	return (vmm_tables[PT_INDEX(va)] & (!0xFFF));
+}
+
 void vmm_map_frame(uint64_t va, uint64_t pa, uint64_t flags)
 {
 	//Not Tested yet...
 	mutex_lock(&vmm_lock);
 	if (!(vmm_plm4t[PLM4T_INDEX(va)] & 0x1))
 	{
-		vmm_plm4t[PLM4T_INDEX(va)] = pre_pmm_allocate_frame() | 0x3;
+		vmm_plm4t[PLM4T_INDEX(va)] = pmm_alloc_page() | 0x3;
 		memset((uint8_t *)(DIR_PTRS_VADDRESS + PLM4T_INDEX(va) * 0x1000), 0x00, 0x1000);
 	}
 
 	if (!(vmm_dir_ptrs[PDPT_INDEX(va)] & 0x1))
 	{
-		vmm_dir_ptrs[PDPT_INDEX(va)] = pre_pmm_allocate_frame() | 0x3;
+		vmm_dir_ptrs[PDPT_INDEX(va)] = pmm_alloc_page() | 0x3;
 		memset((uint8_t *)(DIRS_VADDRESS + PDPT_INDEX(va) * 0x1000), 0x00, 0x1000);
 	}
 
 	if (!(vmm_directories[PD_INDEX(va)] & 0x1))
 	{
-		vmm_directories[PD_INDEX(va)] = pre_pmm_allocate_frame() | 0x3;
+		vmm_directories[PD_INDEX(va)] = pmm_alloc_page() | 0x3;
 		memset((uint8_t *)(TABLES_VADDRESS + PD_INDEX(va) * 0x1000), 0x00, 0x1000);
 	}
 
@@ -78,8 +87,8 @@ void vmm_map_frame(uint64_t va, uint64_t pa, uint64_t flags)
 
 	vmm_tables[PT_INDEX(va)] = (pa | flags);
 	mutex_unlock(&vmm_lock);
+}
 	
-	*/
 
 inline void vmm_flush_page(uint64_t vaddr)
 {

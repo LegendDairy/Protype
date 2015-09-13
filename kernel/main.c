@@ -10,7 +10,7 @@
 #include <stdio.h>
 #include <ipl.h>
 #include <pmm.h>
-
+#include <heap.h>
 
 int main(ipl_info_t *info)
 {
@@ -22,7 +22,8 @@ int main(ipl_info_t *info)
 	printf("Kernel end at %x, Memorymap at %x, number of entries: %d, memsz %x, magic %x, low mem %x, high mem %x\n", (uint64_t)&end, info->mmap, info->mmap_entries, info->mem_sz, info->magic, info->low_mem, info->high_mem);
 	init_idt();
 	setup_pmm(info);
-	setup_apic();
+	setup_apic(); 
+	printf("Allocating 5kb, malloc returns: %x", malloc(500000));
 	
 	//asm volatile("sti");
 	

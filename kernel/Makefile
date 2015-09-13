@@ -3,7 +3,7 @@
 # by LegendMythe	#
 
 SOURCES=\
-main.o video/text.o video/printf.o cpu/apic.o cpu/acpi.o cpu/mutex.o hardware/idt.o hardware/interrupts.o memory/string.o memory/pmm.o memory/vmm.o\
+main.o video/text.o video/printf.o cpu/apic.o cpu/acpi.o cpu/mutex.o hardware/idt.o hardware/interrupts.o memory/string.o memory/pmm.o memory/vmm.o memory/heap.o\
 
 CC = x86_64-elf-gcc
 CFLAGS=\

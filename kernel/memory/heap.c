@@ -9,19 +9,32 @@ header_t *heap_start	= 0;
 header_t *heap_end		= 0;
 
 /* Internal function, shouldn't be called from outside!*/
+<<<<<<< HEAD
 static header_t *create_chunk(uint64_t sz);
 static void split_chunk(header_t *chunk, uint64_t sz);
+=======
+static header_t *create_chunk(u32int sz);
+static void split_chunk(header_t *chunk, u32int sz);
+>>>>>>> 31c8e74bcd477645971f6257b3be365c96210422
 static void free_chunk (header_t *chunk);
 static void glue_chunk (header_t *chunk);
 
 /** Dynamic allocater, chrashes if you overwrite your chunk! **/
+<<<<<<< HEAD
 void *malloc(uint64_t sz)
+=======
+void *malloc(u32int sz)
+>>>>>>> 31c8e74bcd477645971f6257b3be365c96210422
 {
 	/* Heap hasn't been initialised, create a simple block of 4k. */
 	if(heap_start == 0)
 	{
 		/* Map the first entry. */
+<<<<<<< HEAD
 		vmm_map_frame(HEAP_START, pmm_alloc_page, 0x3);
+=======
+		map(HEAP_START, pmm_alloc_page, 0x3);
+>>>>>>> 31c8e74bcd477645971f6257b3be365c96210422
 		
 		/* Set the variables. */
 		heap_start	= HEAP_START;
@@ -43,11 +56,19 @@ void *malloc(uint64_t sz)
 		if(iterator->magic0 != MAGIC || iterator->magic1 != MAGIC)
 		{
 			/* !Magic code is corrupted! */
+<<<<<<< HEAD
 			DebugSetTextColour(0xF,0);
 			printf("\n[");
 			DebugSetTextColour(0x4,0);
 			printf("HEAP");
 			DebugSetTextColour(0xF,0);
+=======
+			settextcolour(0xF,0);
+			printf("\n[");
+			settextcolour(0x4,0);
+			printf("HEAP");
+			settextcolour(0xF,0);
+>>>>>>> 31c8e74bcd477645971f6257b3be365c96210422
 			printf("]:");
 			printf("Error 0x04: Heap corrupted!\n");
 		}
@@ -78,7 +99,11 @@ void *malloc(uint64_t sz)
 	}
 
 	/* No fitting holes found! Expand.	*/
+<<<<<<< HEAD
 	header_t *chunk = (header_t *)create_chunk(sz);
+=======
+	header_t *chunk = create_chunk(sz);
+>>>>>>> 31c8e74bcd477645971f6257b3be365c96210422
 	/* Make the chunk fit perfectly.	*/
 	split_chunk(chunk, sz);
 	/* Allocate it!						*/
@@ -94,7 +119,11 @@ void *malloc(uint64_t sz)
 void free(void *p)
 {
 	/* Find the header. */
+<<<<<<< HEAD
 	uint64_t address = (uint64_t)p - (uint64_t)sizeof(header_t);
+=======
+	u32int address = (u32int)p - (u32int)sizeof(header_t);
+>>>>>>> 31c8e74bcd477645971f6257b3be365c96210422
 	header_t *header = (header_t*)address;
 	
 	/* Deallocate */
@@ -104,14 +133,23 @@ void free(void *p)
 }
 
 /** Splits a chunk and addapts headers. **/
+<<<<<<< HEAD
 void split_chunk(header_t *chunk, uint64_t sz)
+=======
+void split_chunk(header_t *chunk, u32int sz)
+>>>>>>> 31c8e74bcd477645971f6257b3be365c96210422
 {
 	/* Is it worth splitting it? */
 	if(chunk->size > (sz+sizeof(header_t)) )
 	{
 	/* Find the address of the new chunk */
+<<<<<<< HEAD
 	uint64_t addr = (header_t*)(chunk);
 	addr += (uint64_t)sizeof(header_t);
+=======
+	u32int addr = (header_t*)(chunk);
+	addr += (u32int)sizeof(header_t);
+>>>>>>> 31c8e74bcd477645971f6257b3be365c96210422
 	addr += sz;
 
 	/* Create new chunk. */
@@ -123,7 +161,11 @@ void split_chunk(header_t *chunk, uint64_t sz)
 	
 	/* Fill in the headers */
 	new_chunk->allocated	= 0;
+<<<<<<< HEAD
 	new_chunk->size			= (uint64_t)((uint64_t)chunk->size - ((uint64_t)sz + (uint64_t)sizeof(header_t)));
+=======
+	new_chunk->size			= (u32int)((u32int)chunk->size - ((u32int)sz + (u32int)sizeof(header_t)));
+>>>>>>> 31c8e74bcd477645971f6257b3be365c96210422
 	new_chunk->magic0		= MAGIC;
 	new_chunk->magic1		= MAGIC;
 	new_chunk->next			= chunk->next;
@@ -136,7 +178,11 @@ void split_chunk(header_t *chunk, uint64_t sz)
 }
 
 /* Expands the heap. */
+<<<<<<< HEAD
 header_t *create_chunk(uint64_t sz)
+=======
+header_t *create_chunk(u32int sz)
+>>>>>>> 31c8e74bcd477645971f6257b3be365c96210422
 {
 	/* Add header size! */
 	sz += sizeof(header_t);
@@ -153,7 +199,11 @@ header_t *create_chunk(uint64_t sz)
 	/* Addapt previous header. */
 	iterator->next = chunk;
 	
+<<<<<<< HEAD
 	uint64_t i;
+=======
+	u32int i;
+>>>>>>> 31c8e74bcd477645971f6257b3be365c96210422
 	/* Block will atleast be 0x1000 bytes bigger. */
 	for(i=0;i<((sz / 0x1000)+1);i++)
 	{
@@ -171,7 +221,11 @@ header_t *create_chunk(uint64_t sz)
 	
 	/* Change end variable. */
 	i = i * 0x1000;
+<<<<<<< HEAD
 	heap_end = (uint64_t)heap_end + (i);				
+=======
+	heap_end = (u32int)heap_end + (i);				
+>>>>>>> 31c8e74bcd477645971f6257b3be365c96210422
 
 	/* Return the new chunk. */
 	return chunk;
@@ -193,19 +247,32 @@ void free_chunk(header_t *chunk)
 	}
 
 	/* While the heap max can contract by a page and still be greater than the chunk address. */
+<<<<<<< HEAD
 	while ( (heap_end-0x1000) >= (uint64_t)chunk )
+=======
+	while ( (heap_end-0x1000) >= (uint32_t)chunk )
+>>>>>>> 31c8e74bcd477645971f6257b3be365c96210422
 	{
 	  /* Heap end is 0x1000 smaller. */
 	  heap_end -= 0x1000;
 	  
 	  /* Get physical address. */
+<<<<<<< HEAD
 	  uint64_t page;
 	  vmm_get_mapping (heap_end, &page);
+=======
+	  u32int page;
+	  get_mapping (heap_end, &page);
+>>>>>>> 31c8e74bcd477645971f6257b3be365c96210422
 
 	  /* Free the physical page. */
 	  pmm_free_page (page);
 	  /* Unmap the virtual address. */
+<<<<<<< HEAD
 	  vmm_unmap_frame (heap_end);
+=======
+	  unmap (heap_end);
+>>>>>>> 31c8e74bcd477645971f6257b3be365c96210422
 	}
 }
 
@@ -243,7 +310,11 @@ void glue_chunk (header_t *chunk)
 	}
 }
 
+<<<<<<< HEAD
 uint64_t check_heap(void)
+=======
+u32int check_heap(void)
+>>>>>>> 31c8e74bcd477645971f6257b3be365c96210422
 {
 	header_t *iterator = heap_start;
 	while(iterator)
@@ -251,11 +322,19 @@ uint64_t check_heap(void)
 		if(iterator->magic0 != MAGIC || iterator->magic1 != MAGIC)
 		{
 			/* !Magic code is corrupted! */
+<<<<<<< HEAD
 			DebugSetTextColour(0xF,0);
 			printf("\n[");
 			DebugSetTextColour(0x4,0);
 			printf("HEAP");
 			DebugSetTextColour(0xF,0);
+=======
+			settextcolour(0xF,0);
+			printf("\n[");
+			settextcolour(0x4,0);
+			printf("HEAP");
+			settextcolour(0xF,0);
+>>>>>>> 31c8e74bcd477645971f6257b3be365c96210422
 			printf("]:");
 			printf("Error 0x04: Heap corrupted!\n");
 			return 1;

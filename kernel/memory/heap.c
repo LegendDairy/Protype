@@ -6,7 +6,7 @@
 
 /* NOT properly tested, shit is like some wanky Jenga-tower. */
 
-volatile header_t *heap_start	= 0;											// Start of the heap (virtual address) 
+volatile header_t *heap_start	= 0;											// Start of the heap (virtual address)
 volatile uint64_t heap_end		= 0;											// End of the heap (virtual address)
 
 /* Internal function, shouldn't be called from outside!*/
@@ -85,21 +85,27 @@ void free(void *p)
 void split_chunk(header_t *chunk, uint64_t sz)
 {
 	/* Should we split the chunk? */
-	if(chunk->size > ((uint64_t)sz+(uint64_t)sizeof(header_t)) +1 )
+	if(chunk->size > ((uint64_t)sz+(uint64_t)sizeof(header_t) + 1))
 	{
 									// Start of new chunk
-	
+
 	/* Make new header. */
-	header_t *new_chunk		= (header_t*)((uint64_t)chunk + (uint64_t)sizeof(header_t) + (uint64_t)sizeof(header_t) + (uint64_t)sz);												// Create new chunk
+	header_t *new_chunk		= (header_t*)((uint64_t)chunk + (uint64_t)2*sizeof(header_t) + (uint64_t)sz);												// Create new chunk
 	new_chunk->allocated	= 0;												// Not allocated
-	new_chunk->size			= (uint64_t)((uint64_t)chunk->size - ((uint64_t)sz + (uint64_t)sizeof(header_t)));
+	new_chunk->size			= (uint64_t)((uint64_t)chunk->size - (uint64_t)sz - (uint64_t)sizeof(header_t)));
 	new_chunk->magic0		= MAGIC;											// Fill in magic code.
 	new_chunk->magic1		= MAGIC;											// Fill in magic code.
 	new_chunk->next			= chunk->next;										// Pointer to next chunk.
 	new_chunk->prev			= chunk;											// Pointer to previous chunk.
 
+if(new_chunk->next)
+{
+	new_chunk->next->prev = new_chunk;
+
+}
+
 	/* Addapt previous header. */
-	chunk->next 	 = new_chunk;												// Pointer to new chunk.	
+	chunk->next 	 = new_chunk;												// Pointer to new chunk.
 	chunk->size		 = sz;														// Change size.
 	}
 }
@@ -108,7 +114,7 @@ void split_chunk(header_t *chunk, uint64_t sz)
 header_t *create_chunk(uint64_t sz)
 {
 	sz += (uint64_t)sizeof(header_t);														// Add header size
-	
+
 	/*Iterate, find the last block of the heap. */
 	header_t *iterator = (header_t *)heap_start;
 	while(iterator->next)
@@ -134,7 +140,7 @@ header_t *create_chunk(uint64_t sz)
 	chunk->next = 0;															// Last block of the heap
 	chunk->prev = iterator;														// Pointer to previous block
 	chunk->allocated = 0;														// Block is not allocated
-	
+
 
 	/* Return the new chunk. */
 	return chunk;
@@ -148,9 +154,7 @@ void free_chunk(header_t *chunk)
 	{
 	chunk->prev->next = 0;
 	}
-
-	/* Errase the whole heap / Deinitialize the heap */
-	if (chunk->prev == 0)
+  else
 	{
 	heap_start = 0;
 	}
@@ -181,7 +185,7 @@ void glue_chunk (header_t *chunk)
 				if(chunk->next)  chunk->next->prev = chunk;			// change pointer of the next chunk to this one.
 		}
 	}
-	
+
 	/** There's a chunk before this one, glue them. **/
 	if(chunk->prev)
 	{

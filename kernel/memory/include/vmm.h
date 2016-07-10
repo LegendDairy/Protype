@@ -46,6 +46,7 @@
 void pre_vmm_map_frame(uint64_t va, uint64_t pa, uint64_t flags);
 void vmm_map_frame(uint64_t va, uint64_t pa, uint64_t flags);
 void vmm_unmap_frame(uint64_t va);
+uint64_t vmm_get_mapping(uint64_t va, uint64_t *pa);
 //void vmm_unmap_region(uint64_t start, uint64_t end);
 //void vmm_map_large_frame(uint64_t va, uint64_t pa, uint64_t flags);
 

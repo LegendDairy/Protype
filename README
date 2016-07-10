@@ -26,12 +26,14 @@ To build the kernel, you can use the build.sh script, irst you'll need to give i
 chmod 777 build.sh
 Then you can run it, if you copy to Protype folder to your home directory
 ./build.sh
+To test:
+bochs -q -f bin/bochsrc.txt
 
 
 Tools:
 GNU gcc crosscompiler with x86_64-elf as target
 NASM Netwide Assembler, that came with my distribution
-
+Bochs with GUI Debugger
 
 I wrote most of the code myself, but I also took some code from the internet, because I was to lazy to write it. 
 For example the printscreen code.

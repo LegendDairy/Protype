@@ -152,7 +152,7 @@ void setup_pmm(ipl_info_t *info)
 	printf("[PMM] PMM Bitmap at: %x, PMM stack at: %x\n", pmm_bmap, (uint64_t)pmm_stack );
 	printf("[PMM] PMM mapping reserved memory...\n", ((uint64_t)pmm_bmap));
 
-	while(i<pmm_stack)
+	while(i<(uint64_t)pmm_stack)
 	{
 		pre_vmm_map_frame(i, i, 0x3);
 		i += 0x1000;

@@ -21,7 +21,7 @@ typedef struct header
   uint64_t magic0;
   struct header *next;
   struct header *prev;
-  uint8_t allocated;
+  uint64_t allocated;
   uint64_t size;
   uint64_t magic1;
 } __attribute__((packed)) header_t;

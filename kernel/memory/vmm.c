@@ -35,7 +35,7 @@ void pre_vmm_map_frame(uint64_t va, uint64_t pa, uint64_t flags)
 	if (!(vmm_directories[PD_INDEX(va)] & 0x1))
 	{
 		vmm_directories[PD_INDEX(va)] = pre_pmm_allocate_frame() | 0x3;
-		memset(TABLES_VADDRESS + (PD_INDEX(va) * 0x1000), 0x00, 0x1000);
+		memset((uint8_t *)(TABLES_VADDRESS + (PD_INDEX(va) * 0x1000)), 0x00, 0x1000);
 	}
 	/* Check if the page is already mapped */
 	if (!(vmm_tables[PT_INDEX(va)] & 0x1))

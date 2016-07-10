@@ -22,9 +22,9 @@ void *malloc(uint64_t sz)
 	if(heap_start == 0)
 	{
 		/* Create a heap. */
-		heap_start	= HEAP_START;												// Set the virtual address of the heap.
-		heap_end	= (HEAP_START + 0x1000);									// Set address of the end.
-		vmm_map_frame(HEAP_START, pmm_alloc_page, 0x3);							// Map the first entry.
+		heap_start	= (header_t *)HEAP_START;												// Set the virtual address of the heap.
+		heap_end	= (uint64_t)(HEAP_START + 0x1000);									// Set address of the end.
+		vmm_map_frame((uint64_t)HEAP_START, (uint64_t)pmm_alloc_page, 0x3);							// Map the first entry.
 
 		/* Fill in the first header. */
 		heap_start->allocated = 0;												// Not allocated
@@ -36,7 +36,7 @@ void *malloc(uint64_t sz)
 	}
 
 	/* Iterate through the linked list to search for a free chunk. */
-	header_t *iterator = heap_start;
+	header_t *iterator = (header_t *)heap_start;
 	while(iterator)
 	{
 		/* Magic code is corrupted? */
@@ -54,14 +54,14 @@ void *malloc(uint64_t sz)
 		if(iterator->size == sz && iterator->allocated == 0)
 		{
 			iterator->allocated = 1;											// Chunk is now allocated.
-			return (void *)(iterator + sizeof(header_t));						// Return the starting address.
+			return (void *)((uint64_t)iterator + (uint64_t)sizeof(header_t));						// Return the starting address.
 		}
 		/* Does the chunk fit? */
 		if(iterator->size > sz && iterator->allocated == 0)
 		{
 			split_chunk(iterator, sz);											// Split the chunk.
 			iterator->allocated = 1;											// Chunk is now allocated.
-			return (void *)(iterator + sizeof(header_t));						// Return the starting address.
+			return (void *)((uint64_t)iterator + (uint64_t)sizeof(header_t));						// Return the starting address.
 		}
 		iterator = iterator->next;												// Iterate
 	}
@@ -70,7 +70,7 @@ void *malloc(uint64_t sz)
 	header_t *chunk = (header_t *)create_chunk(sz);								// Create a new chunk.
 	split_chunk(chunk, sz);														// Make the chunk fit
 	chunk->allocated = 1;														// Chunk is now allocated.
-	return (void *)(chunk + sizeof(header_t));									// Return the starting address.
+	return (void *)((uint64_t)chunk + (uint64_t)sizeof(header_t));									// Return the starting address.
 }
 
 /** Frees an allocated address. **/
@@ -85,13 +85,12 @@ void free(void *p)
 void split_chunk(header_t *chunk, uint64_t sz)
 {
 	/* Should we split the chunk? */
-	if(chunk->size > (sz+sizeof(header_t)) )
+	if(chunk->size > ((uint64_t)sz+(uint64_t)sizeof(header_t)) )
 	{
-	uint64_t addr = (header_t*)(chunk);											// Find the address of the new chunk
-	addr += (uint64_t)sizeof(header_t) + sz;									// Start of new chunk
+									// Start of new chunk
 	
 	/* Make new header. */
-	header_t *new_chunk		= addr;												// Create new chunk
+	header_t *new_chunk		= (header_t*)((uint64_t)chunk + (uint64_t)sizeof(header_t) + (uint64_t)sizeof(header_t) + (uint64_t)sz);												// Create new chunk
 	new_chunk->allocated	= 0;												// Not allocated
 	new_chunk->size			= (uint64_t)((uint64_t)chunk->size - ((uint64_t)sz + (uint64_t)sizeof(header_t)));
 	new_chunk->magic0		= MAGIC;											// Fill in magic code.
@@ -108,27 +107,28 @@ void split_chunk(header_t *chunk, uint64_t sz)
 /* Expands the heap. */
 header_t *create_chunk(uint64_t sz)
 {
-	sz += sizeof(header_t);														// Add header size
+	sz += (uint64_t)sizeof(header_t);														// Add header size
 	
 	/*Iterate, find the last block of the heap. */
-	header_t *iterator = heap_start;
+	header_t *iterator = (header_t *)heap_start;
 	while(iterator->next)
 	{
 		iterator = iterator->next;
 	}
 
-	header_t *chunk = heap_end;													// Create a chunk
+	header_t *chunk = (header_t *)heap_end;													// Create a chunk
 	iterator->next = chunk;														// Pointer to new block
+	uint64_t i=0;
 
 	/* Block will atleast be 0x1000 bytes bigger. */
-	for(uint64_t i=0;i<((sz / 0x1000)+1);i++)
+	for(i = 0;i<((sz / 0x1000)+1);i++)
 	{
-	vmm_map_frame(heap_end, pmm_alloc_page, 0x3);								// Map a new physical frame for the heap
+	vmm_map_frame((uint64_t)heap_end, (uint64_t)pmm_alloc_page, 0x3);								// Map a new physical frame for the heap
 	heap_end += 0x1000;															// Adjust heap end var
 	}
 
 	/* Fill in the new header. */
-	chunk->size = ((0x1000*i) - sizeof(header_t));								// Size of the block
+	chunk->size = ((uint64_t)(0x1000*i) - (uint64_t)sizeof(header_t));								// Size of the block
 	chunk->magic0 = MAGIC;														// Magic code
 	chunk->magic1 = MAGIC;														// Second Magic code
 	chunk->next = 0;															// Last block of the heap
@@ -175,14 +175,14 @@ void glue_chunk (header_t *chunk)
 
 				chunk->size += (chunk->next->size + sizeof(header_t));			// Change size.
 				chunk->next = chunk->next->next;								// Change pointer to next chunk
-				if(chunk->next->next) chunk->next->next->prev = chunk;			// change pointer of the next chunk to this one.
+				if(chunk->next)  chunk->next->prev = chunk;			// change pointer of the next chunk to this one.
 		}
 	}
 	
 	/** There's a chunk before this one, glue them. **/
 	if(chunk->prev)
 	{
-		if(chunk->next->allocated == 0)
+		if(chunk->prev->allocated == 0)
 		{
 		chunk->prev->size += (chunk->size + sizeof(header_t));					// Change size.
 		chunk->prev->next = chunk->next;										// Change pointer to next chunk.
@@ -202,7 +202,7 @@ void glue_chunk (header_t *chunk)
 uint64_t check_heap(void)
 
 {
-	header_t *iterator = heap_start;
+	header_t *iterator = (header_t *)heap_start;
 	while(iterator)
 	{
 		if(iterator->magic0 != MAGIC || iterator->magic1 != MAGIC)

@@ -26,6 +26,7 @@ int main(ipl_info_t *info)
 	int *ptr =  malloc(0x5000000);
 	*ptr = 5;
 	printf("Allocating 5kb, malloc returns: %x, %x", ptr, *ptr);
+	free((void*)ptr);
 	
 	asm volatile("sti");
 	

@@ -21,7 +21,7 @@ uint8_t apic_check(void)
 
 void apic_timer(void)
 {
-	DebugPuts("i");
+	
 }
 
 extern void parse_madt(void);

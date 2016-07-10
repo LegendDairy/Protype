@@ -25,7 +25,6 @@ void *malloc(uint64_t sz)
 	/* Heap hasn't been initialised, create a simple block of 4k. */
 	if(heap_start == 0)
 	{
-		printf("Making Heap...");
 		/* Map the first entry. */
 		vmm_map_frame(HEAP_START, pmm_alloc_page, 0x3);
 
@@ -41,7 +40,6 @@ void *malloc(uint64_t sz)
 		heap_start->magic0 = MAGIC;
 		heap_start->magic1 = MAGIC;
 		heap_start->size = (0x1000 - sizeof(header_t));
-		printf("   Done.\n");
 	}
 
 	/* Iterate through the linked list. */
@@ -57,7 +55,7 @@ void *malloc(uint64_t sz)
 			printf("HEAP");
 			DebugSetTextColour(0xF,0);
 			printf("]:");
-			printf("Error 0x04: Heap corrupted!\n");
+			printf("Error 0x04a: Heap corrupted!: Magic code error\n");
 		}
 		/* Block fits perfectly! */
 		if(iterator->size == sz && iterator->allocated == 0)
@@ -86,12 +84,9 @@ void *malloc(uint64_t sz)
 	}
 
 	/* No fitting holes found! Expand.	*/
-	printf("Expanding...\n");
 	header_t *chunk = (header_t *)create_chunk(sz);
-	printf("Splitting size: %x, %x\n", chunk->size, sz);
 	/* Make the chunk fit perfectly.	*/
 	split_chunk(chunk, sz);
-	printf("Allocating...\n");
 	/* Allocate it!						*/
 	chunk->allocated = 1;
 
@@ -128,7 +123,6 @@ void split_chunk(header_t *chunk, uint64_t sz)
 	addr += (uint64_t)sizeof(header_t);
 	addr += sz;
 
-	printf("Splitchuck address:%x\n", addr);
 	/* Create new chunk. */
 	header_t *new_chunk = addr;
 
@@ -175,7 +169,6 @@ header_t *create_chunk(uint64_t sz)
 	/* Block will atleast be 0x1000 bytes bigger. */
 	for(i=0;i<((sz / 0x1000)+1);i++)
 	{
-	printf(" %x", (uint64_t)heap_end);
 	/* Create a virtual address for the heap. */
 	vmm_map_frame(heap_end, pmm_alloc_page, 0x3);
 	heap_end += 0x1000;
@@ -284,7 +277,7 @@ uint64_t check_heap(void)
 			DebugSetTextColour(0xF,0);
 
 			printf("]:");
-			printf("Error 0x04: Heap corrupted!\n");
+			printf("Error 0x04b: Heap corrupted! Magic code corrupt!\n");
 			return 1;
 		}
 		/* Iterate */

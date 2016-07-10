@@ -109,5 +109,18 @@ make install
 #####NASM#######
 sudo apt-get install nasm
 
+#####Building and testing#######
+To build the kernel, you can use the build.sh script, irst you'll need to give it per;ission on Linux:
+chmod 777 build.sh
+cd /media
+sudo mkdir floppy1
+sudo chmod 777 /media
+Then you can run it, if you copy to Protype folder to your home directory
+./build.sh
+To test:
+bochs -q -f bin/bochsrc.txt
+
+
+
 http://wiki.osdev.org/GCC_Cross-Compiler
 http://preshing.com/20141119/how-to-build-a-gcc-cross-compiler/

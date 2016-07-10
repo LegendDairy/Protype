@@ -85,7 +85,7 @@ void free(void *p)
 void split_chunk(header_t *chunk, uint64_t sz)
 {
 	/* Should we split the chunk? */
-	if(chunk->size > ((uint64_t)sz+(uint64_t)sizeof(header_t)) )
+	if(chunk->size > ((uint64_t)sz+(uint64_t)sizeof(header_t)) +1 )
 	{
 									// Start of new chunk
 	
@@ -126,7 +126,7 @@ header_t *create_chunk(uint64_t sz)
 	vmm_map_frame((uint64_t)heap_end, (uint64_t)pmm_alloc_page, 0x3);								// Map a new physical frame for the heap
 	heap_end += 0x1000;															// Adjust heap end var
 	}
-
+	printf(" i=%x ", i);
 	/* Fill in the new header. */
 	chunk->size = ((uint64_t)(0x1000*i) - (uint64_t)sizeof(header_t));								// Size of the block
 	chunk->magic0 = MAGIC;														// Magic code
@@ -158,20 +158,23 @@ void free_chunk(header_t *chunk)
 	/* While the heap max can contract by a page and still be greater than the chunk address. */
 	while ( (heap_end-0x1000) >= (uint64_t)chunk )
 	{
-	  heap_end -= 0x1000;														// Contract the heap by a page
-	  vmm_unmap_frame(heap_end);												// Unmap the virtual address.
+	  heap_end -= 0x1000;
 	  pmm_free_page(vmm_get_mapping(heap_end, 0));								// Free the frame.
+	  vmm_unmap_frame(heap_end);												// Unmap the virtual address.
 	}
+/* Change size of remaining chunk! */
 }
 
 /* Glues two chunk and contracts the heap. */
 void glue_chunk (header_t *chunk)
 {
+		printf(" %x ", chunk);
 	/** There's a chunk after this one, glue them. **/
 	if(chunk->next)
 	{
-		if(chunk->next->allocated == 0)
+		if(!chunk->next->allocated)
 		{
+		printf(" %xi ", chunk->next);
 
 				chunk->size += (chunk->next->size + sizeof(header_t));			// Change size.
 				chunk->next = chunk->next->next;								// Change pointer to next chunk
@@ -182,8 +185,9 @@ void glue_chunk (header_t *chunk)
 	/** There's a chunk before this one, glue them. **/
 	if(chunk->prev)
 	{
-		if(chunk->prev->allocated == 0)
+		if(!chunk->prev->allocated)
 		{
+				printf("e");
 		chunk->prev->size += (chunk->size + sizeof(header_t));					// Change size.
 		chunk->prev->next = chunk->next;										// Change pointer to next chunk.
 		if (chunk->next) chunk->next->prev = chunk->prev;	  					// Change pointer of the next chunk to this one.
@@ -194,6 +198,7 @@ void glue_chunk (header_t *chunk)
 	/** There's no chunk after this one, free it. **/
 	if (chunk->next == 0)
 	{
+
 		free_chunk(chunk);														// Contract.
 	}
 }

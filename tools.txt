@@ -82,7 +82,7 @@ export PATH="$HOME/opt/cross/bin:$PATH"
 
 #####BOCHS#######
 #Download latest version on the web
-sudo apt-get install libgtk2.0-dev libncurses5-dev
+sudo apt-get install libgtk2.0-dev libncurses5-dev libsdl1.1-dev libsdl2-dev
 ./configure --enable-smp \
               --enable-cpu-level=6 \
               --enable-all-optimizations \

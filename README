@@ -40,6 +40,11 @@ git config --global user.email "youremail@domain.com"
 git clone https://github.com/LegendDairy/Protype.git
 git status
 
+git pull
+
+git commit -a
+git push
+
 Tools:
 GNU gcc crosscompiler with x86_64-elf as target
 NASM Netwide Assembler, that came with my distribution

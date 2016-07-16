@@ -1,6 +1,6 @@
-/* Pro-Type Kernel v1.3			*/
+/* Pro-Type Kernel v1.3				*/
 /* Dynamic Memory Manager 1.1	*/
-/* By LegendMythe				*/
+/* By LegendMythe							*/
 
 #include <heap.h>
 
@@ -231,3 +231,6 @@ uint64_t check_heap(void)
 	}
 	return 0;
 }
+
+/*void heap_check_status(void)*/
+test

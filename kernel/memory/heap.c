@@ -231,6 +231,3 @@ uint64_t check_heap(void)
 	}
 	return 0;
 }
-
-/*void heap_check_status(void)*/
-test

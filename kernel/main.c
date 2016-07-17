@@ -36,6 +36,8 @@ int main(ipl_info_t *info)
 	*ptr2 = 2;
 	printf("\nAllocating 0x3200, malloc returns: %x, %x", ptr2, *ptr2);
 	
+	view_heap();
+
 	/*int *ptr3 =  malloc(0x6854);
 	*ptr3 = 3;
 	printf("\nAllocating 0x6854, malloc returns: %x, %x", ptr3, *ptr3);

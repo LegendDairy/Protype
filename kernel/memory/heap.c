@@ -231,3 +231,14 @@ uint64_t check_heap(void)
 	}
 	return 0;
 }
+
+void view_heap(void)
+{
+	printf("\nHeap start at: %x, size: %x, allocated: %d", heap_start);
+	header_t *iterator = heap_start->next;
+	while(iterator)
+	{
+		printf("\nNext entry at %x, size: %x, allocated: %d");
+		iterator = iterator->next;
+	}
+}

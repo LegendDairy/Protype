@@ -21,7 +21,7 @@ uint8_t apic_check(void)
 
 void apic_timer(void)
 {
-	
+
 }
 
 extern void parse_madt(void);
@@ -53,7 +53,7 @@ void setup_apic(void)
 		current_cpu.flags = CPU_FLAG_BOOTSTRAP;
 		mutex_unlock(&current_cpu.lock);
 
-		/* Give information to the user */ 
+		/* Give information to the user */
 		printf("[APIC]: Found Local apic at %x, ID: %d, Version: %x\n", (uint64_t)current_cpu.lapic_base, current_cpu.id, lapic_read(apic_reg_version));
 
 		/* Set up Local APIC */
@@ -79,19 +79,19 @@ void setup_apic(void)
 		*ioapic_io = (uint32_t)0x30 ;
 		*(uint32_t*)ioapic_reg = (uint32_t)0x13;
 		*ioapic_io = (uint32_t)0x00;
-	
+
 		//parse_madt();
 
 		/* Set up LAPIC Timer*/
 		setup_lapic_timer();
-	
+
 }
 
 void setup_lapic_timer(void)
 {
 	/* Set LAPIC timer as reg int 32 */
 	lapic_write(apic_lvt_timer_reg, 0x00030);				// int 32
-	lapic_write(apic_div_conf, 0x01);						// Divide by 4
+	lapic_write(apic_div_conf, 0x01);					// Divide by 4
 
 	/* Setup LAPIC Counter */
 	lapic_write(apic_init_count, 0xFFFFFFFF);

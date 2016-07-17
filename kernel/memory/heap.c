@@ -24,12 +24,12 @@ void *malloc(uint64_t sz)
 		/* Create a heap. */
 		heap_start	= (header_t *)HEAP_START;												// Set the virtual address of the heap.
 		heap_end	= (uint64_t)(HEAP_START + 0x1000);									// Set address of the end.
-		vmm_map_frame((uint64_t)HEAP_START, (uint64_t)pmm_alloc_page, 0x3);							// Map the first entry.
+		vmm_map_frame((uint64_t)HEAP_START, (uint64_t)pmm_alloc_page(), 0x3);							// Map the first entry.
 
 		/* Fill in the first header. */
 		heap_start->allocated = 0;												// Not allocated
 		heap_start->next = 0;													// No chunks after this.
-		heap_start->prev = 0;													// First chunk of the heap
+		heap_start->prev = (uint64_t)0;													// First chunk of the heap
 		heap_start->magic0 = MAGIC;												// Set the magic code
 		heap_start->magic1 = MAGIC;												// Set the magic code
 		heap_start->size = (0x1000 - sizeof(header_t));							// Set the size of the chunk.
@@ -92,7 +92,7 @@ void split_chunk(header_t *chunk, uint64_t sz)
 	/* Make new header. */
 	header_t *new_chunk		= (header_t*)((uint64_t)chunk + (uint64_t)2*sizeof(header_t) + (uint64_t)sz);												// Create new chunk
 	new_chunk->allocated	= 0;												// Not allocated
-	new_chunk->size			= (uint64_t)((uint64_t)chunk->size - (uint64_t)sz - (uint64_t)sizeof(header_t)));
+	new_chunk->size			= (uint64_t)((uint64_t)chunk->size - (uint64_t)sz - (uint64_t)sizeof(header_t));
 	new_chunk->magic0		= MAGIC;											// Fill in magic code.
 	new_chunk->magic1		= MAGIC;											// Fill in magic code.
 	new_chunk->next			= chunk->next;										// Pointer to next chunk.
@@ -191,7 +191,7 @@ void glue_chunk (header_t *chunk)
 	{
 		if(!chunk->prev->allocated)
 		{
-				printf("e");
+				printf("%xe", chunk->prev);
 		chunk->prev->size += (chunk->size + sizeof(header_t));					// Change size.
 		chunk->prev->next = chunk->next;										// Change pointer to next chunk.
 		if (chunk->next) chunk->next->prev = chunk->prev;	  					// Change pointer of the next chunk to this one.

@@ -36,18 +36,18 @@ int main(ipl_info_t *info)
 	*ptr2 = 2;
 	printf("\nAllocating 0x3200, malloc returns: %x, %x", ptr2, *ptr2);
 	
-	int *ptr3 =  malloc(0x6854);
+	/*int *ptr3 =  malloc(0x6854);
 	*ptr3 = 3;
 	printf("\nAllocating 0x6854, malloc returns: %x, %x", ptr3, *ptr3);
 
-	free((void*)ptr);
+	/*free((void*)ptr);
 	printf("1");
 	free((void*)ptr1);
 	printf("1");
 	free((void*)ptr2);
 	printf("1");
 	free((void*)ptr3);
-	
+	*/
 	asm volatile("sti");
 	
 	for (;;);

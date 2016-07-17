@@ -1,6 +1,6 @@
-/* Pro-Type Kernel v1.3			*/
+/* Pro-Type Kernel v1.3				*/
 /* Dynamic Memory Manager 1.1	*/
-/* By LegendMythe				*/
+/* By LegendMythe							*/
 
 #include <heap.h>
 
@@ -230,4 +230,15 @@ uint64_t check_heap(void)
 		iterator = iterator->next;
 	}
 	return 0;
+}
+
+void view_heap(void)
+{
+	printf("\nHeap start at: %x, size: %x, allocated: %d", heap_start);
+	header_t *iterator = heap_start->next;
+	while(iterator)
+	{
+		printf("\nNext entry at %x, size: %x, allocated: %d");
+		iterator = iterator->next;
+	}
 }

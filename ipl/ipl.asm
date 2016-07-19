@@ -86,7 +86,7 @@ load_kernel:
     mov esi, [eax + 0x00]             ; p_type
     mov edi, 0x00001                  ; PT_LOAD: Loadable segment
     std                               ; Increment esi and edi
-    cmpsd				; 0x754               ; Check for PT_LOAD
+    cmpsd                               ; Check for PT_LOAD
     jne .skip                         ; Not loadable?=>Not interested!
 
     mov esi, [eax + 0x08]             ; p_offset

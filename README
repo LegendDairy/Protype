@@ -1,4 +1,4 @@
-Protype is an x86_64-based microkernel mostly written in C. 
+Protype is an x86_64-based microkernel mostly written in C.
 The microkernel has it's own two stage bootloader (i.e. the Pre-IPL and IPL).
 The kernel is written in C and x86-assembler.
 I will try to add documentation in the DOCS folders for every part of the microkernel to clarify the code.
@@ -11,8 +11,6 @@ The target cpu is a 2600k
 Future Ideas:
 -unmap pages arround the stack to detect stack overruns
 -Possibility to allign heap structures
--mutex the shit out of mem-managers!
-
 
 Current realease number: r1,3 codenamed Hydrogen
 
@@ -21,8 +19,7 @@ Current realease number: r1,3 codenamed Hydrogen
 /ipl  :   Contains the IPL code, i.e. stage 2 of the bootloader
 /kernel:  Contains the actual kernel, mainly in C
 
-
-To build the kernel, you can use the build.sh script, irst you'll need to give it per;ission on Linux:
+To build the kernel, you can use the build.sh script, first you'll need to give it permission on Linux:
 chmod 777 build.sh
 cd /media
 sudo mkdir floppy1
@@ -50,7 +47,7 @@ GNU gcc crosscompiler with x86_64-elf as target
 NASM Netwide Assembler, that came with my distribution
 Bochs with GUI Debugger
 
-I wrote most of the code myself, but I also took some code from the internet, because I was to lazy to write it. 
+I wrote most of the code myself, but I also took some code from the internet, because I was to lazy to write it.
 For example the printscreen code.
 About me:
 My real name is Frederic, and I'm from Belgium

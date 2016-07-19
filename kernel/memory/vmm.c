@@ -47,16 +47,36 @@ void pre_vmm_map_frame(uint64_t va, uint64_t pa, uint64_t flags)
 
 uint64_t vmm_get_mapping(uint64_t va, uint64_t *pa)
 {
+if ((vmm_plm4t[PLM4T_INDEX(va)] & 0x1))
+{
+if ((vmm_dir_ptrs[PDPT_INDEX(va)] & 0x1))
+{
+if ((vmm_directories[PD_INDEX(va)] & 0x1))
+{
 	if(pa)
 	{
 		*pa = (vmm_tables[PT_INDEX(va)] & (!0xFFF));
 	}
 	return (vmm_tables[PT_INDEX(va)] & (!0xFFF));
 }
+}
+}
+return 0xFFF; // Error: va is not mapped!
+}
 
 uint64_t vmm_test_mapping(uint64_t va)
 {
+if ((vmm_plm4t[PLM4T_INDEX(va)] & 0x1))
+{
+if ((vmm_dir_ptrs[PDPT_INDEX(va)] & 0x1))
+{
+if ((vmm_directories[PD_INDEX(va)] & 0x1))
+{
 	return (vmm_tables[PT_INDEX(va)] & (0x1));
+}
+}
+}
+return 0;
 }
 
 void vmm_map_frame(uint64_t va, uint64_t pa, uint64_t flags)

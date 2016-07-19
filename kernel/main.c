@@ -24,34 +24,9 @@ int main(ipl_info_t *info)
 	setup_pmm(info);
 	setup_apic();
 
-	int *ptr =  malloc(0x1000);
-	*ptr = 5;
-	printf("\nAllocating 0x1000, malloc returns: %x, %x", ptr, *ptr);
 
-	int *ptr1 =  malloc(0x100);
-	*ptr1 = 1;
-	printf("\nAllocating 0x100, malloc returns: %x, %x", ptr1, *ptr1);
-	
-	int *ptr2 =  malloc(0x3200);
-	*ptr2 = 2;
-	printf("\nAllocating 0x3200, malloc returns: %x, %x", ptr2, *ptr2);
-	
-	view_heap();
-
-	/*int *ptr3 =  malloc(0x6854);
-	*ptr3 = 3;
-	printf("\nAllocating 0x6854, malloc returns: %x, %x", ptr3, *ptr3);
-
-	/*free((void*)ptr);
-	printf("1");
-	free((void*)ptr1);
-	printf("1");
-	free((void*)ptr2);
-	printf("1");
-	free((void*)ptr3);
-	*/
 	asm volatile("sti");
-	
+
 	for (;;);
 
 	return 0;

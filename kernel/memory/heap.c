@@ -8,6 +8,7 @@
 
 volatile header_t *heap_start	= 0;												// Start of the heap (virtual address)
 volatile uint64_t heap_end	= HEAP_START;											// End of the heap (virtual address)
+uint64_t vmm_test_mapping(uint64_t va);
 
 /* Internal function, shouldn't be called from outside!*/
 void expand_heap (uint64_t start, uint64_t len);
@@ -18,15 +19,15 @@ static void glue_chunk (header_t *chunk);											// Glues the chunk to suroun
 /** Simple dynamic allocater for the kernel **/
 void *malloc(uint64_t sz)
 {
-	header_t *cur_header = heap_first, *prev_header = 0;
+	header_t *cur_header = (header_t *)heap_start, *prev_header = 0;
 
 	while(cur_header)
-	{
-		if(cur_header->allocated == 0 && cur_header->sz >= sz)
+	{	
+		if(cur_header->allocated == 0 && cur_header->size >= sz)
 		{
-			split_chunk(cur_header, l);
+			split_chunk(cur_header, sz);
 		        cur_header->allocated = 1;
-		        return (void*) ((uint32_t)cur_header + sizeof (header_t));
+		        return (void*) ((uint64_t)cur_header + (uint64_t)sizeof(header_t));
 		}
 
 		prev_header 	= cur_header;
@@ -36,23 +37,24 @@ void *malloc(uint64_t sz)
 	uint64_t chunk_start;
 
         if (prev_header)
-	{
-		chunk_start 	= (uint64_t)prev_header + prev_header->length + sizeof(header_t);
+	{	
+		chunk_start 	= (uint64_t)prev_header + (uint64_t)prev_header->size + (uint64_t)sizeof(header_t);
 	}
         else
-        {
-          chunk_start 		= HEAP_START;
+        {	
+          chunk_start 		= (uint64_t)HEAP_START;
           heap_start 		= (header_t *)chunk_start;
         }
 
-        expand_heap(chunk_start, sz + sizeof(header_t));
-
+        expand_heap(chunk_start, (uint64_t)sz + (uint64_t)sizeof(header_t));
 	cur_header 		= (header_t *)chunk_start;
 	cur_header->allocated 	= 1;
 	cur_header->size 	= sz;
 	cur_header->next 	= 0;
 	cur_header->prev 	= prev_header;
+	cur_header->prev->next 	= cur_header;
 	cur_header->magic 	= MAGIC;
+	return (void*)((uint64_t)cur_header + (uint64_t)sizeof (header_t));
 }
 
 /** Frees an allocated address. **/
@@ -68,7 +70,7 @@ void expand_heap(uint64_t start, uint64_t len)
 	while (start + len > heap_end)
 	{
 		if(!vmm_test_mapping(heap_end))
-	        {
+		{
 			vmm_map_frame((uint64_t)heap_end, (uint64_t)pmm_alloc_page, 0x3);
 		}
 		heap_end += 0x1000;
@@ -79,7 +81,7 @@ void expand_heap(uint64_t start, uint64_t len)
 void split_chunk(header_t *chunk, uint64_t sz)
 {
 	/* Should we split the chunk? */
-	if(chunk->size > ((uint64_t)sz+(uint64_t)sizeof(header_t) )
+	if(chunk->size > ((uint64_t)sz+(uint64_t)sizeof(header_t) ))
 	{
 	/* Make new header. */
 	header_t *new_chunk		= (header_t*)((uint64_t)chunk + (uint64_t)sizeof(header_t) + (uint64_t)sz);		// Create new chunk*
@@ -125,7 +127,7 @@ void free_chunk(header_t *chunk)
 /* Glues two chunk and contracts the heap. */
 void glue_chunk (header_t *chunk)
 {
-$	/** There's a chunk after this one, glue them. **/
+	/** There's a chunk after this one, glue them. **/
 	if (chunk->next && chunk->next->allocated == 0)
 	{
 		chunk->size += (chunk->next->size + sizeof(header_t));						// Change size.
@@ -175,21 +177,29 @@ uint64_t check_heap(void)
 			printf("Error 0x04a: Heap corrupted! Magic code corrupt!\n");
 			return 1;
 		}
-$		iterator = iterator->next;
+		iterator = iterator->next;
 	}
 	return 0;
 }
 
 void view_heap(void)
 {
-	printf("\nHeap start at: %x, size: %x, allocated: %d", heap_start, heap_start->size, heap_start->allocated);
-	header_t *iterator = heap_start->next;
 
-	while(iterator)
+	if(heap_start)
 	{
-		printf("\nNext entry at %x, size: %x, allocated: %d", iterator, iterator->size, iterator->allocated);
-		iterator = iterator->next;
+		printf("\nHeap start at: %x, size: %x, allocated: %d", heap_start, heap_start->size, heap_start->allocated);
+		header_t *iterator = heap_start->next;
+
+		while(iterator)
+		{
+			printf("\nNext entry at %x, size: %x, allocated: %d", iterator, iterator->size, iterator->allocated);
+			iterator = iterator->next;
+		}
+	}
+	else
+	{
+		printf("\nNo Heap!");
 	}
 
-	printf("\nheap_end at %x", heap_end);
+	printf("\nHeap_end at %x", heap_end);
 }

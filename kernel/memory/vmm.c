@@ -1,5 +1,5 @@
 /* Pro-Type Kernel	v1.3	*/
-/* Virtual Memory	v0.1	*/
+/* Virtual Memory	v0.2	*/
 /* By LegendMythe		*/
 
 #include <vmm.h>
@@ -17,7 +17,7 @@ void setup_vmm(void)
 }
 
 void pre_vmm_map_frame(uint64_t va, uint64_t pa, uint64_t flags)
-{	
+{
 	/* Needs More Testing! */
 	/* Check if a page directory pointer exists. */
 	if (!(vmm_plm4t[PLM4T_INDEX(va)] & 0x1))
@@ -43,8 +43,6 @@ void pre_vmm_map_frame(uint64_t va, uint64_t pa, uint64_t flags)
 		/* Map the virtual address to the given physical address*/
 		vmm_tables[PT_INDEX(va)] = (pa | flags);
 	}
-
-	
 }
 
 uint64_t vmm_get_mapping(uint64_t va, uint64_t *pa)
@@ -54,6 +52,11 @@ uint64_t vmm_get_mapping(uint64_t va, uint64_t *pa)
 		*pa = (vmm_tables[PT_INDEX(va)] & (!0xFFF));
 	}
 	return (vmm_tables[PT_INDEX(va)] & (!0xFFF));
+}
+
+uint64_t vmm_test_mapping(uint64_t va)
+{
+	return (vmm_tables[PT_INDEX(va)] & (0x1));
 }
 
 void vmm_map_frame(uint64_t va, uint64_t pa, uint64_t flags)
@@ -88,7 +91,7 @@ void vmm_map_frame(uint64_t va, uint64_t pa, uint64_t flags)
 	vmm_tables[PT_INDEX(va)] = (pa | flags);
 	mutex_unlock(&vmm_lock);
 }
-	
+
 
 inline void vmm_flush_page(uint64_t vaddr)
 {
@@ -103,6 +106,3 @@ void vmm_unmap_frame(uint64_t va)
 	// Send IPI!
 	mutex_unlock(&vmm_lock);
 }
-
-
-

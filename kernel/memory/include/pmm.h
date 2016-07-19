@@ -1,6 +1,6 @@
-/* Pro-Type Kernel v1.3		*/
-/* Physical Memory v0.2		*/
-/* By LegendMythe		*/
+/* Pro-Type Kernel v1.3	        */
+/* Physical Memory v0.3         */
+/* By LegendMythe               */
 
 #ifndef PMM_H
 #define PMM_H

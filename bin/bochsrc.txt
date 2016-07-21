@@ -7,5 +7,5 @@ boot: a
 log: bin/bochsout.txt
 mouse: enabled=0
 clock: sync=realtime
-cpu: count=1:1, model=corei7_sandy_bridge_2600k	
+cpu: count=1:4, model=corei7_sandy_bridge_2600k	
 display_library: x, options="gui_debug"

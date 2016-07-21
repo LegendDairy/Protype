@@ -23,7 +23,7 @@ int main(ipl_info_t *info)
 	init_idt();
 	setup_pmm(info);
 	setup_apic();
-
+	printf("Hello");
 
 	asm volatile("sti");
 

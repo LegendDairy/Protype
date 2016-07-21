@@ -80,7 +80,7 @@ void setup_apic(void)
 		*(uint32_t*)ioapic_reg = (uint32_t)0x13;
 		*ioapic_io = (uint32_t)0x00;
 
-		//parse_madt();
+		parse_madt();
 
 		/* Set up LAPIC Timer*/
 		setup_lapic_timer();

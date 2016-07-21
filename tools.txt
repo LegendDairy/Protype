@@ -1,5 +1,6 @@
-In order to build the kernel a gcc crosscompiler is required. In this file a assembled all the commands I could find that I used to build mine. This will also give you an idea of the versions of the tools I used so that you can mimic it incase you’re having trouble building the kernel
-
+#In order to build the kernel a gcc crosscompiler is required.
+#In this file a assembled all the commands I could find that I used to build mine.
+#This will also give you an idea of the versions of the tools I used so that you can mimic it incase you’re having trouble building the kernel
 #A temporary folder where all the source files will be kept, you can delete it afterwards
 mkdir src
 cd src
@@ -34,7 +35,7 @@ ln -s ../cloog-0.18.1 cloog
 cd ..
 
 sudo mkdir -p /opt/cross
-$ sudo chown username /opt/cross
+sudo chown username /opt/cross
 
 export PREFIX="$HOME/opt/cross"
 export TARGET=x86_64-elf
@@ -76,7 +77,7 @@ make install-gcc
 make install-target-libgcc
 
 #Add this to end of bashrc
-sudo nano ~/.bashrc
+sudo gedit ~/.bashrc
 export PATH="$HOME/opt/cross/bin:$PATH"
 
 
@@ -102,8 +103,8 @@ sudo apt-get install libgtk2.0-dev libncurses5-dev libsdl1.1-dev libsdl2-dev
               --disable-plugins \
               --disable-docbook \
               --with-x --with-x11 --with-term --with-sdl
-              
-make 
+
+make
 make install
 
 #####NASM#######

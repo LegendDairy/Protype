@@ -19,8 +19,9 @@ uint64_t pre_pmm_entries			= 0;
 /* Better testing maybe. 			*/
 /* Mutex the shit out of alloc/free 		*/
 
-/* Paging is enabled before the pmm, so we must make sure every address we access is mapped. The Ipl identity-maps the first 4MB of the memory for the kernel binary. */
-/* The pre_pmm and pre_vmm map the memory for the heap and stack dynamically */
+/* Paging is enabled before the pmm, so we must make sure every address we access is mapped. 	*/
+/* The Ipl identity-maps the first 4MB of the memory for the kernel binary. 			*/
+/* The pre_pmm and pre_vmm map the memory for the heap and stack dynamically 			*/
 
 void setup_pmm(ipl_info_t *info)
 {
@@ -44,7 +45,7 @@ void setup_pmm(ipl_info_t *info)
 	{
 		if (tmp->type == 1)
 		{
-		if(mem_size < (tmp->base + tmp->size)) 
+		if(mem_size < (tmp->base + tmp->size))
 		{
 			mem_size = (uint64_t)((tmp->base) + (tmp->size));
 		}
@@ -113,7 +114,7 @@ void setup_pmm(ipl_info_t *info)
 	pre_pmm_entries = info->mmap_entries;
 	pmm_nframes = (info->mem_sz / 0x1000);
 
-	
+
 	/* Calculate size of memory needed for the pmm */
 	uint64_t sz = (pmm_nframes / 8) + (pmm_nframes * 8);
 
@@ -145,7 +146,7 @@ void setup_pmm(ipl_info_t *info)
 		tmp++;
 	}
 
-	/* Map the memory for PMM*/
+	/* Map the memory for PMM */
 	i = 0;
 	pmm_top = (uint64_t)pmm_stack;
 
@@ -221,7 +222,7 @@ void pmm_free_page(uint64_t address)
 		pmm_bclear(address);
 		pmm_stack--;
 		*pmm_stack = address;
-		
+
 	}
 }
 
@@ -261,4 +262,3 @@ void pmm_bclear(uint64_t address)
 	uint64_t off = (address % 64);
 	pmm_bmap[ind] &= (uint64_t)(~(1 << off));
 }
-        

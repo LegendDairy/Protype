@@ -1,5 +1,5 @@
 /* Pro-Type Kernel v1.3		*/
-/* Kernel Entry Point		*/
+/* Kernel Module		*/
 /* By LegendMythe		*/
 
 #include <text.h>
@@ -22,11 +22,11 @@ int main(ipl_info_t *info)
 	printf("Kernel end at %x, Memorymap at %x, number of entries: %d, memsz %x, magic %x, low mem %x, high mem %x\n", (uint64_t)&end, info->mmap, info->mmap_entries, info->mem_sz, info->magic, info->low_mem, info->high_mem);
 	init_idt();
 	setup_pmm(info);
+	setup_vmm();
 	setup_apic();
-	printf("Hello");
+
 
 	asm volatile("sti");
-
 	for (;;);
 
 	return 0;

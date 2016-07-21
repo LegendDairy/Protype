@@ -4,8 +4,8 @@
 
 #include <string.h>
 
-// Compare two strings. Should return  2 if
-// str1 < str2, 0 if they are equal or 1 otherwise.
+/* Compare two strings. Should return  2 if		*/
+/* str1 < str2, 0 if they are equal or 1 otherwise. 	*/
 int strcmp(const char *str1, const char *str2)
 {
 	int i = 0;
@@ -32,10 +32,7 @@ int strncmp(const char *str1, const char *str2, uint32_t n)
 	}
 	return 0;
 }
-// Copy the NULL-terminated string src into dest, and
-// return dest.
-// Copy the NULL-terminated string src into dest, and
-// return dest.
+/* Copy the NULL-terminated string src into dest, and return dest. */
 char *strcpy(char *dest, const char *src)
 {
     int i = 0;
@@ -47,7 +44,7 @@ char *strcpy(char *dest, const char *src)
 	return dest;
 }
 
-// Counts a NULL-terminated string.
+/* Counts a NULL-terminated string. */
 int strlen(const char *str)
 {
 const char *start = str;
@@ -58,29 +55,29 @@ str++;
 return str - start;
 }
 
-// Copy len bytes from src to dest.
+/* Copy len bytes from src to dest. */
 void memcpy(uint8_t *dest, const uint8_t *src, uint32_t len)
 {
     for(; len != 0; len--) dest[len - 1] = src[len - 1];
 }
 
-// Write len copies of val into dest.
+/* Write len copies of val into dest. */
 void memset(uint8_t *dest, uint8_t val, uint32_t len)
 {
     for ( ; len != 0; len--) dest[len - 1] = val;
 }
 
-// Write len copies of val into dest.
+/* Write len copies of val into dest. */
 void memsetw(uint16_t *dest, uint16_t val, uint32_t len)
 {
     for ( ; len != 0; len--) dest[len - 1] = val;
 }
-// Write len copies of val into dest.
+/* Write len copies of val into dest. */
 void memsetdw(uint32_t *dest, uint32_t val, uint32_t len)
 {
 	for (; len != 0; len--) dest[len - 1] = val;
 }
-// Write len copies of val into dest.
+/* Write len copies of val into dest. */
 void memsetqw(uint64_t *dest, uint64_t val, uint32_t len)
 {
 	for (; len != 0; len--) dest[len - 1] = val;

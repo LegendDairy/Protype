@@ -1,6 +1,6 @@
 /* Pro-Type Kernel v1.3	*/
-/* Print Formatted	v0.1*/
-/* By LegendDairy		*/
+/* Print Formatted v0.1	*/
+/* By LegendDairy	*/
 
 #include <stdio.h>
 

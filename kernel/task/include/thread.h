@@ -11,13 +11,9 @@
 #include <vmm.h>
 #include <heap.h>
 
-#define THREAD_CHILD                    0x1
-#define THREAD_READY                    0x0
-#define THREAD_NREADY                   0x2
+#define THREAD_READY                    0x1
 #define THREAD_SLEEP                    0x2
-#define THREAD_PARENT                   0x4
-#define THREAD_PROCESS                  0x4
-#define THREAD_KERNEL                   0x8
+#define THREAD_KERNEL                   0x4
 
 #define THREAD_PRIORITY_HIGHEST		60
 #define THREAD_PRIORITY_VERY_HIGH	50

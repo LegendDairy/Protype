@@ -2,6 +2,7 @@
 *.sys
 *.prx
 *.img
+floppy.img
 bochsout.txt
 
 

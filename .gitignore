@@ -1,3 +1,10 @@
+*.bin
+*.sys
+*.prx
+*.img
+bochsout.txt
+
+
 # Windows image file caches
 Thumbs.db
 ehthumbs.db

@@ -4,7 +4,10 @@
 
 #include<apic.h>
 
+#define apb_base 0x50000
+
 volatile uint64_t tick;
+uint8_t ap_count = 1;
 uint32_t apic_base;
 processor_t current_cpu;
 processor_list_t processors;
@@ -85,6 +88,9 @@ void setup_apic(void)
 	setup_lapic_timer();
 
 	boot_ap(1);
+	boot_ap(2);
+	boot_ap(3);
+
 }
 
 void setup_lapic_timer(void)
@@ -149,5 +155,9 @@ void boot_ap(uint8_t id)
 
 
 	while(!(inb(0x61)&0x20));
-	lapic_write(apic_ICR_0_31, 0x00004600 | 0x50);
+
+	lapic_write(apic_ICR_0_31, 0x00004600 | (apb_base/0x1000));
+	while(*((uint8_t *)apb_base + 0x03) == ap_count);
+	ap_count++;
+	printf("\n[SMP]: AP %d booted! Currently %d active processors running.", id, ap_count);
 }

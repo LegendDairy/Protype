@@ -1,5 +1,5 @@
 megs: 2042
-romimage: file=/usr/share/bochs/BIOS-bochs-latest, address=0x0
+romimage: file=/usr/local/share/bochs/BIOS-bochs-latest, address=0x0
 #vgaromimage: /usr/share/bochs/VGABIOS-elpin-2.40
 vga: extension = vbe
 floppya: 1_44=bin/floppy.img, status=inserted

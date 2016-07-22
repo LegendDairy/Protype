@@ -14,8 +14,8 @@ jmp main
 %include "print.inc"
 %include "e820.inc"
 
-%define kernel_buffer	0x100000     ; Load kernel at 1mb
-%define PML4T		0x100000      ; Location of PML4 table
+%define kernel_buffer	0x10000     ; Load kernel at 1mb
+%define PML4T		0x10000      ; Location of PML4 table
 %define image_buffer     0x10000      ; 256KB for file
 %define module_buffer    0x50000      ; 192KB for modules
 %define image_seg        0x1000       ; Segment (es)
@@ -54,10 +54,7 @@ main:
   xor bx, bx
   call LoadFile
   mov word [ramdisksize], cx
-  mov bx, gdt_ptr
-  mov word [module_buffer+0x6], bx
-  mov qword [module_buffer+0x8], PML4T
-  mov word [module_buffer+0x10], gdt_64_ptr
+
 
 
   mov si, KRNL                        	; Load filename
@@ -75,7 +72,7 @@ main:
   mov eax, cr0                        	; Read cr0
   or eax, 1                           	; Set PM bit
   mov cr0, eax                        	; Write cr0
-  jmp 0x8:pm                          	; Far jump in PM
+  jmp dword 0x8:pm                          	; Far jump in PM
 
 [BITS 32]
 pm:
@@ -127,7 +124,7 @@ jump_long_mode:
   loop .l1                            ; 4*0x1800=>0x6000
 
   mov DWORD [PML4T], 0x11003		; PML4T[0] = &PD_ptr[0]
-  mov DWORD [PML4T + FF8], 0x10003	; PML4T[511] = &PML4T
+  mov DWORD [PML4T + 0xFF8], 0x10003	; PML4T[511] = &PML4T
   mov DWORD [PML4T + 0x1000], 0x12003	; PDT[0]   = &PD_ptr[0]
   mov DWORD [PML4T + 0x1018], 0x15003	; PDT[3]   = &PD_ptr[3]
 
@@ -199,7 +196,6 @@ jump_long_mode:
 
 [BITS 64]
 longmode:
-
   mov rax, cr0
   and ax, 0xFFFB		       ; Clear coprocessor emulation CR0.EM
   or ax, 0x2			       ; Set coprocessor monitoring  CR0.MP
@@ -228,7 +224,7 @@ longmode:
 
 FileSize:    dw 0
 KRNL         db "KERNEL  SYS"
-APB          db "APBM    PRX"
+APB          db "APBM    SYS"
 MsgIPL       db "[IPL]: Loading kernel module...", 0x0D, 0x0A, 0x00
 
 IPL_Struct:

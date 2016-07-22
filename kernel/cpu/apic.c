@@ -4,13 +4,12 @@
 
 #include<apic.h>
 
-volatile uint32_t tick;
+volatile uint64_t tick;
 uint32_t apic_base;
-void pit_sleep(uint32_t millis);
-
 processor_t current_cpu;
 processor_list_t processors;
-
+extern void parse_madt(void);
+void pit_sleep(uint32_t millis);
 
 uint8_t apic_check(void)
 {
@@ -21,10 +20,8 @@ uint8_t apic_check(void)
 
 void apic_timer(void)
 {
-
+	tick++;
 }
-
-extern void parse_madt(void);
 
 uint32_t lapic_read(uint32_t r)
 {
@@ -44,47 +41,41 @@ void setup_apic(void)
 	processors.current = &current_cpu;
 	processors.next = 0;
 
-		/* Fill CPU form */
-		mutex_lock(&current_cpu.lock);
-		asm volatile ("rdmsr": "=a"((uint32_t *)current_cpu.lapic_base) : "c"(apic_base_msr));
-		current_cpu.lapic_base = (uint32_t *)(0xfffff000 & (uint64_t)current_cpu.lapic_base);
-		apic_base = (uint64_t)current_cpu.lapic_base;
-		current_cpu.id = lapic_read(apic_reg_id);
-		current_cpu.flags = CPU_FLAG_BOOTSTRAP;
-		mutex_unlock(&current_cpu.lock);
+	/* Fill CPU form */
+	mutex_lock(&current_cpu.lock);
+	asm volatile ("rdmsr": "=a"((uint32_t *)current_cpu.lapic_base) : "c"(apic_base_msr));
+	current_cpu.lapic_base &= (uint32_t *)(0xfffff000);
+	apic_base = (uint64_t)current_cpu.lapic_base;
+	current_cpu.id = lapic_read(apic_reg_id);
+	current_cpu.flags = CPU_FLAG_BOOTSTRAP;
+	mutex_unlock(&current_cpu.lock);
 
-		/* Give information to the user */
-		printf("[APIC]: Found Local apic at %x, ID: %d, Version: %x\n", (uint64_t)current_cpu.lapic_base, current_cpu.id, lapic_read(apic_reg_version));
+	/* Set up Local APIC */
+	lapic_write(apic_reg_task_priority, 0x00);			// Accept all interrupts
+	lapic_write(apic_lvt_timer_reg, 0x10000);			// Disable timer interrupts
+	lapic_write(apic_lvt_thermal_reg, 0x10000);			// Dissable Thermal monitor
+	lapic_write(apic_lvt_perf_reg, 0x10000);			// Disable performance counter interrupts
+	lapic_write(apic_lvt_lint0_reg, 0x08700);			// Enable normal external interrupts
+	lapic_write(apic_lvt_lint1_reg, 0x00400);			// Enable normal NMI processing
+	lapic_write(apic_lvt_error_reg, 0x10000);			// Disable error interrupts
+	lapic_write(apic_reg_spur_int_vect, 0x00131);			// Enable the APIC and set spurious vector to 48
+	lapic_write(apic_lvt_lint0_reg, 0x08700);			// Enable normal external interrupts
+	lapic_write(apic_lvt_lint1_reg, 0x00400);			// Enable normal NMI processing
+	lapic_write(apic_reg_eoi, 0x00);				// Make sure no interrupts are left
 
-		/* Set up Local APIC */
-		printf("[APIC]: Enabling APIC...");
-		lapic_write(apic_reg_task_priority, 0x00);			// Accept all interrupts
-		lapic_write(apic_lvt_timer_reg, 0x10000);			// Disable timer interrupts
-		lapic_write(apic_lvt_thermal_reg, 0x10000);			// Dissable Thermal monitor
-		lapic_write(apic_lvt_perf_reg, 0x10000);			// Disable performance counter interrupts
-		lapic_write(apic_lvt_lint0_reg, 0x08700);			// Enable normal external interrupts
-		lapic_write(apic_lvt_lint1_reg, 0x00400);			// Enable normal NMI processing
-		lapic_write(apic_lvt_error_reg, 0x10000);			// Disable error interrupts
-		lapic_write(apic_reg_spur_int_vect, 0x00131);			// Enable the APIC and set spurious vector to 48
-		lapic_write(apic_lvt_lint0_reg, 0x08700);			// Enable normal external interrupts
-		lapic_write(apic_lvt_lint1_reg, 0x00400);			// Enable normal NMI processing
-		lapic_write(apic_reg_eoi, 0x00);				// Make sure no interrupts are left
-		printf("		Done\n");
+	/* Set up IO APIC */
+	uint32_t *ioapic_reg 	= (uint32_t*)0xfec00000;
+	uint32_t *ioapic_io 	= (uint32_t*)0xfec00010;
+	*(uint32_t*)ioapic_reg 	= (uint32_t)0x12;
+	*ioapic_io 		= (uint32_t)0x30 ;
+	*(uint32_t*)ioapic_reg 	= (uint32_t)0x13;
+	*ioapic_io 		= (uint32_t)0x00;
 
-		/* Set up IO APIC */
-		uint32_t *ioapic_reg 	= (uint32_t*)0xfec00000;
-		uint32_t *ioapic_io 	= (uint32_t*)0xfec00010;
+	/* Parse the multiprocessor table */
+	parse_madt();
 
-		*(uint32_t*)ioapic_reg = (uint32_t)0x12;
-		*ioapic_io = (uint32_t)0x30 ;
-		*(uint32_t*)ioapic_reg = (uint32_t)0x13;
-		*ioapic_io = (uint32_t)0x00;
-
-		parse_madt();
-
-		/* Set up LAPIC Timer*/
-		setup_lapic_timer();
-
+	/* Set up LAPIC Timer*/
+	setup_lapic_timer();
 }
 
 void setup_lapic_timer(void)

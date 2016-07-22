@@ -15,8 +15,10 @@ jmp main
 %include "e820.inc"
 
 %define kernel_buffer    0x100000     ; Load kernel at 1mb
-%define image_buffer     0x10000      ; 444 KiB for file
+%define image_buffer     0x10000      ; 256KB for file
+%define module_buffer    0x50000      ; 192KB for modules
 %define image_seg        0x1000       ; Segment (es)
+%define module_seg       0x5000       ; segment for module buffer
 %define BytesPerSector   512          ; Floppy=512
 %define memorymap        0x20000
 %define mmap_seg         0x2000
@@ -51,6 +53,12 @@ main:
   xor bx, bx                          ; Buffer offset
   call LoadFile                       ; Load kernel module
   mov word [FileSize], cx
+
+  mov si, APB
+  mov ax, module_seg
+  xor bx, bx
+  call LoadFile
+  mov word [ramdisksize], cx
 
   cli                                 ; Dissable interupts
   lgdt [gdt_ptr]                      ; Load the GDT
@@ -211,15 +219,18 @@ longmode:
   jmp $
 
 
-FileSize:   dw 0
-KRNL        db "KERNEL  SYS"
-MsgIPL 	    db "[IPL]: Loading kernel module...", 0x0D, 0x0A, 0x00
+FileSize:       dw 0
+KRNL            db "KERNEL  SYS"
+APB             db "apb.prx"
+MsgIPL          db "[IPL]: Loading kernel module...", 0x0D, 0x0A, 0x00
 
 IPL_Struct:
 magic:      dq 0xBEEFC0DEBEEFC0DE
 mem_sz:     dq 0
 low_mem:    dq 0
 high_mem:   dq 0
+ramdisksize: dq 0
+ramdiskptr: dq
 mmap_ptr:   dq memorymap
 mmap_ent:   dq 0
 ;driven     dq 0

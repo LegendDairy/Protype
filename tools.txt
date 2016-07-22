@@ -121,7 +121,10 @@ Then you can run it, if you copy to Protype folder to your home directory
 To test:
 bochs -q -f bin/bochsrc.txt
 
-
+#####Code-editor: Atom#######
+sudo add-apt-repository ppa:webupd8team/atom
+sudo apt-get update
+sudo apt-get install atom
 
 http://wiki.osdev.org/GCC_Cross-Compiler
 http://preshing.com/20141119/how-to-build-a-gcc-cross-compiler/

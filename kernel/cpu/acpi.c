@@ -1,5 +1,5 @@
 /* Pro-Type Kernel v1.3	*/
-/* ACPI Table	   v0.1	*/
+/* ACPI Tables	   v0.1	*/
 /* By LegendMythe	*/
 
 #include<acpi.h>
@@ -24,14 +24,14 @@ ACPISDTHeader_t *find_rsdt(void)
 			if (check == 0)
 			{
 				for(j=0; j<0x100; j++)
-{
-				pmm_bset(((uint64_t)(*(uint32_t*)(curr - 4)) + j*0x1000));
-				vmm_map_frame(((uint64_t)(*(uint32_t*)(curr - 4)) + j*0x1000), ((uint64_t)(*(uint32_t*)(curr - 4)) + j*0x1000), 0x3);
-}
+				{
+					pmm_bset(((uint64_t)(*(uint32_t*)(curr - 4)) + j*0x1000));
+					vmm_map_frame(((uint64_t)(*(uint32_t*)(curr - 4)) + j*0x1000), ((uint64_t)(*(uint32_t*)(curr - 4)) + j*0x1000), 0x3);
+				}
 
 				return  (ACPISDTHeader_t *)((uint64_t)(*(uint32_t*)(curr - 4)));
 			}
-			
+
 		}
 		curr = (uint8_t *)(curr + 0x10); // RSD_PTR has to be 0x10 alligned
 	}
@@ -42,6 +42,12 @@ return NULL;
 ACPISDTHeader_t *findMADT(ACPISDTHeader_t *RootSDT)
 {
 	ACPISDTHeader_t *curr = (ACPISDTHeader_t *)(RootSDT);
+
+	if(!curr)
+	{
+		return NULL;
+	}
+
 	int i = 0;
 	uint8_t *tmp = (uint8_t *)curr;
 
@@ -50,20 +56,23 @@ ACPISDTHeader_t *findMADT(ACPISDTHeader_t *RootSDT)
 
 		if (!strncmp("APIC", tmp, 4))
 		{
-			printf("[ACPI]: Found APIC Table at: %x\n", (uint64_t)tmp);
 			return (ACPISDTHeader_t*)tmp;
 		}
 		tmp++;
-			
+
 	}
-	printf("[ACPI]: No APIC Table found!\n");
-	// No MADT found
 	return NULL;
 }
 
 void parse_madt(void)
 {
 	ACPISDTHeader_t *mad = findMADT((ACPISDTHeader_t *)find_rsdt());
+
+	if(!mad)
+	{
+		printf("[ACPI]: Failed parsing MADT table!\n");
+	}
+
 	uint32_t i = 0;
 	madt_entry_t *curr = (madt_entry_t *)((uint64_t)mad + 44);
 	while (i < mad->Length - 44)

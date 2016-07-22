@@ -11,6 +11,12 @@ void pit_sleep(uint32_t millis);
 processor_t current_cpu;
 processor_list_t processors;
 
+uint8_t inb(uint16_t port)
+{
+    uint8_t byte;
+    asm volatile("inb %1, %0":"=a"(byte): "dN" (port));
+    return byte;
+}
 
 uint8_t apic_check(void)
 {
@@ -23,6 +29,8 @@ void apic_timer(void)
 {
 
 }
+
+
 
 extern void parse_madt(void);
 
@@ -94,19 +102,33 @@ void setup_lapic_timer(void)
 	lapic_write(apic_div_conf, 0x01);					// Divide by 4
 
 	/* Setup LAPIC Counter */
-	lapic_write(apic_init_count, 0xFFFFFFFF);
 
 	/* Set up PIT */
-	//pit_sleep(1);
+	outb(0x61, (inb(0x61) & 0xFD) | 1);
+	outb(0x43,0xB2);
+	//1193180/100 Hz = 11931 = 2e9bh
+	outb(0x42,0x9B);	//LSB
+	inb(0x60);		//short delay
+	outb(0x42,0x2E);	//MSB
+
+	//reset PIT one-shot counter (start counting)
+	uint8_t tmp = inb(0x61)&0xFE;
+	outb(0x61,(uint8_t)tmp);		//gate low
+	outb(0x61,(uint8_t)tmp|1);	//gate high
+
+	lapic_write(apic_init_count, 0xFFFFFFFF);
+
+
+	while(!(inb(0x61)&0x20));
 
 	/* Calculate divisor */
 	lapic_write(apic_lvt_timer_reg, 0x10030);
 	uint32_t freq = lapic_read(apic_cur_count);
 	freq = 0xFFFFFFFF - freq;
-	freq = freq*4;
+	freq = freq*100*4;
 
 	/* Give information to the user */
-	printf("[APIC]: Bus frequency:  %dMHz\n", freq / 1000);
+	printf("[APIC]: Bus frequency:  %dMHz\n", freq / 1000000);
 
 	/* Setup intial count */
 	lapic_write(apic_init_count, 10000);

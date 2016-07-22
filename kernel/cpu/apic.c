@@ -30,7 +30,6 @@ void apic_timer(void)
 	tick++;
 }
 
-
 uint32_t lapic_read(uint32_t r)
 {
 	return ((uint32_t)(current_cpu.lapic_base[r / 4]));

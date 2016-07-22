@@ -48,17 +48,18 @@ main:
   mov WORD [low_mem], ax
   mov WORD [high_mem], bx
 
+  mov si, APB
+  mov ax, module_seg
+  xor bx, bx
+  call LoadFile
+  mov word [ramdisksize], cx
+
   mov si, KRNL                        ; Load filename
   mov ax, image_seg                   ; Buffer segment
   xor bx, bx                          ; Buffer offset
   call LoadFile                       ; Load kernel module
   mov word [FileSize], cx
 
-  mov si, APB
-  mov ax, module_seg
-  xor bx, bx
-  call LoadFile
-  mov word [ramdisksize], cx
 
   cli                                 ; Dissable interupts
   lgdt [gdt_ptr]                      ; Load the GDT
@@ -221,7 +222,7 @@ longmode:
 
 FileSize:       dw 0
 KRNL            db "KERNEL  SYS"
-APB             db "apb.prx"
+APB             db "APBM    PRX"
 MsgIPL          db "[IPL]: Loading kernel module...", 0x0D, 0x0A, 0x00
 
 IPL_Struct:
@@ -229,8 +230,7 @@ magic:      dq 0xBEEFC0DEBEEFC0DE
 mem_sz:     dq 0
 low_mem:    dq 0
 high_mem:   dq 0
-ramdisksize: dq 0
-ramdiskptr: dq
+
 mmap_ptr:   dq memorymap
 mmap_ent:   dq 0
 ;driven     dq 0
@@ -239,3 +239,5 @@ mmap_ent:   dq 0
 
 lmem: dw 0
 hmem: dw 0
+ramdisksize: dq 0
+ramdiskptr: dq 0

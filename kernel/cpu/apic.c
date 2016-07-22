@@ -8,10 +8,8 @@ volatile uint64_t tick;
 uint32_t apic_base;
 processor_t current_cpu;
 processor_list_t processors;
-<<<<<<< HEAD
 extern void parse_madt(void);
 void pit_sleep(uint32_t millis);
-=======
 
 uint8_t inb(uint16_t port)
 {
@@ -19,7 +17,6 @@ uint8_t inb(uint16_t port)
     asm volatile("inb %1, %0":"=a"(byte): "dN" (port));
     return byte;
 }
->>>>>>> 9754fb290eb160125007dfe947e5005f93a1b212
 
 uint8_t apic_check(void)
 {
@@ -33,13 +30,7 @@ void apic_timer(void)
 	tick++;
 }
 
-<<<<<<< HEAD
-=======
 
-
-extern void parse_madt(void);
-
->>>>>>> 9754fb290eb160125007dfe947e5005f93a1b212
 uint32_t lapic_read(uint32_t r)
 {
 	return ((uint32_t)(current_cpu.lapic_base[r / 4]));
@@ -61,7 +52,7 @@ void setup_apic(void)
 	/* Fill CPU form */
 	mutex_lock(&current_cpu.lock);
 	asm volatile ("rdmsr": "=a"((uint32_t *)current_cpu.lapic_base) : "c"(apic_base_msr));
-	current_cpu.lapic_base &= (uint32_t *)(0xfffff000);
+	current_cpu.lapic_base = (uint32_t *)(0xfffff000 & (uint64_t)current_cpu.lapic_base);
 	apic_base = (uint64_t)current_cpu.lapic_base;
 	current_cpu.id = lapic_read(apic_reg_id);
 	current_cpu.flags = CPU_FLAG_BOOTSTRAP;
@@ -93,6 +84,8 @@ void setup_apic(void)
 
 	/* Set up LAPIC Timer*/
 	setup_lapic_timer();
+
+	boot_ap(1);
 }
 
 void setup_lapic_timer(void)
@@ -140,4 +133,22 @@ void boot_ap(uint8_t id)
 	id &= 0xF;
 	lapic_write(apic_ICR_32_63, id << 24);
 	lapic_write(apic_ICR_0_31, 0x00004500);
+	/* Set up PIT */
+	outb(0x61, (inb(0x61) & 0xFD) | 1);
+	outb(0x43,0xB2);
+	//1193180/100 Hz = 11931 = 2e9bh
+	outb(0x42,0x9B);	//LSB
+	inb(0x60);		//short delay
+	outb(0x42,0x2E);	//MSB
+
+	//reset PIT one-shot counter (start counting)
+	uint8_t tmp = inb(0x61)&0xFE;
+	outb(0x61,(uint8_t)tmp);		//gate low
+	outb(0x61,(uint8_t)tmp|1);	//gate high
+
+	lapic_write(apic_init_count, 0xFFFFFFFF);
+
+
+	while(!(inb(0x61)&0x20));
+	lapic_write(apic_ICR_0_31, 0x00004600 | 0x50);
 }

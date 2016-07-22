@@ -3,7 +3,7 @@
 
 [BITS 16]
 
-%include "floppy.inc"		
+%include "floppy.inc"
 
 ClusterLBA:                           ; Converts a clusternumber to a LBA
   sub ax, 0x0002                      ; Zero base cluster number.
@@ -38,7 +38,7 @@ LoadFile:
   mov ax, 0x450
   mov es, ax
   mov di, 0                           ; Locate first root entry en ram
-  
+
 .loop:
   pop si                              ; Load Filename
   push si                             ; Save for later
@@ -56,7 +56,7 @@ LoadFile:
   call Print
   hlt
   jmp $
-  
+
 LoadFAT:
   add sp, 4			                      ; Fix the stack
   add di, 0x001A
@@ -71,13 +71,11 @@ LoadFAT:
   call ReadFloppy                     ; Load the FATs
   pop bx                              ; Load buffer offset
   pop ax                              ; Load buffer segment 0x684
-  mov ax, 0x1000                      ; Set the right segment
-  xor bx, bx
   mov es, ax
   xor cx, cx
   push cx
 
-LOAD_IMAGE:                            
+LOAD_IMAGE:
   mov ax, WORD [cluster]              ; Load clusternumber
   call ClusterLBA                     ; Convert Cluster to address
   xor cx, cx                          ; Erase ax
@@ -91,7 +89,7 @@ LOAD_IMAGE:
   mov cx, ax                          ; Load clusternumber
   shr dx, 0x0001                      ; Divide by two (fast)
   add cx, dx                          ; Add for 3/2
-  mov di, cx				
+  mov di, cx
   push bx
   mov bx, 0x4500
   add bx, di
@@ -103,11 +101,11 @@ LOAD_IMAGE:
   .EVEN_CLUSTER:                      ; If even only the low bits
     and dx, 0000111111111111b         ; Take low twelve bits (start at 0=even)
     jmp .DONE                         ; Jump over odd bit code
-         
+
   .ODD_CLUSTER:                       ; If odd only the high 12 bits
     shr dx, 0x0004                    ; Take high twelve bits
 
-.DONE:                                 
+.DONE:
   mov WORD [cluster], dx              ; Save real 12bit cluster
   cmp dx, 0x0FF0                      ; End of file?
   jb LOAD_IMAGE                       ; Nope, continue...

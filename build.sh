@@ -2,6 +2,8 @@
 ./boot/build.sh
 ./ipl/build.sh
 
+nasm -f bin kernel/cpu/ap_init.asm -o bin/apbm.prx
+
 cd $HOME/Protype/kernel
 make
 make clean

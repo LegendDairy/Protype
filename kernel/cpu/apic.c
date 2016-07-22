@@ -8,8 +8,18 @@ volatile uint64_t tick;
 uint32_t apic_base;
 processor_t current_cpu;
 processor_list_t processors;
+<<<<<<< HEAD
 extern void parse_madt(void);
 void pit_sleep(uint32_t millis);
+=======
+
+uint8_t inb(uint16_t port)
+{
+    uint8_t byte;
+    asm volatile("inb %1, %0":"=a"(byte): "dN" (port));
+    return byte;
+}
+>>>>>>> 9754fb290eb160125007dfe947e5005f93a1b212
 
 uint8_t apic_check(void)
 {
@@ -23,6 +33,13 @@ void apic_timer(void)
 	tick++;
 }
 
+<<<<<<< HEAD
+=======
+
+
+extern void parse_madt(void);
+
+>>>>>>> 9754fb290eb160125007dfe947e5005f93a1b212
 uint32_t lapic_read(uint32_t r)
 {
 	return ((uint32_t)(current_cpu.lapic_base[r / 4]));
@@ -85,29 +102,33 @@ void setup_lapic_timer(void)
 	lapic_write(apic_div_conf, 0x01);					// Divide by 4
 
 	/* Setup LAPIC Counter */
-	lapic_write(apic_init_count, 0xFFFFFFFF);
 
 	/* Set up PIT */
-	uint8_t val;
-	asm volatile ( "inb %1, %0" : "=a"(val) : "Nd"(0x61) );
-	val &= 0xFD
-	val |= 0x1;
-	asm volatile ( "outb %0, %1" : : "a"(val), "Nd"(0x61) );
+	outb(0x61, (inb(0x61) & 0xFD) | 1);
+	outb(0x43,0xB2);
+	//1193180/100 Hz = 11931 = 2e9bh
+	outb(0x42,0x9B);	//LSB
+	inb(0x60);		//short delay
+	outb(0x42,0x2E);	//MSB
 
-	asm volatile ( "outb %0, %1" : : "a"(0xb2), "Nd"(0x43) );
-	asm volatile ( "outb %0, %1" : : "a"(0X4A9), "Nd"(0x42) );
+	//reset PIT one-shot counter (start counting)
+	uint8_t tmp = inb(0x61)&0xFE;
+	outb(0x61,(uint8_t)tmp);		//gate low
+	outb(0x61,(uint8_t)tmp|1);	//gate high
+
+	lapic_write(apic_init_count, 0xFFFFFFFF);
 
 
-	//pit_sleep(1);
+	while(!(inb(0x61)&0x20));
 
 	/* Calculate divisor */
 	lapic_write(apic_lvt_timer_reg, 0x10030);
 	uint32_t freq = lapic_read(apic_cur_count);
 	freq = 0xFFFFFFFF - freq;
-	freq = freq*4;
+	freq = freq*100*4;
 
 	/* Give information to the user */
-	printf("[APIC]: Bus frequency:  %dMHz\n", freq / 1000);
+	printf("[APIC]: Bus frequency:  %dMHz\n", freq / 1000000);
 
 	/* Setup intial count */
 	lapic_write(apic_init_count, 10000);

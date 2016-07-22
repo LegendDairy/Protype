@@ -8,10 +8,8 @@ volatile uint64_t tick;
 uint32_t apic_base;
 processor_t current_cpu;
 processor_list_t processors;
-<<<<<<< HEAD
 extern void parse_madt(void);
 void pit_sleep(uint32_t millis);
-=======
 
 uint8_t inb(uint16_t port)
 {
@@ -19,7 +17,6 @@ uint8_t inb(uint16_t port)
     asm volatile("inb %1, %0":"=a"(byte): "dN" (port));
     return byte;
 }
->>>>>>> 9754fb290eb160125007dfe947e5005f93a1b212
 
 uint8_t apic_check(void)
 {
@@ -33,13 +30,6 @@ void apic_timer(void)
 	tick++;
 }
 
-<<<<<<< HEAD
-=======
-
-
-extern void parse_madt(void);
-
->>>>>>> 9754fb290eb160125007dfe947e5005f93a1b212
 uint32_t lapic_read(uint32_t r)
 {
 	return ((uint32_t)(current_cpu.lapic_base[r / 4]));

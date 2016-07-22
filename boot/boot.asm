@@ -8,7 +8,7 @@
 jmp loader
 
 ;;;;;;;;;;BIOS Parameter Block;;;;;;;;;;;
-bpbOEM:                 db "PROTYPE "   ;
+bpbOEM:                 db "PROTYPE "   ;                                       ; image[0x3]
 bpbBytesPerSector:      dw 512          ;
 bpbSectorsPerCluster:   db 1            ;
 bpbReservedSectors:     dw 1            ;
@@ -30,14 +30,14 @@ ebrVolumeLabel          db "PROTYPE 1  ";
 ebrFileSystem:          db "FAT12   "   ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-%include "floppy.inc"		
-%include "fat12.inc"		
-%include "print.inc"		
+%include "floppy.inc"
+%include "fat12.inc"
+%include "print.inc"
 
 loader:           									; Loads stage2.
 cli						    									; Disable interrupts.
 mov ax, 0x07C0											; Set up segments.
-mov ds, ax        									; 
+mov ds, ax        									;
 mov es, ax        									;
 mov fs, ax        									;
 mov gs, ax        									;

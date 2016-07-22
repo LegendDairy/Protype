@@ -23,6 +23,11 @@ typedef struct
 	uint64_t high_mem;
 	map_entry_t *mmap;
 	uint64_t mmap_entries;
+	uint64_t driven;
+	uint64_t drivetype;
+	uint64_t PLM4T;
+	uint64_t ramdisksize;
+	uint64_t ramdiskptr;
 
 } ipl_info_t;
 

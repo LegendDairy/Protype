@@ -14,7 +14,8 @@ jmp main
 %include "print.inc"
 %include "e820.inc"
 
-%define kernel_buffer    0x100000     ; Load kernel at 1mb
+%define kernel_buffer	0x100000     ; Load kernel at 1mb
+%define PML4T		0x100000      ; Location of PML4 table
 %define image_buffer     0x10000      ; 256KB for file
 %define module_buffer    0x50000      ; 192KB for modules
 %define image_seg        0x1000       ; Segment (es)
@@ -24,18 +25,18 @@ jmp main
 %define mmap_seg         0x2000
 
 main:
-  xor ax, ax                          ; Erase ax
-  mov ds, ax                          ; Set up the segments
+  xor ax, ax                  		; Erase ax
+  mov ds, ax                  		; Set up the segments
   mov es, ax
   mov fs, ax
   mov gs, ax
   mov ss, ax
-  mov sp, 0xFFFF		      ; Stack from 0x7E00-0xFFFF
+  mov sp, 0xFFF0			; Stack from 0x7E00-0xFFF0
 
-  mov si, MsgIPL                      ; IPL Message
-  call Print                          ; Print Message
+  mov si, MsgIPL              		; IPL Message
+  call Print                  		; Print Message
 
-  call a20_kb                         ; Enable A20
+  call a20_kb                 		; Enable A20
 
   mov ax, mmap_seg
   mov es, ax
@@ -53,50 +54,55 @@ main:
   xor bx, bx
   call LoadFile
   mov word [ramdisksize], cx
+  mov bx, gdt_ptr
+  mov word [module_buffer+0x6], bx
+  mov qword [module_buffer+0x8], PML4T
+  mov word [module_buffer+0x10], gdt_64_ptr
 
-  mov si, KRNL                        ; Load filename
-  mov ax, image_seg                   ; Buffer segment
-  xor bx, bx                          ; Buffer offset
-  call LoadFile                       ; Load kernel module
+
+  mov si, KRNL                        	; Load filename
+  mov ax, image_seg                   	; Buffer segment
+  xor bx, bx                          	; Buffer offset
+  call LoadFile                       	; Load kernel module
   mov word [FileSize], cx
 
 
-  cli                                 ; Dissable interupts
-  lgdt [gdt_ptr]                      ; Load the GDT
-  sti                                 ; Enable interupts
+  cli                                 	; Dissable interupts
+  lgdt [gdt_ptr]                      	; Load the GDT
+  sti                                 	; Enable interupts
 
   cli
-  mov eax, cr0                        ; Read cr0
-  or eax, 1                           ; Set PM bit
-  mov cr0, eax                        ; Write cr0
-  jmp 0x8:pm                          ; Far jump in PM
+  mov eax, cr0                        	; Read cr0
+  or eax, 1                           	; Set PM bit
+  mov cr0, eax                        	; Write cr0
+  jmp 0x8:pm                          	; Far jump in PM
 
 [BITS 32]
 pm:
-  mov ax, 0x10                        ; Set data descriptors
-  mov ds, ax                          ;
-  mov es, ax                          ;
-  mov fs, ax                          ;
+  mov ax, 0x10                        	; Set data descriptors
+  mov ds, ax                          	;
+  mov es, ax                          	;
+  mov fs, ax                          	;
 
   mov gs, ax
-  mov ss, ax                          ; Set up Stack descriptor
+  mov ss, ax                          	; Set up Stack descriptor
 
-  mov eax, DWORD [0x10000 + 0x20]     ; e_phoff
-  mov ebp, DWORD [0x10000 + 0x18]     ; e_entry
+  mov eax, DWORD [0x10000 + 0x20]     	; e_phoff
+  mov ebp, DWORD [0x10000 + 0x18]     	; e_entry
   xor ecx, ecx
-  mov cx, WORD [0x10000 + 0x38]       ; e_phnum
+  mov cx, WORD [0x10000 + 0x38]       	; e_phnum
   xor edx, edx
-  mov dx, WORD [0x10000 + 0x36]       ; e_phentsize
-  add eax, 0x10000                    ; Set base
+  mov dx, WORD [0x10000 + 0x36]       	; e_phentsize
+  add eax, 0x10000                    	; Set base
 
 load_kernel:
-  .loop:                              ; Loop through headers
+  .loop:                              	; Loop through headers
     push ecx
-    mov esi, [eax + 0x00]             ; p_type
-    mov edi, 0x00001                  ; PT_LOAD: Loadable segment
-    std                               ; Increment esi and edi
+    mov esi, [eax + 0x00]             	; p_type
+    mov edi, 0x00001                  	; PT_LOAD: Loadable segment
+    std                               	; Increment esi and edi
     cmpsd                               ; Check for PT_LOAD
-    jne .skip                         ; Not loadable?=>Not interested!
+    jne .skip                         	; Not loadable?=>Not interested!
 
     mov esi, [eax + 0x08]             ; p_offset
     add esi, 0x10000                  ; address of section
@@ -112,7 +118,7 @@ load_kernel:
 
 jump_long_mode:
   mov ecx, 0x1800                     ; Size to erase /4
-  mov eax, 0x10000                    ; Base of paging structs
+  mov eax, PML4T                      ; Base of paging structs
   mov cr3, eax                        ; Set PML4T_ptr in cr3
 
   .l1:
@@ -120,10 +126,10 @@ jump_long_mode:
   add eax, 4                          ; Per DWORD
   loop .l1                            ; 4*0x1800=>0x6000
 
-  mov DWORD [0x10000], 0x11003        ; PML4T[0] = &PD_ptr[0]
-  mov DWORD [0x10FF8], 0x10003        ; PML4T[0] = &PML4T
-  mov DWORD [0x11000], 0x12003        ; PDT[0]   = &PD_ptr[0]
-  mov DWORD [0x11018], 0x15003        ; PDT[3]   = &PD_ptr[3]
+  mov DWORD [PML4T], 0x11003		; PML4T[0] = &PD_ptr[0]
+  mov DWORD [PML4T + FF8], 0x10003	; PML4T[511] = &PML4T
+  mov DWORD [PML4T + 0x1000], 0x12003	; PDT[0]   = &PD_ptr[0]
+  mov DWORD [PML4T + 0x1018], 0x15003	; PDT[3]   = &PD_ptr[3]
 
   mov DWORD [0x12000], 0x16003        ; PD0[0]   = &PT_ptr[0]
   mov DWORD [0x15FB0], 0x17003        ; PD3[502] = &PT_ptr[502]
@@ -131,7 +137,7 @@ jump_long_mode:
   mov DWORD [0x15FF8], 0x10003        ; Virtual addresses of the PDPTs
 
   mov ecx, 512
-  xor eax, eax	                        ; 512 PT entries
+  xor eax, eax	                      ; 512 PT entries
   mov eax, 0x00003                    ; Physical address
   mov ebx, 0x16000                    ; Pagetable address
 
@@ -220,24 +226,20 @@ longmode:
   jmp $
 
 
-FileSize:       dw 0
-KRNL            db "KERNEL  SYS"
-APB             db "APBM    PRX"
-MsgIPL          db "[IPL]: Loading kernel module...", 0x0D, 0x0A, 0x00
+FileSize:    dw 0
+KRNL         db "KERNEL  SYS"
+APB          db "APBM    PRX"
+MsgIPL       db "[IPL]: Loading kernel module...", 0x0D, 0x0A, 0x00
 
 IPL_Struct:
-magic:      dq 0xBEEFC0DEBEEFC0DE
-mem_sz:     dq 0
-low_mem:    dq 0
-high_mem:   dq 0
-
-mmap_ptr:   dq memorymap
-mmap_ent:   dq 0
-;driven     dq 0
-;drivetype  dq 0
-;PLM4T      dq 0
-
-lmem: dw 0
-hmem: dw 0
+magic:       dq 0xBEEFC0DEBEEFC0DE
+mem_sz:      dq 0
+low_mem:     dq 0
+high_mem:    dq 0
+mmap_ptr:    dq memorymap
+mmap_ent:    dq 0
+driven       dq 0
+drivetype    dq 0
+PML4T_PTR    dq PML4T
 ramdisksize: dq 0
-ramdiskptr: dq 0
+ramdiskptr:  dq 0

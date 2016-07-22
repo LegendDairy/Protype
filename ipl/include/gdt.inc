@@ -20,14 +20,14 @@ gdt_start:
   db 10010010b              ; Acces byte
   db 11001111b              ; Flags + limit
   db 0                      ; Base high
-  
+
 gdt_end:
-    
+
 gdt_ptr:
   dw gdt_end - gdt_start - 1
   dw gdt_start
-  
-  
+
+
 gdt_64_start:
   dd 0                      ; Null descriptor
   dd 0                      ; Null descriptor
@@ -40,11 +40,11 @@ gdt_64_start:
   db 0                      ; Base high
                             ; Data Descriptor
   dq 0x0000920000000000
-  
+
 gdt_64_end:
-    
+
 gdt_64_ptr:
   dw gdt_64_end - gdt_64_start - 1
   dq gdt_64_start
-  
+
 %endif

@@ -88,6 +88,16 @@ void setup_lapic_timer(void)
 	lapic_write(apic_init_count, 0xFFFFFFFF);
 
 	/* Set up PIT */
+	uint8_t val;
+	asm volatile ( "inb %1, %0" : "=a"(val) : "Nd"(0x61) );
+	val &= 0xFD
+	val |= 0x1;
+	asm volatile ( "outb %0, %1" : : "a"(val), "Nd"(0x61) );
+
+	asm volatile ( "outb %0, %1" : : "a"(0xb2), "Nd"(0x43) );
+	asm volatile ( "outb %0, %1" : : "a"(0X4A9), "Nd"(0x42) );
+
+
 	//pit_sleep(1);
 
 	/* Calculate divisor */
@@ -102,4 +112,11 @@ void setup_lapic_timer(void)
 	/* Setup intial count */
 	lapic_write(apic_init_count, 10000);
 	lapic_write(apic_lvt_timer_reg, (uint32_t)(0x30 | apic_timer_period));
+}
+
+void boot_ap(uint8_t id)
+{
+	id &= 0xF;
+	lapic_write(apic_ICR_32_63, id << 24);
+	lapic_write(apic_ICR_0_31, 0x00004500);
 }

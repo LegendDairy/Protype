@@ -9,7 +9,6 @@ jmp main
 
 ap_count: db 0x01
 
-
 main:
 cli
 mov al, [ap_count]

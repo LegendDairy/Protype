@@ -88,6 +88,13 @@ mov al, 0x48				; ASCII for 'H'
 mov ah, 0x0F				; Color attributes
 mov [rbx], ax
 
+mov al, [ap_count]
+inc al
+mov [ap_count], al
+
+mov rax, [idt_ptr]
+lidt [rax]
+
 loop:
 jmp loop
 

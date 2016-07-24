@@ -3,6 +3,8 @@
 /* By LegendMythe	*/
 
 #include<apic.h>
+#include<idt.h>
+
 
 #define apb_base 0x50000
 
@@ -11,6 +13,7 @@ uint8_t ap_count = 1;
 uint32_t apic_base;
 processor_t current_cpu;
 processor_list_t processors;
+extern idt_ptr_t	idt_ptr;
 
 uint8_t inb(uint16_t port)
 {
@@ -21,7 +24,7 @@ uint8_t inb(uint16_t port)
 
 void pit_handler(void)
 {
-
+	printf("i");
 }
 
 uint8_t apic_check(void)
@@ -33,6 +36,8 @@ uint8_t apic_check(void)
 
 void apic_timer_handler(void)
 {
+	printf("i");
+
 	tick++;
 }
 
@@ -94,8 +99,8 @@ void setup_apic(void)
 	lapic_write(apic_lvt_lint0_reg, 0x08700);			// Enable normal external interrupts
 	lapic_write(apic_lvt_lint1_reg, 0x00400);			// Enable normal NMI processing
 	lapic_write(apic_lvt_error_reg, 0x10000);			// Disable error interrupts
-        //lapic_write(aapic_reg_dest_format, 0xF0000000);               // Flatmode
-        //lapic_write(apic_reg_logical_dest, 0xFF000000);
+        lapic_write(apic_reg_dest_format, 0xF0000000);               // Flatmode
+        lapic_write(apic_reg_logical_dest, 0xFF000000);
 	lapic_write(apic_reg_spur_int_vect, 0x0013F);			// Enable the APIC and set spurious vector to 0x3F
 	lapic_write(apic_lvt_lint0_reg, 0x08700);			// Enable normal external interrupts
 	lapic_write(apic_lvt_lint1_reg, 0x00400);			// Enable normal NMI processing
@@ -103,22 +108,19 @@ void setup_apic(void)
 
 	/* Set up IO APIC for the PIT (POC) */
 	uint32_t *ioapic_reg 	= (uint32_t*)0xfec00000;
-	uint32_t *ioapic_io 	= (uint32_t*)0xfec00010;
-	*(uint32_t*)ioapic_reg 	= (uint32_t)0x12;                      // IRQ2
-	*ioapic_io 		= (uint32_t)0x0831 ;                   // Vector 49, fixed, log dest, active high, edge,
-	*(uint32_t*)ioapic_reg 	= (uint32_t)0x13;
-	*ioapic_io 		= (uint32_t)0x0F000000;                // Destination 0xF
+ 	uint32_t *ioapic_io 	= (uint32_t*)0xfec00010;
+ 	*(uint32_t*)ioapic_reg 	= (uint32_t)0x12;
+ 	*ioapic_io 		= (uint32_t)0x830 ;
+ 	*(uint32_t*)ioapic_reg 	= (uint32_t)0x13;
+ 	*ioapic_io 		= (uint32_t)0x0F000000;
 
 	/* Parse the multiprocessor table. */
 	parse_madt();
 
 	/* Set up LAPIC Timer. */
 	setup_lapic_timer();
+	boot_ap(1); // BUg: if we boot the ap, the apic timer only fires once.
 
-        /* Proof of concept (smp): */
-	boot_ap(1);
-	boot_ap(2);
-	boot_ap(3);
 
 }
 
@@ -161,8 +163,8 @@ void setup_lapic_timer(void)
 void boot_ap(uint8_t id)
 {
 	id &= 0xF;
-        /*uint64_t *apb_idt_ptr = 0x50000 + 0x4;
-        *apb_idt_ptr = &idt_ptr;*/
+        uint64_t *apb_idt_ptr = 0x50000 + 0x3;
+        *apb_idt_ptr = &idt_ptr;
 
 	lapic_write(apic_ICR_32_63, id << 24);
 	lapic_write(apic_ICR_0_31, 0x00004500);
@@ -185,7 +187,6 @@ void boot_ap(uint8_t id)
 	while(!(inb(0x61)&0x20));
 
 	lapic_write(apic_ICR_0_31, 0x00004600 | (apb_base/0x1000));
-	while(*((uint8_t *)apb_base + 0x03) == ap_count);
-	ap_count++;
+
 	printf("\n[SMP]: AP %d booted! Currently %d active processors running.", id, ap_count);
 }

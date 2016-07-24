@@ -73,7 +73,8 @@ extern void isr28();
 extern void isr29();
 extern void isr30();
 extern void isr31();
-extern void apic_routine();
+extern void apic_timer();
+extern void pit_routine();
 extern void apic_spurious();
 
 #endif

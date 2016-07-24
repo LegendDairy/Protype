@@ -41,8 +41,8 @@ isr_common_stub:
     add rsp, 16                     ; Cleans up the pushed error code and pushed ISR number
     iretq                           ; pops 5 things at once: CS, EIP, EFLAGS, SS, and ESP
 
-[GLOBAL apic_timer_handler]
-[EXTERN apic_timer]
+[GLOBAL apic_timer]
+[EXTERN apic_timer_handler]
 [EXTERN apic_base]
 apic_timer:
   cli                               ; Dissable interrupts
@@ -54,8 +54,8 @@ apic_timer:
 
   iretq                             ; Return to code
 
-[GLOBAL pit_handler]
-[EXTERN pit_routine]
+[GLOBAL pit_routine]
+[EXTERN pit_handler]
 [EXTERN apic_base]
 pit_routine:
   cli                               ; Dissable interrupts

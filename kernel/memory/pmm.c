@@ -12,8 +12,6 @@ mutex_t  pmm_lock;
 map_entry_t *pre_pmm_heap			= 0;
 uint64_t pre_pmm_entries			= 0;
 
-static uint64_t pre_pmm_allocate_frame(void);
-
 /* Current TODO: 				*/
 /* -mcmodel=large, maybe alternatives?		*/
 /* Better testing maybe. 			*/

@@ -26,6 +26,8 @@ void pmm_free_page(uint64_t address);
 /** Pops a page from the stack and sets the bit.        **/
 /** Returns the physical address of the page.           **/
 uint64_t pmm_alloc_page(void);
+/* Physical page allocator to be used before pmm is setup. */
+uint64_t pre_pmm_allocate_frame(void);
 
 /** Tests if a page is available.                       **/
 uint64_t pmm_test_bmap(uint64_t address);

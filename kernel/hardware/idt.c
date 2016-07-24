@@ -72,8 +72,9 @@ void init_idt(void)
 	idt_set_gate (29, (uint64_t)isr29, 0x08, 0xEE);
 	idt_set_gate (30, (uint64_t)isr30, 0x08, 0xEE);
 	idt_set_gate (31, (uint64_t)isr31, 0x08, 0xEE);
-	idt_set_gate (48, (uint64_t)apic_routine, 0x08, 0xEE);
-	idt_set_gate (49, (uint64_t)apic_spurious, 0x08, 0xEE);
+	idt_set_gate (48, (uint64_t)apic_timer, 0x08, 0xEE);
+	idt_set_gate (49, (uint64_t)pit_routine, 0x08, 0xEE);
+	idt_set_gate (0x3F, (uint64_t)apic_spurious, 0x08, 0xEE);
 
 	flush_idt((uint64_t) &idt_ptr);
 }

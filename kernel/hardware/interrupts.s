@@ -8,7 +8,7 @@
 [GLOBAL flush_idt]                  ; Allows the C code to call idt_flush().
 [EXTERN idt_ptr]
 flush_idt:
-    mov rax, idt_ptr                ; Get the pointer to the IDT, passed as a parameter. 
+    mov rax, idt_ptr                ; Get the pointer to the IDT, passed as a parameter.
     lidt [rax]                      ; Load the IDT pointer.
     ret
 
@@ -37,21 +37,34 @@ isr_common_stub:
     pop rcx                         ; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
     pop rbx                         ; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
     pop rax                         ; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
-    
-    add rsp, 16                     ; Cleans up the pushed error code and pushed ISR number    
-    iretq                           ; pops 5 things at once: CS, EIP, EFLAGS, SS, and ESP   
 
-[GLOBAL apic_routine]
-[EXTERN apic_base]
+    add rsp, 16                     ; Cleans up the pushed error code and pushed ISR number
+    iretq                           ; pops 5 things at once: CS, EIP, EFLAGS, SS, and ESP
+
+[GLOBAL apic_timer_handler]
 [EXTERN apic_timer]
-apic_routine:
-  cli                               ; Dissable interrupts                           
-    
+[EXTERN apic_base]
+apic_timer:
+  cli                               ; Dissable interrupts
+
   mov eax, [apic_base]              ; Apic Base in C-code
   mov dword [eax + apic_eoi],  0    ; Send EOI to LAPIC
-    
-  call apic_timer                   ; Call C function                      
-    
+
+  call apic_timer_handler                   ; Call C function
+
+  iretq                             ; Return to code
+
+[GLOBAL pit_handler]
+[EXTERN pit_routine]
+[EXTERN apic_base]
+pit_routine:
+  cli                               ; Dissable interrupts
+
+  mov eax, [apic_base]              ; Apic Base in C-code
+  mov dword [eax + apic_eoi],  0    ; Send EOI to LAPIC
+
+  call pit_handler                   ; Call C function
+
   iretq                             ; Return to code
 
 [GLOBAL apic_spurious]
@@ -67,7 +80,7 @@ global isr%1
     push 0                          ; Push a dummy error code.
     push %1                         ; Push the interrupt number.
     jmp isr_common_stub             ; Go to our common handler code.
-%endmacro   
+%endmacro
 
 %macro ISR_ERRCODE 1
 global isr%1

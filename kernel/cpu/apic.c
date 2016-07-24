@@ -19,6 +19,11 @@ uint8_t inb(uint16_t port)
     return byte;
 }
 
+void pit_handler(void)
+{
+
+}
+
 uint8_t apic_check(void)
 {
 	uint32_t eax, edx;
@@ -26,7 +31,7 @@ uint8_t apic_check(void)
 	return edx & CPUID_FLAG_APIC;
 }
 
-void apic_timer(void)
+void apic_timer_handler(void)
 {
 	tick++;
 }
@@ -53,7 +58,19 @@ void setup_apic(void)
         /* Create an IDT with interrupt vectors for the local APIC's spurious IRQ,
         /* the master PIC's spurious IRQ and the slave PIC's spurious IRQ. */
 
+        /* LINT0 and LINT1 should be setup dynamically (according to whatever
+        the MPS table or ACPI says), rather than hardcoded. Harcoding them
+        (like in the example in Intel manuals) is only really appropriate
+        for BIOSs (where they know how the inputs are connected in advance). */
 
+        /*  test dword [SIBBOOTdetectionFlags],DETECTFLAGhasIMCRP   ;Does IMCR need to be disabled?
+   je .noIMCR                  ; no
+   mov al,0x70
+   out 0x22,al                  ;Select IMCR register
+   mov al,1
+   out 0x23,al                  ;Disable PICs
+.noIMCR: */
+//http://forum.osdev.org/viewtopic.php?p=107868#107868
 	mutex_unlock(&processors.lock);
 	mutex_unlock(&current_cpu.lock);
 	processors.prev = 0;
@@ -79,18 +96,18 @@ void setup_apic(void)
 	lapic_write(apic_lvt_error_reg, 0x10000);			// Disable error interrupts
         //lapic_write(aapic_reg_dest_format, 0xF0000000);               // Flatmode
         //lapic_write(apic_reg_logical_dest, 0xFF000000);
-	lapic_write(apic_reg_spur_int_vect, 0x00131);			// Enable the APIC and set spurious vector to 49
+	lapic_write(apic_reg_spur_int_vect, 0x0013F);			// Enable the APIC and set spurious vector to 0x3F
 	lapic_write(apic_lvt_lint0_reg, 0x08700);			// Enable normal external interrupts
 	lapic_write(apic_lvt_lint1_reg, 0x00400);			// Enable normal NMI processing
 	lapic_write(apic_reg_eoi, 0x00);				// Make sure no interrupts are left
 
-	/* Set up IO APIC */
+	/* Set up IO APIC for the PIT (POC) */
 	uint32_t *ioapic_reg 	= (uint32_t*)0xfec00000;
 	uint32_t *ioapic_io 	= (uint32_t*)0xfec00010;
-	*(uint32_t*)ioapic_reg 	= (uint32_t)0x12;
-	*ioapic_io 		= (uint32_t)0x30 ;
+	*(uint32_t*)ioapic_reg 	= (uint32_t)0x12;                      // IRQ2
+	*ioapic_io 		= (uint32_t)0x0831 ;                   // Vector 49, fixed, log dest, active high, edge,
 	*(uint32_t*)ioapic_reg 	= (uint32_t)0x13;
-	*ioapic_io 		= (uint32_t)0x00;
+	*ioapic_io 		= (uint32_t)0x0F000000;                // Destination 0xF
 
 	/* Parse the multiprocessor table. */
 	parse_madt();

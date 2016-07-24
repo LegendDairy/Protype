@@ -16,13 +16,13 @@ static void split_chunk(header_t *chunk, uint64_t sz);										// Splits a chun
 static void free_chunk (header_t *chunk);											// Frees a chunk (must be the last chunk of the heap).
 static void glue_chunk (header_t *chunk);											// Glues the chunk to surounding chunks if possible.
 
-/** Simple dynamic allocater for the kernel **/
+/** Simple dynamic allocater for the kernel. **/
 void *malloc(uint64_t sz)
 {
 	header_t *cur_header = (header_t *)heap_start, *prev_header = 0;
 
 	while(cur_header)
-	{	
+	{
 		if(cur_header->allocated == 0 && cur_header->size >= sz)
 		{
 			split_chunk(cur_header, sz);
@@ -37,11 +37,11 @@ void *malloc(uint64_t sz)
 	uint64_t chunk_start;
 
         if (prev_header)
-	{	
+	{
 		chunk_start 	= (uint64_t)prev_header + (uint64_t)prev_header->size + (uint64_t)sizeof(header_t);
 	}
         else
-        {	
+        {
           chunk_start 		= (uint64_t)HEAP_START;
           heap_start 		= (header_t *)chunk_start;
         }

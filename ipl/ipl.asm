@@ -14,15 +14,15 @@ jmp main
 %include "print.inc"
 %include "e820.inc"
 
-%define kernel_buffer	0x10000     ; Load kernel at 1mb
-%define PML4T		0x10000      ; Location of PML4 table
-%define image_buffer     0x10000      ; 256KB for file
-%define module_buffer    0x50000      ; 192KB for modules
-%define image_seg        0x1000       ; Segment (es)
-%define module_seg       0x5000       ; segment for module buffer
-%define BytesPerSector   512          ; Floppy=512
-%define memorymap        0x20000
-%define mmap_seg         0x2000
+%define kernel_buffer           0x10000     ; Load kernel at 1mb
+%define PML4T                   0x10000      ; Location of PML4 table
+%define image_buffer            0x10000      ; 256KB for file
+%define module_buffer           0x50000      ; 192KB for modules
+%define image_seg               0x1000       ; Segment (es)
+%define module_seg              0x5000       ; segment for module buffer
+%define BytesPerSector          512          ; Floppy=512
+%define memorymap               0x20000
+%define mmap_seg                0x2000
 
 main:
   xor ax, ax                  		; Erase ax
@@ -55,14 +55,11 @@ main:
   call LoadFile
   mov word [ramdisksize], cx
 
-
-
   mov si, KRNL                        	; Load filename
   mov ax, image_seg                   	; Buffer segment
   xor bx, bx                          	; Buffer offset
   call LoadFile                       	; Load kernel module
   mov word [FileSize], cx
-
 
   cli                                 	; Dissable interupts
   lgdt [gdt_ptr]                      	; Load the GDT
@@ -145,17 +142,16 @@ jump_long_mode:
   add ebx, 8                          ; 8 byte entries
   loop .l2                            ; loop till full
 
-
   mov ecx, 512                        ; 512 PT entries
   mov eax, 0x200003                   ; Physical address
   mov ebx, 0x19000                    ; Pagetable address
 
-  .l5:                                ; Fill table
+  .l3:                                ; Fill table
   mov DWORD [ebx], eax                ; Physical address
   mov DWORD [ebx + 4], 0              ; Physical address
   add eax, 0x1000                     ; Next page
   add ebx, 8                          ; 8 byte entries
-  loop .l5                            ; loop till full
+  loop .l3                            ; loop till full
 
   mov ecx, 512                        ; 512 PT entries
   mov eax, 0xFEC00003                 ; Physical address of IOAPIC
@@ -172,12 +168,12 @@ jump_long_mode:
   mov eax, 0xFEE00003                 ; Physical address of LAPIC
   mov ebx, 0x18000                    ; Pagetable address of table
 
-  .l3:                                ; Fill table
+  .l5:                                ; Fill table
   mov DWORD [ebx + 4], 0              ; Physical address
   mov DWORD [ebx], eax                ; Physical address
   add eax, 0x1000                     ; Next page
   add ebx, 8                          ; 8 byte entries
-  loop .l3                            ; loop till full
+  loop .l5                            ; loop till full
 
   mov eax, cr4                        ; Load cr4
   or eax, 1 << 5                      ; Set PAE-bit

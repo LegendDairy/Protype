@@ -6,13 +6,13 @@
 
 uint64_t *pmm_bmap				= 0;
 uint64_t *pmm_stack				= 0;
-
 uint64_t pmm_top				= 0;
 uint64_t pmm_nframes				= 0;
 mutex_t  pmm_lock;
-
 map_entry_t *pre_pmm_heap			= 0;
 uint64_t pre_pmm_entries			= 0;
+
+static uint64_t pre_pmm_allocate_frame(void);
 
 /* Current TODO: 				*/
 /* -mcmodel=large, maybe alternatives?		*/
@@ -25,7 +25,7 @@ uint64_t pre_pmm_entries			= 0;
 
 void setup_pmm(ipl_info_t *info)
 {
-	pmm_lock.lock = 0;
+	mutex_unlock(&pmm_lock);
 
 	/* Page allign the end of kernel */
 	end = (uint64_t)&end;
@@ -53,8 +53,8 @@ void setup_pmm(ipl_info_t *info)
 		tmp++;
 	}
 
-	i = 0;
-	tmp = info->mmap;
+	i 	= 0;
+	tmp 	= info->mmap;
 	for (i=0; i < info->mmap_entries; i++)
 	{
 		if (tmp->type == 1)
@@ -107,13 +107,10 @@ void setup_pmm(ipl_info_t *info)
 		tmp++;
 	}
 
-
-
 	/* Set up Pre-PMM Heap */
 	pre_pmm_heap	= info->mmap;
 	pre_pmm_entries = info->mmap_entries;
-	pmm_nframes = (info->mem_sz / 0x1000);
-
+	pmm_nframes 	= (info->mem_sz / 0x1000);
 
 	/* Calculate size of memory needed for the pmm */
 	uint64_t sz = (pmm_nframes / 8) + (pmm_nframes * 8);
@@ -123,10 +120,9 @@ void setup_pmm(ipl_info_t *info)
 		sz += (0x1000 - sz % 0x1000);
 	}
 
-
 	/* Allocate memory for PMM*/
 	tmp	= info->mmap;
-	i = 0;
+	i 	= 0;
 
 	for (i=0; i < info->mmap_entries; i++)
 	{
@@ -147,7 +143,7 @@ void setup_pmm(ipl_info_t *info)
 	}
 
 	/* Map the memory for PMM */
-	i = 0;
+	i 	= 0;
 	pmm_top = (uint64_t)pmm_stack;
 
 	while(i<(uint64_t)pmm_stack)

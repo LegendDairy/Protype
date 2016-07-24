@@ -14,11 +14,13 @@ typedef volatile uint64_t spinlock_t;
 
 typedef struct
 {
-	spinlock_t lock;
+	spinlock_t lock /* = 0 */;
 	//thread_list_t *waiting;
-} __attribute__((packed)) mutex_t;
+} mutex_t;
 
+/** Tests and locks a given spinlock. 		**/
 void mutex_lock(mutex_t *m);
+/** Unlock a given spinlock. 			**/
 void mutex_unlock(mutex_t *m);
 
-#endif		
+#endif

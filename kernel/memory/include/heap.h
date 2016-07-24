@@ -9,6 +9,9 @@
 #include <vmm.h>
 #include <pmm.h>
 
+/* TODO                 */
+/* -Data allignment.    */
+
 /* Hiding some ugly numbers. */
 #define HEAP_START	0x80000000
 #define MAGIC		0xABABABAB
@@ -21,11 +24,11 @@ typedef struct header
   struct header *prev;
   uint64_t allocated;
   uint64_t size;
-} __attribute__((packed)) header_t;
+} header_t;
 
-/** Dynamic allocater, chrashed if you overwrite your chunk!    **/
-/** arg1: Size of the piece you wish to allocate.               **/
-/** Return:  pointer to a virtual address                       **/
+/** Dynamic allocater for the kernel, chrashes if you overwrite your chunk!     **/
+/** arg1: Size of the piece you wish to allocate.                               **/
+/** Return:  pointer to a virtual address                                       **/
 void *malloc(uint64_t sz);
 
 /** Frees an allocated address.         **/

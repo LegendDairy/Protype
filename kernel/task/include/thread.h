@@ -30,22 +30,20 @@
 #define SS_USER				0x23
 #define SS_KERNEL			0x10
 
-#define KERNEL_STACK_SIZE               0x4000       // Use a 16kb kernel stack.
+#define KERNEL_STACK_SIZE               0x4000
 #define KERNEL_STACK_BASE               0xC0000000
 
 extern thread_list_t *current_thread;
 
 typedef struct thread_struct
 {
-  regs_t regs;	// Registers.
+  u64int_t thid;																// Thread ID
+  char *name;
   u8int_t flags;																// Flags of the thread.													// Start of the Thread's heap.
-  uint64_tint thid;																// Thread ID
-  char *name;																// Name of the thread.
+  regs_t regs;	// Registers.																// Name of the thread.
   uint64_t millis;															// Current relative wait value
   uint64_t priority;															// Priority level.
-  uint64_t pr_lvl;															// Protection Level.
   uint64_t parent_thid;														// Thread ID of the parent thread.
-  struct thread_list *childs;													// List of child threads.
 } thread_t;
 
 typedef struct thread_list
@@ -56,5 +54,6 @@ typedef struct thread_list
 
 typedef int(*fn_t)(void*);
 
-
 #endif
+
+// scheduling: H - M - H - M - H - L

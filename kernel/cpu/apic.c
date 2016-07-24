@@ -11,8 +11,6 @@ uint8_t ap_count = 1;
 uint32_t apic_base;
 processor_t current_cpu;
 processor_list_t processors;
-extern void parse_madt(void);
-void pit_sleep(uint32_t millis);
 
 uint8_t inb(uint16_t port)
 {
@@ -45,6 +43,17 @@ void lapic_write(uint32_t r, uint32_t val)
 
 void setup_apic(void)
 {
+        /* TODO: */
+        /* -Map lapic and ioapic address here instead of in the ipl.    */
+        /* -Clean up the code.                                          */
+        /* -Separate ioapic and lapic code.                             */
+        /* -Make some documentation.                                    */
+        /* -Mask all IRQs (not the "cascade" line) in the PIC chips     */
+        /* -Mask everything in all IO APICs.                            */
+        /* Create an IDT with interrupt vectors for the local APIC's spurious IRQ,
+        /* the master PIC's spurious IRQ and the slave PIC's spurious IRQ. */
+
+
 	mutex_unlock(&processors.lock);
 	mutex_unlock(&current_cpu.lock);
 	processors.prev = 0;
@@ -68,7 +77,9 @@ void setup_apic(void)
 	lapic_write(apic_lvt_lint0_reg, 0x08700);			// Enable normal external interrupts
 	lapic_write(apic_lvt_lint1_reg, 0x00400);			// Enable normal NMI processing
 	lapic_write(apic_lvt_error_reg, 0x10000);			// Disable error interrupts
-	lapic_write(apic_reg_spur_int_vect, 0x00131);			// Enable the APIC and set spurious vector to 48
+        //lapic_write(aapic_reg_dest_format, 0xF0000000);               // Flatmode
+        //lapic_write(apic_reg_logical_dest, 0xFF000000);
+	lapic_write(apic_reg_spur_int_vect, 0x00131);			// Enable the APIC and set spurious vector to 49
 	lapic_write(apic_lvt_lint0_reg, 0x08700);			// Enable normal external interrupts
 	lapic_write(apic_lvt_lint1_reg, 0x00400);			// Enable normal NMI processing
 	lapic_write(apic_reg_eoi, 0x00);				// Make sure no interrupts are left
@@ -81,12 +92,13 @@ void setup_apic(void)
 	*(uint32_t*)ioapic_reg 	= (uint32_t)0x13;
 	*ioapic_io 		= (uint32_t)0x00;
 
-	/* Parse the multiprocessor table */
+	/* Parse the multiprocessor table. */
 	parse_madt();
 
-	/* Set up LAPIC Timer*/
+	/* Set up LAPIC Timer. */
 	setup_lapic_timer();
 
+        /* Proof of concept (smp): */
 	boot_ap(1);
 	boot_ap(2);
 	boot_ap(3);
@@ -95,47 +107,46 @@ void setup_apic(void)
 
 void setup_lapic_timer(void)
 {
-	/* Set LAPIC timer as reg int 32 */
-	lapic_write(apic_lvt_timer_reg, 0x00030);				// int 32
-	lapic_write(apic_div_conf, 0x01);					// Divide by 4
-
-	/* Setup LAPIC Counter */
+	/* Set LAPIC timer as reg int 48 */
+	lapic_write(apic_lvt_timer_reg, 0x00030);      // int 48
+	lapic_write(apic_div_conf, apic_timer_div_4);  // Divide by 4
 
 	/* Set up PIT */
-	outb(0x61, (inb(0x61) & 0xFD) | 1);
-	outb(0x43,0xB2);
-	//1193180/100 Hz = 11931 = 2e9bh
-	outb(0x42,0x9B);	//LSB
-	inb(0x60);		//short delay
-	outb(0x42,0x2E);	//MSB
+	outb(0x61, (inb(0x61) & 0xFD) | 1);            //
+	outb(0x43,0xB2);                               //
+	outb(0x42,0xa9);	                       // LSB (1193180/1000 Hz = 1193 = 0x04a9)
+        inb(0x60);                                     // short delay
+	outb(0x42,0x04);                               // MSB
 
 	//reset PIT one-shot counter (start counting)
-	uint8_t tmp = inb(0x61)&0xFE;
-	outb(0x61,(uint8_t)tmp);		//gate low
-	outb(0x61,(uint8_t)tmp|1);	//gate high
+	outb(0x61,(uint8_t)inb(0x61)&0xFE);            //gate low
+	outb(0x61,(uint8_t)(inb(0x61)&0xFE)|1);        //gate high
 
 	lapic_write(apic_init_count, 0xFFFFFFFF);
 
-
-	while(!(inb(0x61)&0x20));
+	while(!(inb(0x61)&0x20));                      // sleep(1ms);
 
 	/* Calculate divisor */
 	lapic_write(apic_lvt_timer_reg, 0x10030);
 	uint32_t freq = lapic_read(apic_cur_count);
 	freq = 0xFFFFFFFF - freq;
-	freq = freq*100*4;
+	freq = freq*4/1000;
 
 	/* Give information to the user */
-	printf("[APIC]: Bus frequency:  %dMHz\n", freq / 1000000);
+	printf("[APIC]: Bus frequency:  %dMHz\n", freq);
 
 	/* Setup intial count */
-	lapic_write(apic_init_count, 10000);
-	lapic_write(apic_lvt_timer_reg, (uint32_t)(0x30 | apic_timer_period));
+	lapic_write(apic_init_count, freq);                                    // Fire every micro second
+	lapic_write(apic_lvt_timer_reg, (uint32_t)(0x30 | apic_timer_period)); //int 48, periodic
 }
 
+/* Proof of concept: */
 void boot_ap(uint8_t id)
 {
 	id &= 0xF;
+        /*uint64_t *apb_idt_ptr = 0x50000 + 0x4;
+        *apb_idt_ptr = &idt_ptr;*/
+
 	lapic_write(apic_ICR_32_63, id << 24);
 	lapic_write(apic_ICR_0_31, 0x00004500);
 	/* Set up PIT */

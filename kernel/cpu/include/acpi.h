@@ -13,6 +13,12 @@
 #define ACPI_MADT_LAPIC_NMI					4
 #define ACPI_MADT_LAPIC_ADDR_OVERRIDE				5
 #define ACPI_MADT_IO_SAPIC					6
+#define ACPI_MADT_LOCAL_SAPIC					7
+#define ACPI_MADT_PLATFORM_INTERRUPT_SOURCES			8
+#define ACPI_MADT_PROCESSOR_LOCAL_x2APIC			9
+#define ACPI_MADT_LOCAL_x2APIC_NMI				0xA
+#define ACPI_MADT_GIC						0xB
+#define ACPI_MADT_GICD						0xC
 
 typedef struct
 {
@@ -36,7 +42,7 @@ typedef struct
 	uint32_t CreatorRevision;
 }__attribute__((packed))  ACPISDTHeader_t;
 
-typedef struct 
+typedef struct
 {
 	char Signature[4];
 	uint32_t Length;
@@ -54,8 +60,9 @@ typedef struct
 {
 	uint8_t entry_type;
 	uint8_t length;
-} madt_entry_t;
+} __attribute__((packed)) madt_entry_t;
 
+/* Multiple APIC Description Table */
 typedef struct
 {
 	uint8_t entry_type;
@@ -70,7 +77,7 @@ typedef struct
 	uint8_t entry_type;
 	uint8_t length;
 	uint8_t ioap_id;
-	uint8_t res;
+	uint8_t reserved;
 	uint32_t address;
 	uint32_t int_base;
 }  __attribute__((packed)) madt_ioap_t;

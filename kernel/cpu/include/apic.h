@@ -90,7 +90,7 @@ typedef struct
 #define apic_ICR_0_31						0x0300		//R/W
 #define apic_ICR_32_63						0x0310		//R/W
 
-/* LAPIC Local Interrupts */
+/* LAPIC Local Interrupt registers */
 #define apic_lvt_timer_reg					0x0320		//R/W
 #define apic_lvt_thermal_reg					0x0330		//R/W
 #define apic_lvt_perf_reg					0x0340		//R/W
@@ -98,11 +98,12 @@ typedef struct
 #define apic_lvt_lint1_reg					0x0360		//R/W
 #define apic_lvt_error_reg					0x0370		//R/W
 
-/* LAPIC Timer */
+/* LAPIC Timer registers */
 #define apic_init_count						0x0380		//R/W
 #define apic_cur_count						0x0390		//RO
 #define apic_div_conf						0x03E0		//R/W
 
+/* LAPIC Timer register flags */
 #define apic_timer_div_1					11
 #define apic_timer_div_2					0x00
 #define apic_timer_div_4					0x01
@@ -115,8 +116,19 @@ typedef struct
 #define apic_timer_period					0x20000
 #define apic_timer_tsc_dead					0x40000
 
-#define apic_base_msr 0x1B
-#define apic_base_msr_bsp 0x100
-#define apic_base_msr_enable 0x800
+/* LAPIC ICR register flags (TODO vol3: 10-27)*/
 
-#endif										
+
+
+/* MSR index */
+#define apic_base_msr 						0x1B
+#define apic_base_msr_bsp 					0x100
+#define apic_base_msr_enable 					0x800
+
+/* APIC Spurious interrupt register flags */
+#define apic_suprious_enable					0x0100
+#define apic_suprious_proc_checking				0x0200
+#define apic_suprious_suppress_EOI_broadcast			0x1000
+
+
+#endif

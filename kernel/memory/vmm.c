@@ -12,13 +12,16 @@ mutex_t vmm_lock;
 
 /* Current TODO: 				*/
 /* -Send IPI when ivplg.			*/
-/* Better testing maybe. 			*/
+/* -Better testing maybe. 			*/
+/* -Test mutual exclusion (mutex) support.	*/
+/* -Mapping to a given PLM4T. 			*/
 
 void setup_vmm(void)
 {
-	vmm_lock.lock = 0;
+	mutex_unlock(&vmm_lock);
 }
 
+/* Maps a given frame (pa) to a given virtual address (va) to kernel PLM4T before pmm is setup. */
 void pre_vmm_map_frame(uint64_t va, uint64_t pa, uint64_t flags)
 {
 	/* Needs More Testing! */
@@ -48,46 +51,11 @@ void pre_vmm_map_frame(uint64_t va, uint64_t pa, uint64_t flags)
 	}
 }
 
-uint64_t vmm_get_mapping(uint64_t va, uint64_t *pa)
-{
-	if ((vmm_plm4t[PLM4T_INDEX(va)] & 0x1))
-	{
-		if ((vmm_dir_ptrs[PDPT_INDEX(va)] & 0x1))
-		{
-			if ((vmm_directories[PD_INDEX(va)] & 0x1))
-			{
-				if(pa)
-				{
-					*pa = (vmm_tables[PT_INDEX(va)] & (!0xFFF));
-				}
-
-				return (vmm_tables[PT_INDEX(va)] & (!0xFFF));
-			}
-		}
-	}
-
-	return 0xFFF; // Error: va is not mapped!
-}
-
-uint64_t vmm_test_mapping(uint64_t va)
-{
-	if ((vmm_plm4t[PLM4T_INDEX(va)] & 0x1))
-	{
-		if ((vmm_dir_ptrs[PDPT_INDEX(va)] & 0x1))
-		{
-			if ((vmm_directories[PD_INDEX(va)] & 0x1))
-			{
-				return (vmm_tables[PT_INDEX(va)] & (0x1));
-			}
-		}
-	}
-
-	return 0;
-}
-
+/* Maps a given frame (pa) to a given virtual address (va) to kernel PLM4T once the pmm is setup. */
 void vmm_map_frame(uint64_t va, uint64_t pa, uint64_t flags)
 {
 	mutex_lock(&vmm_lock);
+
 	if (!(vmm_plm4t[PLM4T_INDEX(va)] & 0x1))
 	{
 		vmm_plm4t[PLM4T_INDEX(va)] = pmm_alloc_page() | 0x3;
@@ -117,17 +85,54 @@ void vmm_map_frame(uint64_t va, uint64_t pa, uint64_t flags)
 	mutex_unlock(&vmm_lock);
 }
 
+/* Returns the physical address of a virtual address va and can store this in pa. */
+uint64_t vmm_get_mapping(uint64_t va, uint64_t *pa)
+{
+	if ((vmm_plm4t[PLM4T_INDEX(va)] & 0x1))
+	{
+		if ((vmm_dir_ptrs[PDPT_INDEX(va)] & 0x1))
+		{
+			if ((vmm_directories[PD_INDEX(va)] & 0x1))
+			{
+				if(pa)
+				{
+					*pa = (vmm_tables[PT_INDEX(va)] & (!0xFFF));
+				}
+				return (vmm_tables[PT_INDEX(va)] & (!0xFFF));
+			}
+		}
+	}
+	return 0xFFF; // Error: va is not mapped!
+}
 
+#define PAGE_WRITE				        0x2
+uint64_t vmm_test_mapping(uint64_t va)
+{
+	if ((vmm_plm4t[PLM4T_INDEX(va)] & 0x1))
+	{
+		if ((vmm_dir_ptrs[PDPT_INDEX(va)] & 0x1))
+		{
+			if ((vmm_directories[PD_INDEX(va)] & 0x1))
+			{
+				return (vmm_tables[PT_INDEX(va)] & (0x1));
+			}
+		}
+	}
+	return 0;
+}
+
+/* Flushes the cpu TLB casche */
 inline void vmm_flush_page(uint64_t vaddr)
 {
 	asm volatile("invlpg (%0)" ::"r" (vaddr) : "memory");
 }
 
+/* Unmaps a given virtual address va. */
 void vmm_unmap_frame(uint64_t va)
 {
 	mutex_lock(&vmm_lock);
 	vmm_tables[PT_INDEX(va)] = 0;
 	vmm_flush_page(va);
-	// Send IPI!
+	/* send_tlb_ipi(); */
 	mutex_unlock(&vmm_lock);
 }

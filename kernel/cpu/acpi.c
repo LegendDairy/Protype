@@ -4,11 +4,9 @@
 
 #include<acpi.h>
 
-
 ACPISDTHeader_t *find_rsdt(void)
 {
 	uint8_t *curr = (uint8_t *)0xe0000;
-
 	int i, j;
 	uint8_t check = 0;
 
@@ -36,7 +34,7 @@ ACPISDTHeader_t *find_rsdt(void)
 		curr = (uint8_t *)(curr + 0x10); // RSD_PTR has to be 0x10 alligned
 	}
 
-return NULL;
+	return NULL;
 }
 
 ACPISDTHeader_t *findMADT(ACPISDTHeader_t *RootSDT)

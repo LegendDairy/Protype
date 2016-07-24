@@ -15,11 +15,12 @@
 #define DIR_PTRS_VADDRESS				0xFFFFFFFFFFE00000
 #define DIRS_VADDRESS					0xFFFFFFFFC0000000
 #define TABLES_VADDRESS			                0xFFFFFF8000000000
+#define PAGE_SIZE                                       0x1000
 
 #define PLM4T_INDEX(a)					((uint64_t)a)/((uint64_t)512*1024*1024*1024)
 #define PDPT_INDEX(a)					((uint64_t)a)/((uint64_t)1024*1024*1024)
 #define PD_INDEX(a)			                ((uint64_t)a)/((uint64_t)2*1024*1024)
-#define PT_INDEX(a)			                ((uint64_t)a)/((uint64_t)4096)
+#define PT_INDEX(a)			                ((uint64_t)a)/((uint64_t)PAGE_SIZE)
 
 #define PAGE_PRESENT					0x1
 #define PAGE_WRITE				        0x2
@@ -39,14 +40,16 @@
 #define TABLE_LARGE_SZ					0x40
 #define TABLE_IGNORED					0x80
 
-
-
-
-
+/* Maps a given frame (pa) to a given virtual address (va) to kernel PLM4T before the pmm is setup. */
 void pre_vmm_map_frame(uint64_t va, uint64_t pa, uint64_t flags);
+/* Maps a given frame (pa) to a given virtual address (va) to kernel PLM4T once the pmm is setup. */
 void vmm_map_frame(uint64_t va, uint64_t pa, uint64_t flags);
+/* Returns the physical address of a virtual address va and can store this in pa. */
 void vmm_unmap_frame(uint64_t va);
+/* Tests if a given page is mapped, returns 1, if va is mapped.*/
 uint64_t vmm_get_mapping(uint64_t va, uint64_t *pa);
+
+/* TODO */
 //void vmm_unmap_region(uint64_t start, uint64_t end);
 //void vmm_map_large_frame(uint64_t va, uint64_t pa, uint64_t flags);
 

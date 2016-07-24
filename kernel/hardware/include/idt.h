@@ -31,7 +31,7 @@ typedef struct
 typedef struct
 {
 	uint64_t rsp, rbp, rsi, rdi, rdx, rcx, rbx, rax;
-	uint64_t int_no, err_code;							
+	uint64_t int_no, err_code;
 	uint64_t rip, cs, rflags, userrsp, ss;				// Pushed by the processor automatically.
 } regs_t;
 
@@ -73,22 +73,6 @@ extern void isr28();
 extern void isr29();
 extern void isr30();
 extern void isr31();
-extern void irq0 ();
-extern void irq1 ();
-extern void irq2 ();
-extern void irq3 ();
-extern void irq4 ();
-extern void irq5 ();
-extern void irq6 ();
-extern void irq7 ();
-extern void irq8 ();
-extern void irq9 ();
-extern void irq10();
-extern void irq11();
-extern void irq12();
-extern void irq13();
-extern void irq14();
-extern void irq15();
 extern void apic_routine();
 extern void apic_spurious();
 

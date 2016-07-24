@@ -5,12 +5,11 @@
 #include <idt.h>
 #include <text.h>
 
-idt_entry_t idt_entry[256];
+idt_entry_t 	idt_entry[256];
 idt_ptr_t	idt_ptr;
-idt_handler_t interrupt_handlers[256];
-
-extern void flush_idt(uint32_t);
-void pit_handler(regs_t *r);
+idt_handler_t 	interrupt_handlers[256];
+extern void 	flush_idt(uint32_t);
+void 		pit_handler(regs_t *r);
 
 void idt_set_gate(uint8_t num, uint64_t base, uint16_t sel, uint8_t flags);
 
@@ -84,11 +83,11 @@ void idt_set_gate(uint8_t num, uint64_t base, uint16_t sel, uint8_t flags)
 	idt_entry[num].baselow  = (uint16_t)(base & 0xFFFF);
 	idt_entry[num].basemid  = (uint16_t)((base >> 16) & 0xFFFF);
 	idt_entry[num].basehigh = (uint32_t)(base >> 32) & 0xFFFFFFFF;
-	
+
 	idt_entry[num].selector     = sel;
 	idt_entry[num].res = 0;
 	idt_entry[num].zero = 0;
-	
+
 	idt_entry[num].flags   = flags;
 }
 
@@ -134,8 +133,8 @@ const char *exception_messages[] =
 void isr_handler(regs_t * regs)
 {
 	if ( interrupt_handlers[regs->int_no] != 0)
-	{ 
-		interrupt_handlers[regs->int_no](regs); 
+	{
+		interrupt_handlers[regs->int_no](regs);
 	}
 	else
 	{
@@ -154,4 +153,3 @@ uint64_t faulting_address;
 		for (;;);
 	}
 }
-

@@ -8,6 +8,7 @@
 jmp main
 
 ap_count: db 0x01
+idt_ptr:  dq 0x0
 
 main:
 cli

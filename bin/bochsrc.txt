@@ -1,4 +1,4 @@
-megs: 2042
+megs: 256
 romimage: file=/usr/local/share/bochs/BIOS-bochs-latest, address=0x0
 #vgaromimage: /usr/share/bochs/VGABIOS-elpin-2.40
 vga: extension = vbe
@@ -6,6 +6,6 @@ floppya: 1_44=bin/floppy.img, status=inserted
 boot: a
 log: bin/bochsout.txt
 mouse: enabled=0
-clock: sync=realtime
+clock: sync=none
 cpu: count=1:4:2, model=corei7_sandy_bridge_2600k
 display_library: x, options="gui_debug"

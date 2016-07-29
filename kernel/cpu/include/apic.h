@@ -21,24 +21,6 @@ void setup_lapic_timer(void);
 #define CPUID_FLAG_MSR 0x20
 #define CPUID_FLAG_APIC 0x200
 
-typedef struct
-{
-	//threadlist_t *current_thread;
-	uint32_t *lapic_base;
-	uint32_t *ioapic_base;
-	mutex_t lock;
-	uint32_t id;
-	uint32_t flags;
-} processor_t;
-
-typedef struct
-{
-	processor_t *current;
-	processor_t *prev;
-	mutex_t lock;
-	processor_t *next;
-} processor_list_t;
-
 #define CPU_FLAG_BOOTSTRAP					0x0001
 
 /* Local APIC register map */

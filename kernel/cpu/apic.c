@@ -3,17 +3,15 @@
 /* By LegendMythe	*/
 
 #include<apic.h>
+#include<acpi.h>
 #include<idt.h>
 
-
-#define apb_base 0x50000
+#define APB_BASE 0x50000
 
 volatile uint64_t tick;
-uint8_t ap_count = 1;
 uint32_t apic_base;
-processor_t current_cpu;
-processor_list_t processors;
-extern idt_ptr_t	idt_ptr;
+extern idt_ptr_t idt_ptr;
+extern topology_t *system_info;
 
 uint8_t inb(uint16_t port)
 {
@@ -36,23 +34,25 @@ uint8_t apic_check(void)
 
 void apic_timer_handler(void)
 {
-	printf("i");
-
 	tick++;
 }
 
 uint32_t lapic_read(uint32_t r)
 {
-	return ((uint32_t)(current_cpu.lapic_base[r / 4]));
+	return ((uint32_t)(system_info->lapic_address[r / 4]));
 }
 
 void lapic_write(uint32_t r, uint32_t val)
 {
-	current_cpu.lapic_base[r / 4] = (uint32_t)val;
+	system_info->lapic_address[r / 4] = (uint32_t)val;
 }
 
 void setup_apic(void)
 {
+	parse_madt();
+	apic_base = (uint32_t *) system_info->lapic_address;
+	vmm_map_frame((uint64_t) apic_base,(uint64_t) apic_base, 0x3);
+
         /* TODO: */
         /* -Map lapic and ioapic address here instead of in the ipl.    */
         /* -Clean up the code.                                          */
@@ -76,20 +76,7 @@ void setup_apic(void)
    out 0x23,al                  ;Disable PICs
 .noIMCR: */
 //http://forum.osdev.org/viewtopic.php?p=107868#107868
-	mutex_unlock(&processors.lock);
-	mutex_unlock(&current_cpu.lock);
-	processors.prev = 0;
-	processors.current = &current_cpu;
-	processors.next = 0;
-
-	/* Fill CPU form */
-	mutex_lock(&current_cpu.lock);
-	asm volatile ("rdmsr": "=a"((uint32_t *)current_cpu.lapic_base) : "c"(apic_base_msr));
-	current_cpu.lapic_base = (uint32_t *)(0xfffff000 & (uint64_t)current_cpu.lapic_base);
-	apic_base = (uint64_t)current_cpu.lapic_base;
-	current_cpu.id = lapic_read(apic_reg_id);
-	current_cpu.flags = CPU_FLAG_BOOTSTRAP;
-	mutex_unlock(&current_cpu.lock);
+	/* Parse the multiprocessor table. */
 
 	/* Set up Local APIC */
 	lapic_write(apic_reg_task_priority, 0x00);			// Accept all interrupts
@@ -99,28 +86,50 @@ void setup_apic(void)
 	lapic_write(apic_lvt_lint0_reg, 0x08700);			// Enable normal external interrupts
 	lapic_write(apic_lvt_lint1_reg, 0x00400);			// Enable normal NMI processing
 	lapic_write(apic_lvt_error_reg, 0x10000);			// Disable error interrupts
-        lapic_write(apic_reg_dest_format, 0xF0000000);               // Flatmode
+        lapic_write(apic_reg_dest_format, 0xF0000000);               	// Flatmode
         lapic_write(apic_reg_logical_dest, 0xFF000000);
 	lapic_write(apic_reg_spur_int_vect, 0x0013F);			// Enable the APIC and set spurious vector to 0x3F
 	lapic_write(apic_lvt_lint0_reg, 0x08700);			// Enable normal external interrupts
 	lapic_write(apic_lvt_lint1_reg, 0x00400);			// Enable normal NMI processing
+	lapic_write(apic_reg_processor_priority, 0x00);			// Enable normal NMI processing
+	lapic_write(apic_reg_arbitration_priority, 0x00);			// Enable normal NMI processing
 	lapic_write(apic_reg_eoi, 0x00);				// Make sure no interrupts are left
 
-	/* Set up IO APIC for the PIT (POC) */
-	uint32_t *ioapic_reg 	= (uint32_t*)0xfec00000;
- 	uint32_t *ioapic_io 	= (uint32_t*)0xfec00010;
- 	*(uint32_t*)ioapic_reg 	= (uint32_t)0x12;
- 	*ioapic_io 		= (uint32_t)0x830 ;
- 	*(uint32_t*)ioapic_reg 	= (uint32_t)0x13;
- 	*ioapic_io 		= (uint32_t)0x0F000000;
 
-	/* Parse the multiprocessor table. */
-	parse_madt();
+	/* Set up IO APIC for the PIT (POC) */
+	printf("%x", system_info->io_apic->address);
+	uint32_t * volatile ioapic_reg 	= (uint32_t *)system_info->io_apic->address;
+ 	uint32_t * volatile ioapic_io 	= (uint32_t *)(system_info->io_apic->address+0x4);
+
+	vmm_map_frame(ioapic_reg, ioapic_reg, 0x3); 			// Identity map io apic address
+ 	*(uint32_t*)ioapic_reg 	= (uint32_t)0x14;
+ 	*ioapic_io 		= (uint32_t)0x030 ;
+ 	*(uint32_t*)ioapic_reg 	= (uint32_t)0x15;
+ 	*ioapic_io 		= (uint32_t)0xFF000000;
+
 
 	/* Set up LAPIC Timer. */
 	setup_lapic_timer();
 	boot_ap(1); // BUg: if we boot the ap, the apic timer only fires once.
 
+	#define PIT_CHAN0_REG_COUNT	0x40
+	#define PIT_CHAN1_REG_COUNT	0x41
+	#define PIT_CHAN2_REG_COUNT	0x42
+	#define PIT_CONTROL_REG		0x43
+
+	int32_t divisor = 1193180 / 1;
+
+        // Send the command byte.
+    	// outb(PIT_CONTROL_REG, PIT_COM_MODE3 | PIT_COM_BINAIRY | PIT_COM_LSBMSB | PIT_SEL_CHAN0);
+        outb(PIT_CONTROL_REG, 0x36);
+
+        // Divisor has to be sent byte-wise, so split here into upper/lower bytes.
+        int8_t l = (uint8_t)(divisor & 0xFF);
+    	int8_t h = (uint8_t)((divisor>>8) & 0xFF );
+
+        // Send the frequency divisor.
+        outb(PIT_CHAN0_REG_COUNT, l);
+        outb(PIT_CHAN0_REG_COUNT, h);
 
 }
 
@@ -156,15 +165,18 @@ void setup_lapic_timer(void)
 
 	/* Setup intial count */
 	lapic_write(apic_init_count, freq);                                    // Fire every micro second
-	lapic_write(apic_lvt_timer_reg, (uint32_t)(0x30 | apic_timer_period)); //int 48, periodic
+	lapic_write(apic_lvt_timer_reg, (uint32_t)(0x20 | apic_timer_period)); //int 48, periodic
 }
 
 /* Proof of concept: */
 void boot_ap(uint8_t id)
 {
 	id &= 0xF;
-        uint64_t *apb_idt_ptr = 0x50000 + 0x3;
+        uint64_t *apb_idt_ptr = APB_BASE + 0x3;
         *apb_idt_ptr = &idt_ptr;
+
+	uint8_t *ap_count_ptr = (uint8_t *)(APB_BASE + 0x2);
+	*ap_count_ptr = system_info->active_cpus;
 
 	lapic_write(apic_ICR_32_63, id << 24);
 	lapic_write(apic_ICR_0_31, 0x00004500);
@@ -181,12 +193,34 @@ void boot_ap(uint8_t id)
 	outb(0x61,(uint8_t)tmp);		//gate low
 	outb(0x61,(uint8_t)tmp|1);	//gate high
 
-	lapic_write(apic_init_count, 0xFFFFFFFF);
-
-
 	while(!(inb(0x61)&0x20));
 
-	lapic_write(apic_ICR_0_31, 0x00004600 | (apb_base/0x1000));
+	lapic_write(apic_ICR_0_31, 0x00004600 | (APB_BASE/0x1000));
+	lapic_write(apic_ICR_32_63, id << 24);
 
-	printf("\n[SMP]: AP %d booted! Currently %d active processors running.", id, ap_count);
+	outb(0x42,0x9B);	//LSB
+	inb(0x60);		//short delay
+	outb(0x42,0x2E);	//MSB
+
+	//reset PIT one-shot counter (start counting)
+	tmp = inb(0x61)&0xFE;
+	outb(0x61,(uint8_t)tmp);		//gate low
+	outb(0x61,(uint8_t)tmp|1);	//gate high
+
+	while(!(inb(0x61)&0x20));
+	outb(0x42,0x9B);	//LSB
+	inb(0x60);		//short delay
+	outb(0x42,0x2E);	//MSB
+
+	//reset PIT one-shot counter (start counting)
+	tmp = inb(0x61)&0xFE;
+	outb(0x61,(uint8_t)tmp);		//gate low
+	outb(0x61,(uint8_t)tmp|1);	//gate high
+
+	while(!(inb(0x61)&0x20));
+	if(*ap_count_ptr > system_info->active_cpus)
+	{
+		printf("\n[SMP]: AP %d booted! Currently %d active processors running.", id, *ap_count_ptr);
+		system_info->active_cpus = *ap_count_ptr;
+	}
 }

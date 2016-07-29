@@ -19,7 +19,6 @@ extern uint64_t end;
 /** Param1: Pointer to IPL Info Structure.              **/
 /** Hybrid model: Bitmap + Stack.                       **/
 void setup_pmm(ipl_info_t *info);
-
 /** Pushes the page and clears the bit.                 **/
 /** Arg1: the physical address of the page.             **/
 void pmm_free_page(uint64_t address);

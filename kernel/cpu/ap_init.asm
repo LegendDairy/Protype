@@ -94,7 +94,7 @@ mov [ap_count], al
 
 mov rax, [idt_ptr]
 lidt [rax]
-
+sti
 loop:
 jmp loop
 

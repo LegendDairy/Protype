@@ -4,7 +4,7 @@
 
 #include <mutex.h>
 
-static uint64_t atomic_test_and_set (volatile spinlock_t *lock)
+uint64_t spinlock_lock (volatile spinlock_t *lock)
 {
         register spinlock_t value = SPINLOCK_UNLOCKED;
 
@@ -19,7 +19,7 @@ static uint64_t atomic_test_and_set (volatile spinlock_t *lock)
 
 void mutex_lock(mutex_t *m)
 {
-	while (atomic_test_and_set (&m->lock) == SPINLOCK_LOCKED);
+	while (spinlock_lock (&m->lock) == SPINLOCK_LOCKED);
 	/*{
 		schedule(); // software interupt and schedule
 	}*/

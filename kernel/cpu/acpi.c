@@ -3,97 +3,191 @@
 /* By LegendMythe	*/
 
 #include<acpi.h>
+#include<vmm.h>
+#include<heap.h>
 
-ACPISDTHeader_t *find_rsdt(void)
+
+topology_t *system_info;
+
+RSDT_t *find_rsdt(void)
 {
 	uint8_t *curr = (uint8_t *)0xe0000;
-	int i, j;
+	uint32_t i, j;
 	uint8_t check = 0;
 
 	for (i = 0; i < 0x2000; i++)
 	{
 		if (!(strncmp("RSD PTR ", (const char *)curr, 8)))
 		{
-			for (j = 0; j < 20; j++)
+			for (j = 0; j < sizeof(RSDP_t); j++)
 			{
 				check += *curr;
 				curr++;
 			}
+
 			if (check == 0)
 			{
-				for(j=0; j<0x100; j++)
-				{
-					pmm_bset(((uint64_t)(*(uint32_t*)(curr - 4)) + j*0x1000));
-					vmm_map_frame(((uint64_t)(*(uint32_t*)(curr - 4)) + j*0x1000), ((uint64_t)(*(uint32_t*)(curr - 4)) + j*0x1000), 0x3);
-				}
-
-				return  (ACPISDTHeader_t *)((uint64_t)(*(uint32_t*)(curr - 4)));
+				pmm_bset((uint64_t)(*(uint32_t*)(curr - 4)));
+				vmm_map_frame((uint64_t)(*(uint32_t*)(curr - 4)), (uint64_t)(*(uint32_t*)(curr - 4)), 0x3);
+				return  (RSDT_t *)((uint64_t)(*(uint32_t*)(curr - 4)));
 			}
-
+			curr -= 20;
 		}
 		curr = (uint8_t *)(curr + 0x10); // RSD_PTR has to be 0x10 alligned
 	}
 
+	/* TODO: Search 1kb of the EBDA. */
+
 	return NULL;
 }
 
-ACPISDTHeader_t *findMADT(ACPISDTHeader_t *RootSDT)
+ACPISDTHeader_t *find_acpi_header(RSDT_t *root, const char *signature)
 {
-	ACPISDTHeader_t *curr = (ACPISDTHeader_t *)(RootSDT);
-
-	if(!curr)
+	if(!root)
 	{
 		return NULL;
 	}
 
-	int i = 0;
-	uint8_t *tmp = (uint8_t *)curr;
+	uint32_t i = 0;
 
-	for (i = 0; i < 0x5000; i++)
+	for (i = 0; i < (root->Length - sizeof(ACPISDTHeader_t))/4; i++)
 	{
+		ACPISDTHeader_t *curr = (ACPISDTHeader_t *)((uint64_t)((uint32_t)root->PointerToOtherSDT[i]));
 
-		if (!strncmp("APIC", tmp, 4))
+		if(!vmm_test_mapping((uint64_t)root->PointerToOtherSDT[i]))
 		{
-			return (ACPISDTHeader_t*)tmp;
+			pmm_bset((uint64_t)root->PointerToOtherSDT[i]);
+			vmm_map_frame((uint64_t)root->PointerToOtherSDT[i], (uint64_t)root->PointerToOtherSDT[i], 0x3);
 		}
-		tmp++;
 
+		if (!strncmp(signature, (const char *)curr, 4))
+		{
+			uint8_t check 	= 0;
+			uint8_t *tmp	= (uint8_t *)curr;
+			uint32_t j 	= 0;
+
+			for (j = 0; j < curr->Length; j++)
+			{
+				if(!vmm_test_mapping((uint64_t)tmp))
+				{
+					pmm_bset((uint64_t)tmp);
+					vmm_map_frame((uint64_t)tmp, (uint64_t)tmp, 0x3);
+				}
+				check += *tmp;
+				tmp++;
+			}
+
+			if(!check)
+			{
+				return (ACPISDTHeader_t*)curr;
+			}
+		}
 	}
+
 	return NULL;
 }
 
 void parse_madt(void)
 {
-	ACPISDTHeader_t *mad = findMADT((ACPISDTHeader_t *)find_rsdt());
+	/* Parse ACPI information for the MADT header. */
+	madt_t *madt = (madt_t *)find_acpi_header((RSDT_t *)find_rsdt(), "APIC");
 
-	if(!mad)
+	/* Initialise system_info structure. */
+	system_info 			= malloc(sizeof(topology_t));
+	system_info->cpu_list 		= 0;
+	system_info->io_apic 		= 0;
+	system_info->active_cpus 	= 1;
+
+	/* If find_acpi_header reurns NULL the header was not found. */
+	if(!madt)
 	{
-		printf("[ACPI]: Failed parsing MADT table!\n");
+		printf("[ACPI]: Failed locating MADT table!\n");
 	}
 
-	uint32_t i = 0;
-	madt_entry_t *curr = (madt_entry_t *)((uint64_t)mad + 44);
-	while (i < mad->Length - 44)
+	/* Initialise some variables. */
+	uint32_t i 			= sizeof(madt_t);
+	madt_entry_t *curr 		= (madt_entry_t *)((uint64_t)madt + sizeof(madt_t));
+	system_info->flags		= madt->flags;
+	system_info->lapic_address 	= (uint32_t *)madt->lapic_address;
+
+	/* If PCAT flag is set, a PICs are present and must be dissabled to use ioapic. */
+	if(system_info->flags & ACPI_MADT_FLAG_PCAT_COMPAT)
+	{
+		outb(0x22, 0x70);   	// Select IMCR
+		outb(0x23, 1);		// Dissable
+	}
+
+	/* Parse the MADT table and store the information in system_info structure. */
+	while (i < madt->Length)
 	{
 		if (curr->entry_type == ACPI_MADT_PROC)
 		{
 			madt_proc_t *tmp = (madt_proc_t *)curr;
 
-			printf("[ACPI] Found processor: %d, apic id: %d, flags: %x\n", tmp->proc_id, tmp->apic_id, tmp->flags);
-			i += 8;
+			/* Test if this cpu is not dissabled and ready to boot. */
+			if(tmp->flags)
+			{
+				/* Initialise a new entry for the cpu structure in system_info. */
+				processor_t *cpu_entry 	= malloc(sizeof(processor_t));
+				cpu_entry->proc_id 	= tmp->proc_id;
+				cpu_entry->apic_id 	= tmp->apic_id;
+				cpu_entry->next 	= 0;
+
+				/* Iterate through the cpu list to find the last entry. */
+				processor_t *itterator 	= (processor_t *)system_info->cpu_list;
+				if(itterator)
+				{
+					while(itterator->next)
+					{
+						itterator=itterator->next;
+					}
+					itterator->next = cpu_entry;
+
+				}
+				else
+				{
+					/* system_info doesn't contain any cpu entries yet. */
+					system_info->cpu_list = cpu_entry;
+				}
+
+			}
 		}
-		if (curr->entry_type == ACPI_MADT_IOAP)
+		else if (curr->entry_type == ACPI_MADT_IOAP)
 		{
-			madt_ioap_t *tmp = (madt_ioap_t *)curr;
-			printf("[ACPI] Found IO APIC ID: %d, address: %x, int base: %x\n", tmp->ioap_id, tmp->address, tmp->int_base);
-			i += 12;
+			madt_ioap_t *tmp 		= (madt_ioap_t *)curr;
+
+			/* Initialise a new entry for this io_apic. */
+			io_apic_t *io_apic_entry 	= (io_apic_t *)malloc(sizeof(io_apic_t));
+			io_apic_entry->next 		= 0;
+			io_apic_entry->id 		= tmp->ioap_id;
+			io_apic_entry->address		= (uint32_t *)tmp->address;
+			io_apic_entry->int_base		= tmp->int_base;
+
+			if(system_info->io_apic)
+			{
+				/* Itterate through all the io_apic entries to find the end of the list. */
+				io_apic_t *itterator = system_info->io_apic;
+				while(itterator->next)
+				{
+					itterator=itterator->next;
+				}
+				/* Add new entry at the end of the list. */
+				itterator->next = io_apic_entry;
+			}
+			else
+			{
+				/* system_info doesn't contain any ioapic entries yet. */
+				system_info->io_apic = io_apic_entry;
+			}
 		}
-		if (curr->entry_type == ACPI_MADT_OVERRIDE)
+		else if (curr->entry_type == ACPI_MADT_OVERRIDE)
 		{
 			madt_overide_t *tmp = (madt_overide_t *)curr;
-			printf("[ACPI] Found Interrupt Source Override: IRQ: %d, , Global int: %d\n", tmp->irq, tmp->interrupt);
-			i += 10;
+			/* Add this irq override to the system_info irq map. */
+			system_info->irq_map[tmp->irq] = tmp->interrupt;
 		}
-		curr = (madt_entry_t *)((uint64_t)curr + (uint32_t)curr->length);
+
+		i    += curr->length;
+		curr  = (madt_entry_t *)((uint64_t)curr + (uint32_t)curr->length);
 	}
 }

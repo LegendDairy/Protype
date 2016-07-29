@@ -37,8 +37,8 @@ void init_idt(void)
 	outb(0x21, 0xff);	// Mask all interrupts, ie dissable master
 	outb(0xA1, 0xff);	// Mask all interrupts, ie dissable slave
 
-	/*outb(0x22, 0x70);	// SMP Mode old hardware
-	outb(0x23, 0x01);	// We should read the ACPI */
+	outb(0xa1, 0xFF);	// SMP Mode old hardware
+	outb(0x21, 0xFF);	// We should read the ACPI
 
 	idt_set_gate ( 0, (uint64_t)isr0 , 0x08, 0xEE);
 	idt_set_gate ( 1, (uint64_t)isr1 , 0x08, 0xEE);
@@ -72,8 +72,8 @@ void init_idt(void)
 	idt_set_gate (29, (uint64_t)isr29, 0x08, 0xEE);
 	idt_set_gate (30, (uint64_t)isr30, 0x08, 0xEE);
 	idt_set_gate (31, (uint64_t)isr31, 0x08, 0xEE);
-	idt_set_gate (48, (uint64_t)apic_timer, 0x08, 0xEE);
-	idt_set_gate (49, (uint64_t)pit_routine, 0x08, 0xEE);
+	idt_set_gate (32, (uint64_t)apic_timer, 0x08, 0xEE);
+	idt_set_gate (0x30, (uint64_t)pit_routine, 0x08, 0xEE);
 	idt_set_gate (0x3F, (uint64_t)apic_spurious, 0x08, 0xEE);
 
 	flush_idt((uint64_t) &idt_ptr);

@@ -105,7 +105,6 @@ uint64_t vmm_get_mapping(uint64_t va, uint64_t *pa)
 	return 0xFFF; // Error: va is not mapped!
 }
 
-#define PAGE_WRITE				        0x2
 uint64_t vmm_test_mapping(uint64_t va)
 {
 	if ((vmm_plm4t[PLM4T_INDEX(va)] & 0x1))

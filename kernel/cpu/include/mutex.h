@@ -7,8 +7,8 @@
 
 #include<common.h>
 
-#define SPINLOCK_LOCKED 0
-#define SPINLOCK_UNLOCKED 1
+#define SPINLOCK_LOCKED 1
+#define SPINLOCK_UNLOCKED 0
 
 typedef volatile uint64_t spinlock_t;
 
@@ -22,5 +22,7 @@ typedef struct
 void mutex_lock(mutex_t *m);
 /** Unlock a given spinlock. 			**/
 void mutex_unlock(mutex_t *m);
+/** Lock a spinlock wo going to sleep if locked. */
+uint64_t spinlock_lock (volatile spinlock_t *lock);
 
 #endif

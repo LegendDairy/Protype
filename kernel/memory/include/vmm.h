@@ -40,14 +40,19 @@
 #define TABLE_LARGE_SZ					0x40
 #define TABLE_IGNORED					0x80
 
+/* Unlocks the vmm spinlock. */
+void setup_vmm(void);
 /* Maps a given frame (pa) to a given virtual address (va) to kernel PLM4T before the pmm is setup. */
 void pre_vmm_map_frame(uint64_t va, uint64_t pa, uint64_t flags);
 /* Maps a given frame (pa) to a given virtual address (va) to kernel PLM4T once the pmm is setup. */
 void vmm_map_frame(uint64_t va, uint64_t pa, uint64_t flags);
-/* Returns the physical address of a virtual address va and can store this in pa. */
+/* Unmaps a given virtual address (va). */
 void vmm_unmap_frame(uint64_t va);
-/* Tests if a given page is mapped, returns 1, if va is mapped.*/
+/* Returns the physical address of a virtual address va and can store this in pa. */
 uint64_t vmm_get_mapping(uint64_t va, uint64_t *pa);
+/* Tests if a given page is mapped, returns 1, if va is mapped.*/
+uint64_t vmm_test_mapping(uint64_t va);
+
 
 /* TODO */
 //void vmm_unmap_region(uint64_t start, uint64_t end);

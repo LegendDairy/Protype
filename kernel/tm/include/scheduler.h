@@ -9,7 +9,7 @@
 #include<mutex.h>
 
 /* Structure with all the spinlocks for the scheduler. */
-typedef
+typedef struct
 {
 	spinlock_t sched_ready_que_high;
 	spinlock_t sched_ready_que_med;
@@ -17,9 +17,8 @@ typedef
 	spinlock_t sched_notready_que;
 } sched_spinlock_t;
 
-/** Set's multithreading up. Creates a current thread structure. **/
+/** Intialises multithreading. Creates a current thread structure for the BSP. **/
 void setup_tm(void);
 /** Gets called by the timer routine to swap the current running thread with a new one. **/
-uint64_t tm_schedule(uint64_t rsp);
 
 #endif

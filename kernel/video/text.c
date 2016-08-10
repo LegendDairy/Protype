@@ -3,6 +3,12 @@
 /* From the Internet	*/
 
 #include <text.h>
+#include <mutex.h>
+
+
+/* TODO: mutex this bitch. */
+
+mutex_t  text_lock;
 
 uint16_t *video_memory = (uint16_t *)0xB8000;
 unsigned char x_csr = 0;
@@ -23,7 +29,6 @@ void move_cursor(void)
 	outb(0x3D5, tmp >> 8);
 	outb(0x3D4, 15);
 	outb(0x3D5, tmp);
-
 }
 /** Clears the screen. **/
 void DebugClearScreen(void)
@@ -36,6 +41,7 @@ void DebugClearScreen(void)
 	x_csr = 0;
 	y_csr = 0;
 	move_cursor();
+
 }
 /** Scrolls the text if y > 24. **/
 void scroll (void)
@@ -51,6 +57,7 @@ void scroll (void)
         y_csr = 24;           // Get y back at 24.
 	x_csr = 0;
     }
+
 }
 /** Changes the foreground and background colour **/
 void DebugSetTextColour(uint8_t foreground,uint8_t background)

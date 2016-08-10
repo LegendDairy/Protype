@@ -14,7 +14,7 @@
 
 /* Hiding some ugly numbers. */
 #define HEAP_START	0x80000000
-#define MAGIC		0xABABABAB
+#define MAGIC		0xABABABABABABABAB
 
 /* Memorybock header. */
 typedef struct header

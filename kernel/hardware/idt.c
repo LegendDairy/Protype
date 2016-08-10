@@ -139,18 +139,12 @@ void isr_handler(regs_t * regs)
 	}
 	else
 	{
-uint64_t faulting_address;
-    asm volatile("mov %%cr2, %0" : "=r" (faulting_address));
+		DebugClearScreen();
+		uint64_t faulting_address;
+		    asm volatile("mov %%cr2, %0" : "=r" (faulting_address));
 
-		printf("\n[");
-		DebugSetTextColour(0x4, 0);
-		printf("ISR");
-		DebugSetTextColour(0xF, 0);
-		printf("] %s: Errorcode: %x, address: %x, rip %x\n[", (const char *)exception_messages[regs->int_no], regs->err_code,faulting_address, regs->rip);
-		DebugSetTextColour(0x4, 0);
-		printf("Kernel");
-		DebugSetTextColour(0xF, 0);
-		printf("]\nHalted.\n");
+		printf("%s: Errorcode: %x, address: %x, rip %x\n", (const char *)exception_messages[regs->int_no], regs->err_code,faulting_address, regs->rip);
+
 		for (;;);
 	}
 }

@@ -5,10 +5,8 @@
 #ifndef THREAD_H
 #define THREAD_H
 
-#include <malloc.h>
 #include <scheduler.h>
-#include <stdint.h>
-#include <vmm.h>
+//#include <vmm.h>
 #include <heap.h>
 
 #define THREAD_FLAG_READY          	0x01		// Else terminated
@@ -34,7 +32,7 @@
 typedef struct thread_struct
 {
   struct thread_struct *next;
-  u64int_t thid;					// Threads ID number
+  uint64_t thid;					// Threads ID number
   const char *name;					// Thread name (for debugging)
   uint32_t flags;					// Thread flags
   uint64_t rsp;						// Thread stack pointer
@@ -44,6 +42,8 @@ typedef struct thread_struct
 } thread_t;
 
 typedef int(*fn_t)(void*);
+
+uint64_t tm_thread_create(int (*fn)(void*), /*uint64_t argn, char *argv[],*/ uint64_t PLM4T, uint8_t priority, uint64_t quantum, const char *name, uint32_t flags, uint64_t *stack, uint8_t ds, uint8_t cs, uint8_t ss);
 
 #endif
 

@@ -22,7 +22,7 @@ uint8_t inb(uint16_t port)
 
 void pit_handler(void)
 {
-	printf("i");
+	//printf("i");
 }
 
 uint8_t apic_check(void)
@@ -34,6 +34,7 @@ uint8_t apic_check(void)
 
 void apic_timer_handler(void)
 {
+	//printf("i");
 	tick++;
 }
 
@@ -52,6 +53,7 @@ void setup_apic(void)
 	parse_madt();
 	apic_base = (uint32_t *) system_info->lapic_address;
 	vmm_map_frame((uint64_t) apic_base,(uint64_t) apic_base, 0x3);
+
 
         /* TODO: */
         /* -Map lapic and ioapic address here instead of in the ipl.    */
@@ -97,7 +99,6 @@ void setup_apic(void)
 
 
 	/* Set up IO APIC for the PIT (POC) */
-	printf("%x", system_info->io_apic->address);
 	uint32_t * volatile ioapic_reg 	= (uint32_t *)system_info->io_apic->address;
  	uint32_t * volatile ioapic_io 	= (uint32_t *)(system_info->io_apic->address+0x4);
 
@@ -110,14 +111,14 @@ void setup_apic(void)
 
 	/* Set up LAPIC Timer. */
 	setup_lapic_timer();
-	boot_ap(1); // BUg: if we boot the ap, the apic timer only fires once.
+	//boot_ap(1); // multithreading doesn't support smp yet.
 
 	#define PIT_CHAN0_REG_COUNT	0x40
 	#define PIT_CHAN1_REG_COUNT	0x41
 	#define PIT_CHAN2_REG_COUNT	0x42
 	#define PIT_CONTROL_REG		0x43
 
-	int32_t divisor = 1193180 / 1;
+	int32_t divisor = 1193180 / 40;
 
         // Send the command byte.
     	// outb(PIT_CONTROL_REG, PIT_COM_MODE3 | PIT_COM_BINAIRY | PIT_COM_LSBMSB | PIT_SEL_CHAN0);
@@ -164,7 +165,7 @@ void setup_lapic_timer(void)
 	printf("[APIC]: Bus frequency:  %dMHz\n", freq);
 
 	/* Setup intial count */
-	lapic_write(apic_init_count, freq);                                    // Fire every micro second
+	lapic_write(apic_init_count, freq * 1000);                                    // Fire every micro second
 	lapic_write(apic_lvt_timer_reg, (uint32_t)(0x20 | apic_timer_period)); //int 48, periodic
 }
 

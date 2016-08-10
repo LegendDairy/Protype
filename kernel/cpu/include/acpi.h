@@ -32,6 +32,7 @@ typedef struct processor_t
 	uint32_t proc_id;
 	uint32_t apic_id;
 	uint32_t flags;
+	/* thread_t *current_thread; */
 } processor_t;
 
 typedef struct

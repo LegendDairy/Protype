@@ -4,7 +4,7 @@
 
 #include <heap.h>
 
-/* NOT properly tested, shit is like some wanky Jenga-tower. */
+/* BUG: Malloc shits the bed when trying to allocate < 0xFFF */
 
 volatile header_t *heap_start	= 0;												// Start of the heap (virtual address)
 volatile uint64_t heap_end	= HEAP_START;											// End of the heap (virtual address)
@@ -27,7 +27,9 @@ void *malloc(uint64_t sz)
 		{
 			split_chunk(cur_header, sz);
 		        cur_header->allocated = 1;
-		        return (void*) ((uint64_t)cur_header + (uint64_t)sizeof(header_t));
+			void *tmp = cur_header;
+			tmp += sizeof(header_t);
+			return tmp;
 		}
 
 		prev_header 	= cur_header;
@@ -45,8 +47,7 @@ void *malloc(uint64_t sz)
           chunk_start 		= (uint64_t)HEAP_START;
           heap_start 		= (header_t *)chunk_start;
         }
-
-        expand_heap(chunk_start, (uint64_t)sz + (uint64_t)sizeof(header_t));
+        expand_heap(chunk_start, (uint64_t)sz +sizeof(header_t));
 	cur_header 		= (header_t *)chunk_start;
 	cur_header->allocated 	= 1;
 	cur_header->size 	= sz;
@@ -54,7 +55,9 @@ void *malloc(uint64_t sz)
 	cur_header->prev 	= prev_header;
 	cur_header->prev->next 	= cur_header;
 	cur_header->magic 	= MAGIC;
-	return (void*)((uint64_t)cur_header + (uint64_t)sizeof (header_t));
+	void *tmp = cur_header;
+	tmp += sizeof(header_t);
+	return tmp;
 }
 
 /** Frees an allocated address. **/
@@ -71,7 +74,7 @@ void expand_heap(uint64_t start, uint64_t len)
 	{
 		if(!vmm_test_mapping(heap_end))
 		{
-			vmm_map_frame((uint64_t)heap_end, (uint64_t)pmm_alloc_page, 0x3);
+			vmm_map_frame((uint64_t)heap_end, (uint64_t)pmm_alloc_page(), 0x3);
 		}
 		heap_end += 0x1000;
 	}
@@ -84,7 +87,8 @@ void split_chunk(header_t *chunk, uint64_t sz)
 	if(chunk->size > ((uint64_t)sz+(uint64_t)sizeof(header_t) ))
 	{
 	/* Make new header. */
-	header_t *new_chunk		= (header_t*)((uint64_t)chunk + (uint64_t)sizeof(header_t) + (uint64_t)sz);		// Create new chunk*
+	header_t *new_chunk		= (header_t*)((uint64_t)chunk + (uint64_t)sizeof(header_t) + (uint64_t)sz);
+		// Create new chunk*
 	new_chunk->allocated		= 0;											// Not allocated
 	new_chunk->size			= (uint64_t)((uint64_t)chunk->size - (uint64_t)sz - (uint64_t)sizeof(header_t));
 	new_chunk->magic		= MAGIC;										// Fill in magic code.
@@ -187,12 +191,12 @@ void view_heap(void)
 
 	if(heap_start)
 	{
-		printf("\nHeap start at: %x, size: %x, allocated: %d", heap_start, heap_start->size, heap_start->allocated);
+		printf("\nHeap start at: %x, size: %x, allocated: %d,  magic: %x", heap_start, heap_start->size, heap_start->allocated, heap_start->magic);
 		header_t *iterator = heap_start->next;
 
 		while(iterator)
 		{
-			printf("\nNext entry at %x, size: %x, allocated: %d", iterator, iterator->size, iterator->allocated);
+			printf("\nNext entry at %x, size: %x, allocated: %d, magic: %x", iterator, iterator->size, iterator->allocated, iterator->magic);
 			iterator = iterator->next;
 		}
 	}

@@ -4,6 +4,9 @@
 
 #include <mutex.h>
 
+/* TODO: Locked Arthmetic and test functions. */
+/* -ie inc, dec, add, or, not, */
+
 uint64_t spinlock_lock (volatile spinlock_t *lock)
 {
         register spinlock_t value = SPINLOCK_UNLOCKED;

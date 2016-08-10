@@ -15,6 +15,8 @@ flush_idt:
 [GLOBAL isr_common_stub]
 [EXTERN isr_handler]
 isr_common_stub:
+    cli
+
     push rax                        ; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
     push rbx                        ; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
     push rcx                        ; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
@@ -42,14 +44,13 @@ isr_common_stub:
     iretq                           ; pops 5 things at once: CS, EIP, EFLAGS, SS, and ESP
 
 [GLOBAL apic_timer]
+[EXTERN tm_schedule]
 [EXTERN apic_timer_handler]
 [EXTERN apic_base]
 apic_timer:
-  cli                               	; Dissable interrupts
-  ;mov eax, [apic_base]			; Apic Base in C-code
-  ;mov dword [eax + 0x80], 0x30		; Dissable software for this cpu
+  cli
+  push rax                           	; Dissable interrupts
 
-  push rax
   push rbx
   push rcx
   push rdx
@@ -74,6 +75,7 @@ apic_timer:
 
 
   mov rdi, rsp
+  cld
   call tm_schedule           ; Call C function
   mov rsp, rax
 
@@ -100,10 +102,9 @@ apic_timer:
   pop rdx
   pop rcx
   pop rbx
-
-  mov eax, [apic_base]              	; Apic Base in C-code
-  mov dword [eax + 0x80	], 0x00		; Send EOI
-  ;mov dword [eax + 0x80], 0x00		; Enable software for this cpu
+  xor rax, rax
+  mov eax, [apic_base]			; Apic Base in C-code
+  mov dword [eax + apic_eoi], 0x00		; Dissable software for this cpu
   pop rax
   iretq                             	; Return to code
 
@@ -111,15 +112,69 @@ apic_timer:
 [EXTERN pit_handler]
 [EXTERN apic_base]
 pit_routine:
-  cli                               ; Dissable interrupts
+cli
+push rax                           	; Dissable interrupts
 
-  mov eax, [apic_base]              ; Apic Base in C-code
-  mov dword [eax + apic_eoi],  0    ; Send EOI to LAPIC
+push rbx
+push rcx
+push rdx
+push rsi
+push rdi
+push rbp
+push r8
+push r9
+push r10
+push r11
+push r12
+push r13
+push r14
+push r15
+
+xor rax, rax
+mov ax, ds
+push rax
+
+mov rax, cr3
+push rax
+
+
+mov rdi, rsp
 cld
-  call pit_handler                   ; Call C function
-  cli
-  mov eax, [apic_base]              ; Apic Base in C-code
-  mov dword [eax + apic_eoi],  0    ; Send EOI to LAPIC
+call pit_handler           ; Call C function
+;mov rsp, rax
+xor rax, rax
+mov eax, [apic_base]              ; Apic Base in C-code
+mov dword [eax + apic_eoi],  0    ; Send EOI to LAPIC
+
+pop rax
+mov cr3, rax
+
+xor rax, rax
+pop rax
+mov ds, ax
+mov es, ax
+mov fs, ax
+
+pop r15
+pop r14
+pop r13
+pop r12
+pop r11
+pop r10
+pop r9
+pop r8
+pop rbp
+pop rdi
+pop rsi
+pop rdx
+pop rcx
+pop rbx
+xor rax, rax                 ; Call C function
+xor rax, rax
+
+  mov eax, [apic_base]              	; Apic Base in C-code
+  mov dword [eax + 0x80	], 0x00		; Enable soft ints
+  pop rax
 
   iretq                             ; Return to code
 

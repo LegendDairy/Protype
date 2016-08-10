@@ -45,7 +45,7 @@ isr_common_stub:
 
 [GLOBAL apic_timer]
 [EXTERN tm_schedule]
-[EXTERN apic_timer_handler]
+; TODO: Save the SSE MMX etc registers before thread switch. */
 [EXTERN apic_base]
 apic_timer:
   cli
@@ -141,7 +141,6 @@ push rax
 mov rdi, rsp
 cld
 call pit_handler           ; Call C function
-;mov rsp, rax
 xor rax, rax
 mov eax, [apic_base]              ; Apic Base in C-code
 mov dword [eax + apic_eoi],  0    ; Send EOI to LAPIC

@@ -22,7 +22,6 @@ uint8_t inb(uint16_t port)
 
 void pit_handler(void)
 {
-	//printf("i");
 }
 
 uint8_t apic_check(void)
@@ -30,12 +29,6 @@ uint8_t apic_check(void)
 	uint32_t eax, edx;
 	asm volatile("cpuid":"=a"(eax),"=d"(edx):"a"(1):"ecx","ebx");
 	return edx & CPUID_FLAG_APIC;
-}
-
-void apic_timer_handler(void)
-{
-	//printf("i");
-	tick++;
 }
 
 uint32_t lapic_read(uint32_t r)
@@ -50,10 +43,12 @@ void lapic_write(uint32_t r, uint32_t val)
 
 void setup_apic(void)
 {
+	/* Parse the multiprocessor table. */
 	parse_madt();
+	/* Address label for the asm code. */
 	apic_base = (uint32_t *) system_info->lapic_address;
+	/* Map the local apic to a virtual address. */
 	vmm_map_frame((uint64_t) apic_base,(uint64_t) apic_base, 0x3);
-
 
         /* TODO: */
         /* -Map lapic and ioapic address here instead of in the ipl.    */
@@ -64,21 +59,11 @@ void setup_apic(void)
         /* -Mask everything in all IO APICs.                            */
         /* Create an IDT with interrupt vectors for the local APIC's spurious IRQ,
         /* the master PIC's spurious IRQ and the slave PIC's spurious IRQ. */
-
         /* LINT0 and LINT1 should be setup dynamically (according to whatever
         the MPS table or ACPI says), rather than hardcoded. Harcoding them
         (like in the example in Intel manuals) is only really appropriate
         for BIOSs (where they know how the inputs are connected in advance). */
-
-        /*  test dword [SIBBOOTdetectionFlags],DETECTFLAGhasIMCRP   ;Does IMCR need to be disabled?
-   je .noIMCR                  ; no
-   mov al,0x70
-   out 0x22,al                  ;Select IMCR register
-   mov al,1
-   out 0x23,al                  ;Disable PICs
-.noIMCR: */
-//http://forum.osdev.org/viewtopic.php?p=107868#107868
-	/* Parse the multiprocessor table. */
+	//http://forum.osdev.org/viewtopic.php?p=107868#107868
 
 	/* Set up Local APIC */
 	lapic_write(apic_reg_task_priority, 0x00);			// Accept all interrupts
@@ -89,7 +74,7 @@ void setup_apic(void)
 	lapic_write(apic_lvt_lint1_reg, 0x00400);			// Enable normal NMI processing
 	lapic_write(apic_lvt_error_reg, 0x10000);			// Disable error interrupts
         lapic_write(apic_reg_dest_format, 0xF0000000);               	// Flatmode
-        lapic_write(apic_reg_logical_dest, 0xFF000000);
+        lapic_write(apic_reg_logical_dest, 0xFF000000);			// Destination bits for this apic
 	lapic_write(apic_reg_spur_int_vect, 0x0013F);			// Enable the APIC and set spurious vector to 0x3F
 	lapic_write(apic_lvt_lint0_reg, 0x08700);			// Enable normal external interrupts
 	lapic_write(apic_lvt_lint1_reg, 0x00400);			// Enable normal NMI processing
@@ -111,27 +96,6 @@ void setup_apic(void)
 
 	/* Set up LAPIC Timer. */
 	setup_lapic_timer();
-	//boot_ap(1); // multithreading doesn't support smp yet.
-
-	#define PIT_CHAN0_REG_COUNT	0x40
-	#define PIT_CHAN1_REG_COUNT	0x41
-	#define PIT_CHAN2_REG_COUNT	0x42
-	#define PIT_CONTROL_REG		0x43
-
-	int32_t divisor = 1193180 / 40;
-
-        // Send the command byte.
-    	// outb(PIT_CONTROL_REG, PIT_COM_MODE3 | PIT_COM_BINAIRY | PIT_COM_LSBMSB | PIT_SEL_CHAN0);
-        outb(PIT_CONTROL_REG, 0x36);
-
-        // Divisor has to be sent byte-wise, so split here into upper/lower bytes.
-        int8_t l = (uint8_t)(divisor & 0xFF);
-    	int8_t h = (uint8_t)((divisor>>8) & 0xFF );
-
-        // Send the frequency divisor.
-        outb(PIT_CHAN0_REG_COUNT, l);
-        outb(PIT_CHAN0_REG_COUNT, h);
-
 }
 
 void setup_lapic_timer(void)

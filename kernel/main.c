@@ -21,8 +21,6 @@
 /* -Clean up debug-text code. 					*/
 /* -Graphics proof of concept.					*/
 
-extern void apic_timer();
-extern void view_heap();
 void thread(void)
 {
 	while(1)
@@ -50,7 +48,6 @@ int main(ipl_info_t *info)
 	setup_apic();
 	setup_tm();
 
-	printf("Thread function at: %x", &apic_timer);
 
 	vmm_map_frame(0x90000000, pmm_alloc_page(), 0x3);
 

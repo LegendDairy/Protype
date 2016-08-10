@@ -163,7 +163,7 @@ void glue_chunk (header_t *chunk)
 }
 
 /* Routine to check for heap corruption. */
-uint64_t check_heap(void)
+uint64_t heap_check(void)
 
 {
 	header_t *iterator = (header_t *)heap_start;
@@ -186,7 +186,7 @@ uint64_t check_heap(void)
 	return 0;
 }
 
-void view_heap(void)
+void heap_debug_view(void)
 {
 
 	if(heap_start)

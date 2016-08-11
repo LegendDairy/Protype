@@ -5,7 +5,7 @@ sudo losetup /dev/loop0 bin/floppy.img
 echo "Injecting IPL..."
 sudo mount -t msdos /dev/loop0 /media/floppy1/
 sudo cp bin/ipl.sys /media/floppy1/
-sudo cp bin/apbm.prx /media/floppy1/
+sudo cp bin/apbm.sys /media/floppy1/
 sudo umount /dev/loop0
 sudo losetup -d /dev/loop0
 

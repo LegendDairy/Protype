@@ -9,6 +9,7 @@ jmp main
 
 ap_count: db 0x01
 idt_ptr:  dq 0x0
+ap_setup_apic: dq 0x0
 
 main:
 cli
@@ -83,6 +84,12 @@ mov rax, cr4
 or ax, 3 << 9		               ; Set CR4.OSFXSR and CR4.OSXMMEXCPT at the same time
 mov cr4, rax
 
+mov rax, [idt_ptr]
+lidt [rax]
+
+mov rax, [ap_setup_apic]
+call rax
+
 mov rbx, 0xB8000
 mov al, 0x48				; ASCII for 'H'
 mov ah, 0x0F				; Color attributes
@@ -92,11 +99,10 @@ mov al, [ap_count]
 inc al
 mov [ap_count], al
 
-mov rax, [idt_ptr]
-lidt [rax]
 sti
 loop:
 jmp loop
+hlt
 
 gdt_start:
   dd 0                      ; Null descriptor

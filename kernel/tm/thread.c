@@ -7,6 +7,8 @@
 uint64_t tm_current_thid 	= 1;
 extern topology_t *system_info;
 
+static void thread_exit(void);
+
 thread_t *tm_thread_get_current_thread(void)
 {
 	processor_t *curr = system_info_get_current_cpu();
@@ -28,7 +30,7 @@ uint64_t tm_thread_get_current_thread_thid(void)
 }
 
 /* Creates a new thread. */
-uint64_t tm_thread_create(int (*fn)(void*), /*uint64_t argn, char *argv[],*/ uint64_t PLM4T, uint8_t priority, uint64_t quantum, const char *name, uint32_t flags, uint64_t *stack, uint8_t ds, uint8_t cs, uint8_t ss)
+uint64_t tm_thread_create(int (*fn)(void*), uint64_t argn, char *argv[], uint64_t PLM4T, uint8_t priority, uint64_t quantum, const char *name, uint32_t flags, uint64_t *stack, uint8_t ds, uint8_t cs, uint8_t ss)
 {
 
 	/* Create and initialise an entry thread structure. */
@@ -53,7 +55,7 @@ uint64_t tm_thread_create(int (*fn)(void*), /*uint64_t argn, char *argv[],*/ uin
 	stack 			-= 12;						// Make room for the GPR on the stack.
 	*--stack 		= 0;						// rbp
 	*--stack 		= (uint64_t)argn;				// rdi
-	*--stack 		= (uint64_t)argv				// rsi
+	*--stack 		= (uint64_t)argv;				// rsi
 
 	*--stack 		= (uint64_t)ds;					// Setup data segment
 	*--stack 		= (uint64_t)PLM4T;				// Setup PLM4T for this thread

@@ -2,6 +2,10 @@
 /* ACPI Table	   v0.1	*/
 /* By LegendMythe	*/
 
+
+#ifndef ACPI_H
+#define ACPI_H
+
 #include<common.h>
 #include<string.h>
 #include<stdio.h>
@@ -23,23 +27,22 @@
 #define ACPI_MADT_GICD						0xC
 #define ACPI_MADT_FLAG_PCAT_COMPAT				0x1
 
-struct processor_t;
 struct io_apic_t;
-
-processor_t *system_info_get_current_cpu(void);
-uint32_t *system_info_get_lapic_base(void);
-uint32_t *system_info_get_ioapic_base(uint8_t id);
-
+typedef struct thread_t thread_t;
 
 typedef struct processor_t
 {
 	struct processor_t *next;				// Pointer to the next structure (this is a list entry)
-	uint32_t proc_id;					// ID of the processor (package)
-	uint32_t apic_id;					// ID for the logical cpu, ie ID of the local apic
+	uint8_t proc_id;					// ID of the processor (package)
+	uint8_t apic_id;					// ID for the logical cpu, ie ID of the local apic
 	uint32_t flags;						// Flags from the MADT
 	thread_t *current_thread;				// Pointer to the current running thread on this logical cpu
 	uint64_t timer_current_tick;				// Curent tick of lapic timer.
 } processor_t;
+
+processor_t *system_info_get_current_cpu(void);
+uint32_t *system_info_get_lapic_base(void);
+uint32_t *system_info_get_ioapic_base(uint8_t id);
 
 typedef struct
 {
@@ -146,3 +149,5 @@ typedef struct
 	uint32_t interrupt;
 	uint16_t flags;
 }  __attribute__((packed)) madt_overide_t;
+
+#endif

@@ -139,7 +139,7 @@ void isr_handler(regs_t * regs)
 	}
 	else
 	{
-		DebugClearScreen();
+		//DebugClearScreen();
 		uint64_t faulting_address;
 		    asm volatile("mov %%cr2, %0" : "=r" (faulting_address));
 

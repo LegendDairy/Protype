@@ -8,6 +8,8 @@
 #include <scheduler.h>
 //#include <vmm.h>
 #include <heap.h>
+#include <acpi.h>
+
 
 #define THREAD_FLAG_READY          	0x01		// Else terminated
 #define THREAD_FLAG_SLEEP               0x02
@@ -29,7 +31,7 @@
 #define KERNEL_STACK_SIZE               0x4000
 #define KERNEL_STACK_BASE               0xC0000000
 
-typedef struct thread_struct
+typedef struct thread_t
 {
   struct thread_struct *next;
   uint64_t thid;					// Threads ID number
@@ -43,10 +45,10 @@ typedef struct thread_struct
 
 typedef int(*fn_t)(void*);
 
-uint64_t tm_thread_create(int (*fn)(void*), /*uint64_t argn, char *argv[],*/ uint64_t PLM4T, uint8_t priority, uint64_t quantum, const char *name, uint32_t flags, uint64_t *stack, uint8_t ds, uint8_t cs, uint8_t ss);
+uint64_t tm_thread_create(int (*fn)(void*), uint64_t argn, char *argv[], uint64_t PLM4T, uint8_t priority, uint64_t quantum, const char *name, uint32_t flags, uint64_t *stack, uint8_t ds, uint8_t cs, uint8_t ss);
 
 thread_t *tm_thread_get_current_thread(void);
-uint64_t tm_thread_get_current_thread_thid(void)
+uint64_t tm_thread_get_current_thread_thid(void);
 
 
 #endif

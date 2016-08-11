@@ -7,7 +7,7 @@ main.o video/text.o video/printf.o cpu/apic.o  cpu/acpi.o cpu/mutex.o hardware/i
 
 CC = x86_64-elf-gcc
 CFLAGS=\
--nostdlib -lgcc -ffreestanding -mno-red-zone -fno-exceptions -O2 -Wall -Wextra   -mcmodel=large \
+-nostdlib -lgcc -ffreestanding -mno-red-zone -fno-exceptions -O2 -Wall -Wextra   -mcmodel=large\
 -I./memory/include -I./cpu/include -I./video/include -I./include/stdinc -I./include -I./hardware/include -I./tm/include\
 #mcmodel=kernel also possible
 AS = nasm

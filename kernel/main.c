@@ -23,17 +23,19 @@
 
 void thread(void)
 {
+	processor_t *curr =  system_info_get_current_cpu();
+	printf("Hello from thread 1 running on %x\n", curr->apic_id);
 	while(1)
 	{
-		printf("e");
 	}
 }
 
 void thread2(void)
 {
+	processor_t *curr =  system_info_get_current_cpu();
+	printf("Hello from thread 2 running on %x\n", curr->apic_id);
 	while(1)
 	{
-		printf("o");
 	}
 }
 
@@ -41,23 +43,25 @@ int main(ipl_info_t *info)
 {
 	DebugClearScreen();
 	DebugSetTextColour(0x2, 0);
-	printf("Protype v1.3\n");
+	//printf("Protype v1.3\n");
 	DebugSetTextColour(0xF, 0);
 	init_idt();
 	setup_pmm(info);
 	setup_vmm();
+	parse_madt();
 	setup_apic();
 	setup_tm();
+	//
+
 
 
 	vmm_map_frame(0x90000000, pmm_alloc_page(), 0x3);
-
-
 	vmm_map_frame(0xA0000000, pmm_alloc_page(), 0x3);
 
+boot_ap(1);
 
-	tm_thread_create(&thread,  0x10000, 1, 100, "Thread 1", 1, 0x90000F00, 0x10, 0x8, 0x10);
-	tm_thread_create(&thread2, 0x10000, 1, 100, "Thread 2", 1, 0xA0000F00, 0x10, 0x8, 0x10);
+	tm_thread_create(&thread, 0, 0,  0x10000, 1, 100, "Thread 1", 1, 0x90000F00, 0x10, 0x8, 0x10);
+	tm_thread_create(&thread2, 0, 0, 0x10000, 1, 100, "Thread 2", 1, 0xA0000F00, 0x10, 0x8, 0x10);
 	asm volatile("sti");
 	while(1)
 	{

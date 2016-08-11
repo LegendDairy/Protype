@@ -44,7 +44,6 @@ void lapic_write(uint32_t r, uint32_t val)
 void setup_apic(void)
 {
 	/* Parse the multiprocessor table. */
-	parse_madt();
 	/* Address label for the asm code. */
 	apic_base = (uint32_t *) system_info->lapic_address;
 	/* Map the local apic to a virtual address. */
@@ -84,20 +83,40 @@ void setup_apic(void)
 
 
 	/* Set up IO APIC for the PIT (POC) */
-	uint32_t * volatile ioapic_reg 	= (uint32_t *)system_info->io_apic->address;
+	/*uint32_t * volatile ioapic_reg 	= (uint32_t *)system_info->io_apic->address;
  	uint32_t * volatile ioapic_io 	= (uint32_t *)(system_info->io_apic->address+0x4);
 
 	vmm_map_frame(ioapic_reg, ioapic_reg, 0x3); 			// Identity map io apic address
  	*(uint32_t*)ioapic_reg 	= (uint32_t)0x14;
  	*ioapic_io 		= (uint32_t)0x030 ;
  	*(uint32_t*)ioapic_reg 	= (uint32_t)0x15;
- 	*ioapic_io 		= (uint32_t)0xFF000000;
+ 	*ioapic_io 		= (uint32_t)0xFF000000;*/
 
 
 	/* Set up LAPIC Timer. */
 	setup_lapic_timer();
+	//boot_ap(1);
 }
+void apic_ap_setup(void)
+{
+	lapic_write(apic_reg_task_priority, 0x00);			// Accept all interrupts
+	lapic_write(apic_lvt_timer_reg, 0x10000);			// Disable timer interrupts
+	lapic_write(apic_lvt_thermal_reg, 0x10000);			// Dissable Thermal monitor
+	lapic_write(apic_lvt_perf_reg, 0x10000);			// Disable performance counter interrupts
+	lapic_write(apic_lvt_lint0_reg, 0x08700);			// Enable normal external interrupts
+	lapic_write(apic_lvt_lint1_reg, 0x00400);			// Enable normal NMI processing
+	lapic_write(apic_lvt_error_reg, 0x10000);			// Disable error interrupts
+        lapic_write(apic_reg_dest_format, 0xF0000000);               	// Flatmode
+        lapic_write(apic_reg_logical_dest, 0xFF000000);			// Destination bits for this apic
+	lapic_write(apic_reg_spur_int_vect, 0x0013F);			// Enable the APIC and set spurious vector to 0x3F
+	lapic_write(apic_lvt_lint0_reg, 0x08700);			// Enable normal external interrupts
+	lapic_write(apic_lvt_lint1_reg, 0x00400);			// Enable normal NMI processing
+	lapic_write(apic_reg_processor_priority, 0x00);			// Enable normal NMI processing
+	lapic_write(apic_reg_arbitration_priority, 0x00);		// Enable normal NMI processing
+	lapic_write(apic_reg_eoi, 0x00);				// Make sure no interrupts are left
 
+	setup_lapic_timer();
+}
 void setup_lapic_timer(void)
 {
 	/* Set LAPIC timer as reg int 48 */
@@ -139,6 +158,9 @@ void boot_ap(uint8_t id)
 	id &= 0xF;
         uint64_t *apb_idt_ptr = APB_BASE + 0x3;
         *apb_idt_ptr = &idt_ptr;
+
+	uint64_t *apb_apic_setup = APB_BASE + 0xb;
+	*apb_apic_setup = &apic_ap_setup;
 
 	uint8_t *ap_count_ptr = (uint8_t *)(APB_BASE + 0x2);
 	*ap_count_ptr = system_info->active_cpus;
@@ -185,7 +207,7 @@ void boot_ap(uint8_t id)
 	while(!(inb(0x61)&0x20));
 	if(*ap_count_ptr > system_info->active_cpus)
 	{
-		printf("\n[SMP]: AP %d booted! Currently %d active processors running.", id, *ap_count_ptr);
+		printf("\n[SMP]: AP %d booted! Currently %d active processors running.\n", id, *ap_count_ptr);
 		system_info->active_cpus = *ap_count_ptr;
 	}
 }

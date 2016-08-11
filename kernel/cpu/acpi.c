@@ -136,7 +136,6 @@ void parse_madt(void)
 				cpu_entry->current_thread			= 0;
 				cpu_entry->next 				= 0;
 				cpu_entry->timer_current_tick			= 0;
-
 				/* Iterate through the cpu list to find the last entry. */
 				processor_t *itterator 	= (processor_t *)system_info->cpu_list;
 				if(itterator)
@@ -200,7 +199,7 @@ void parse_madt(void)
 processor_t *system_info_get_current_cpu(void)
 {
 	processor_t *current_cpu = system_info->cpu_list;
-	while(current_cpu && (current_cpu->apic_id =! lapic_read(apic_reg_id)))
+	while(current_cpu && !(current_cpu->apic_id == lapic_read(apic_reg_id)))
 	{
 		current_cpu = current_cpu->next;
 	}

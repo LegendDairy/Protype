@@ -54,9 +54,6 @@ apic_timer:
   push rbx
   push rcx
   push rdx
-  push rsi
-  push rdi
-  push rbp
   push r8
   push r9
   push r10
@@ -65,6 +62,9 @@ apic_timer:
   push r13
   push r14
   push r15
+  push rbp
+  push rdi
+  push rsi
 
   xor rax, rax
   mov ax, ds
@@ -88,6 +88,10 @@ apic_timer:
   mov es, ax
   mov fs, ax
 
+
+  pop rsi
+  pop rdi
+  pop rbp
   pop r15
   pop r14
   pop r13
@@ -96,9 +100,6 @@ apic_timer:
   pop r10
   pop r9
   pop r8
-  pop rbp
-  pop rdi
-  pop rsi
   pop rdx
   pop rcx
   pop rbx

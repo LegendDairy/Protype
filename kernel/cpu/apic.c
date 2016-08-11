@@ -79,7 +79,7 @@ void setup_apic(void)
 	lapic_write(apic_lvt_lint0_reg, 0x08700);			// Enable normal external interrupts
 	lapic_write(apic_lvt_lint1_reg, 0x00400);			// Enable normal NMI processing
 	lapic_write(apic_reg_processor_priority, 0x00);			// Enable normal NMI processing
-	lapic_write(apic_reg_arbitration_priority, 0x00);			// Enable normal NMI processing
+	lapic_write(apic_reg_arbitration_priority, 0x00);		// Enable normal NMI processing
 	lapic_write(apic_reg_eoi, 0x00);				// Make sure no interrupts are left
 
 

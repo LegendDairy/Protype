@@ -25,10 +25,10 @@ void thread(void)
 {
 	while(1)
 	{
-
 		printf("e");
 	}
 }
+
 void thread2(void)
 {
 	while(1)
@@ -36,6 +36,7 @@ void thread2(void)
 		printf("o");
 	}
 }
+
 int main(ipl_info_t *info)
 {
 	DebugClearScreen();
@@ -66,6 +67,8 @@ int main(ipl_info_t *info)
 
 	return 0;
 }
+
+
 /*uint32_t *ptr1 = malloc(0x500);
 *ptr1 = 0xDEADBEE1;
 uint32_t *ptr2 = malloc(0x1100);

@@ -11,10 +11,10 @@
 /* Structure with all the spinlocks for the scheduler. */
 typedef struct
 {
-	spinlock_t sched_ready_que_high;
-	spinlock_t sched_ready_que_med;
-	spinlock_t sched_ready_que_low;
-	spinlock_t sched_notready_que;
+	spinlock_t sched_ready_queue_high;
+	spinlock_t sched_ready_queue_med;
+	spinlock_t sched_ready_queue_low;
+	spinlock_t sched_notready_queue;
 } sched_spinlock_t;
 
 /** Intialises multithreading. Creates a current thread structure for the BSP. **/

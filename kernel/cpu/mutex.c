@@ -19,6 +19,16 @@ uint64_t spinlock_lock (volatile spinlock_t *lock)
         return value;
 }
 
+uint64_t atomic_fetch_add(volatile uint64_t* p, uint64_t incr)
+{
+
+     uint64_t result;
+    __asm__ _volatile_ ("lock; xadd %0, %1" :
+            "=r"(result), "=m"(*p):
+            "0"(incr), "m"(*p) :
+            "memory");
+    return result;
+}
 
 void mutex_lock(mutex_t *m)
 {

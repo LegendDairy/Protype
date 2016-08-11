@@ -6,7 +6,7 @@
 #include<string.h>
 #include<stdio.h>
 #include<apic.h>
-
+#include<thread.h>
 
 #define ACPI_MADT_PROC						0
 #define ACPI_MADT_IOAP						1
@@ -26,32 +26,38 @@
 struct processor_t;
 struct io_apic_t;
 
+processor_t *system_info_get_current_cpu(void);
+uint32_t *system_info_get_lapic_base(void);
+uint32_t *system_info_get_ioapic_base(uint8_t id);
+
+
 typedef struct processor_t
 {
-	struct processor_t *next;
-	uint32_t proc_id;
-	uint32_t apic_id;
-	uint32_t flags;
-	/* thread_t *current_thread; */
+	struct processor_t *next;				// Pointer to the next structure (this is a list entry)
+	uint32_t proc_id;					// ID of the processor (package)
+	uint32_t apic_id;					// ID for the logical cpu, ie ID of the local apic
+	uint32_t flags;						// Flags from the MADT
+	thread_t *current_thread;				// Pointer to the current running thread on this logical cpu
+	uint64_t timer_current_tick;				// Curent tick of lapic timer.
 } processor_t;
 
 typedef struct
 {
 	uint8_t bootstrap;
-	uint32_t active_cpus;
-	uint32_t *lapic_address;
-	struct io_apic_t *io_apic;
-	uint32_t irq_map[16];
-	uint32_t flags;
-	processor_t *cpu_list;
+	uint32_t active_cpus;					// Number of active logical cpus.
+	uint32_t *lapic_address;				// Physical address for the APIC.
+	struct io_apic_t *io_apic;				// Linked list for available IO APICs.
+	uint32_t irq_map[16];					// ISA Overide f.e. pit = irq_map[0]
+	uint32_t flags;						// Flags (not yet used.)
+	processor_t *cpu_list;					// Linked list of Logical CPUs
 } topology_t;
 
 typedef struct io_apic_t
 {
-	struct io_apic_t *next;
-	uint32_t *address;
-	uint32_t id;
-	uint32_t int_base;
+	struct io_apic_t *next;					// Pointer to next entry in the list.
+	uint32_t *address;					// Physical address of this ioapic
+	uint8_t id;						// ID of this IO APIC
+	uint32_t int_base;					// ?
 } io_apic_t;
 
 typedef struct

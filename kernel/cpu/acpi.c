@@ -5,6 +5,8 @@
 #include<acpi.h>
 #include<vmm.h>
 #include<heap.h>
+#include<mutex.h>
+
 
 
 topology_t *system_info;
@@ -128,10 +130,12 @@ void parse_madt(void)
 			if(tmp->flags)
 			{
 				/* Initialise a new entry for the cpu structure in system_info. */
-				processor_t *cpu_entry 	= malloc(sizeof(processor_t));
-				cpu_entry->proc_id 	= tmp->proc_id;
-				cpu_entry->apic_id 	= tmp->apic_id;
-				cpu_entry->next 	= 0;
+				processor_t *cpu_entry 				= malloc(sizeof(processor_t));
+				cpu_entry->proc_id 				= tmp->proc_id;
+				cpu_entry->apic_id 				= tmp->apic_id;
+				cpu_entry->current_thread			= 0;
+				cpu_entry->next 				= 0;
+				cpu_entry->timer_current_tick			= 0;
 
 				/* Iterate through the cpu list to find the last entry. */
 				processor_t *itterator 	= (processor_t *)system_info->cpu_list;
@@ -189,5 +193,39 @@ void parse_madt(void)
 
 		i    += curr->length;
 		curr  = (madt_entry_t *)((uint64_t)curr + (uint32_t)curr->length);
+	}
+}
+
+/* TODO: move to seperate file system_info.c */
+processor_t *system_info_get_current_cpu(void)
+{
+	processor_t *current_cpu = system_info->cpu_list;
+	while(current_cpu && (current_cpu->apic_id =! lapic_read(apic_reg_id)))
+	{
+		current_cpu = current_cpu->next;
+	}
+
+	return current_cpu;
+}
+
+uint32_t *system_info_get_lapic_base(void)
+{
+	return system_info->lapic_address;
+}
+
+uint32_t *system_info_get_ioapic_base(uint8_t id)
+{
+	io_apic_t *itterator = system_info->io_apic;
+	while( itterator && itterator->id != id)
+	{
+		itterator = itterator->next;
+	}
+	if(itterator)
+	{
+		return itterator->address;
+	}
+	else
+	{
+		return 0;
 	}
 }

@@ -5,44 +5,77 @@
 #include <thread.h>
 
 uint64_t tm_current_thid 	= 1;
-extern thread_t *current_thread;
+extern topology_t *system_info;
 
+thread_t *tm_thread_get_current_thread(void)
+{
+	processor_t *curr = system_info_get_current_cpu();
+	if(!curr)
+	{
+		return 0;
+	}
+	return curr->current_thread;
+}
+
+uint64_t tm_thread_get_current_thread_thid(void)
+{
+	thread_t *curr = tm_thread_get_current_thread();
+	if(!curr)
+	{
+		return 0;
+	}
+	return curr->thid;
+}
+
+/* Creates a new thread. */
 uint64_t tm_thread_create(int (*fn)(void*), /*uint64_t argn, char *argv[],*/ uint64_t PLM4T, uint8_t priority, uint64_t quantum, const char *name, uint32_t flags, uint64_t *stack, uint8_t ds, uint8_t cs, uint8_t ss)
 {
+
 	/* Create and initialise an entry thread structure. */
 	thread_t *entry 	= malloc(sizeof(thread_t));
 	entry->next		= 0;
-	entry->thid		= tm_current_thid++; // TODO: make atomic thid increase
+	entry->thid		= atomic_fetch_add(&tm_current_thid, 1);
 	entry->name		= name;
 	entry->flags		= flags;
 	entry->quantum		= quantum;
 	entry->priority		= priority;
-	entry->parent_thid	= current_thread->thid;
+	entry->parent_thid	= tm_thread_get_current_thread_thid();
 
 	/* Prepare the thread stack. Set the intial register values. */
-	//*--stack = (uint64_t)&thread_exit;
-	//*--stack(rbp) = 0;
-	//*--stack(rdi) = (uint64_t)argn;
-	//*--stack(rsi) = (uint64_t)argv
-	*--stack = (uint64_t)ss;		// Stack segment selector
-	*--stack = (uint64_t)(stack+1);		// Pointer to stack
-	*--stack = (uint64_t)0x200; 		// Interrupts enabled.
-	*--stack = (uint64_t)cs; 		// Code segment selector
-	*--stack = (uint64_t)fn; 		// RIP
+	*--stack 		= (uint64_t)&thread_exit;			// Exit routine
+	*--stack 		= (uint64_t)ss;					// Stack segment selector
+	*--stack 		= (uint64_t)(stack+1);				// Pointer to stack
+	*--stack 		= (uint64_t)0x200; 				// Interrupts enabled
+	*--stack 		= (uint64_t)cs; 				// Code segment selector
+	*--stack 		= (uint64_t)fn; 				// RIP
 
-	//memsetq(stack, 0, 12);			// GPR are 0
-	stack 	-= 15;					//make room for the GPR on the stack.
-	*--stack = (uint64_t)ds;
-	*--stack = (uint64_t)PLM4T;
-	entry->rsp		= stack;
+	//memsetq(stack, 0, 12);						// Set gprs to 0
+	stack 			-= 12;						// Make room for the GPR on the stack.
+	*--stack 		= 0;						// rbp
+	*--stack 		= (uint64_t)argn;				// rdi
+	*--stack 		= (uint64_t)argv				// rsi
+
+	*--stack 		= (uint64_t)ds;					// Setup data segment
+	*--stack 		= (uint64_t)PLM4T;				// Setup PLM4T for this thread
+	entry->rsp		= stack;					// pointer to the stack
 
 	/* Add to not ready queue. */
-	tm_sched_add_to_que(entry);
+	tm_sched_add_to_queue(entry);
 
 	return entry->thid;
 }
 
+/* Finds a thread in the not_ready_queue and puts it in the correct queue. */
 void tm_start_thread(uint64_t thid)
 {
 
+}
+
+/* Thread exist routine. */
+void thread_exit(void)
+{
+	//  register uint64_t val asm ("eax");
+	//printf("\nThread with thid %d existed with value: %x.", tm_thread_get_current_thid(), val);
+	//sched_kill_curr_thread();
+	for(;;);
 }

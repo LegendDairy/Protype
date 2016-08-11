@@ -24,5 +24,7 @@ void mutex_lock(mutex_t *m);
 void mutex_unlock(mutex_t *m);
 /** Lock a spinlock wo going to sleep if locked. */
 uint64_t spinlock_lock (volatile spinlock_t *lock);
+uint64_t atomic_fetch_add(volatile uint64_t* p, uint64_t incr);
+
 
 #endif

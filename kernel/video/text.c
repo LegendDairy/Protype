@@ -8,8 +8,6 @@
 
 /* TODO: mutex this bitch. */
 
-mutex_t  text_lock;
-
 uint16_t *video_memory = (uint16_t *)0xB8000;
 unsigned char x_csr = 0;
 unsigned char y_csr = 0;

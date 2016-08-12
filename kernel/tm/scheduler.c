@@ -65,10 +65,28 @@ uint64_t tm_schedule(uint64_t rsp)
 
 	current_cpu->timer_current_tick++;
 
-	/* Test if a thread is running on this core. */
+	/* Test if a thread is running on this logical cpu. */
 	if(!current_cpu->current_thread)
 	{
-		return rsp;
+		if(sched_ready_queue_high)
+		{
+			/* Attempt to unlock the spinlock on the list. */
+			while (spinlock_lock(&sched_lock.sched_ready_queue_high) == SPINLOCK_LOCKED);
+
+			/* Change current thread and change the begining of the appropriate list. */
+			current_cpu->current_thread 		= sched_ready_queue_high;
+			sched_ready_queue_high 			= sched_ready_queue_high->next;
+
+			/* Unlock the spinlock. */
+			sched_lock.sched_ready_queue_high = SPINLOCK_UNLOCKED;
+			current_cpu->current_thread->next = 0;
+			return current_cpu->current_thread->rsp;
+		}
+		else
+		{
+			return rsp;
+		}
+
 	}
 
 	/* Save current possition in the stack of the thread and increase the current tick. */

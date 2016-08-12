@@ -5,17 +5,19 @@
 [BITS	16]
 [ORG 0x50000]
 
-jmp main
-
-ap_count: db 0x01
+jmp main		; 0x50000 size: 0x2
+bla: 	  dw 0x00
+ap_count: dd 0x01
 idt_ptr:  dq 0x0
 ap_setup_apic: dq 0x0
 
 main:
 cli
-mov al, [ap_count]
-inc al
-mov [ap_count], al
+mov ax, 0x6000
+mov ss, ax
+xor ax, ax
+mov sp, ax
+
 
 
 xor eax, eax
@@ -76,6 +78,9 @@ jmp 0x08:longmode                   ; Jump into longmode
 
 [BITS 64]
 longmode:
+mov rax, 0x60000
+mov rsp, rax
+
 mov rax, cr0
 and ax, 0xFFFB		       ; Clear coprocessor emulation CR0.EM
 or ax, 0x2			       ; Set coprocessor monitoring  CR0.MP
@@ -90,19 +95,16 @@ lidt [rax]
 mov rax, [ap_setup_apic]
 call rax
 
-mov rbx, 0xB8000
-mov al, 0x48				; ASCII for 'H'
-mov ah, 0x0F				; Color attributes
-mov [rbx], ax
-
 mov al, [ap_count]
 inc al
 mov [ap_count], al
 
 sti
+
 loop:
-jmp loop
-hlt
+hlt			   ; Wait for interrupt
+jmp loop		   ; Jump to wait
+
 
 gdt_start:
   dd 0                      ; Null descriptor

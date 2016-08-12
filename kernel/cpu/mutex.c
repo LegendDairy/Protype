@@ -9,14 +9,8 @@
 
 uint64_t spinlock_lock (volatile spinlock_t *lock)
 {
-        register spinlock_t value = SPINLOCK_UNLOCKED;
 
-        asm volatile("lock\
-                      xchg   %0, %1"
-                      : "=q" (value), "=m" (*lock)
-                      : "0" (value) );
-
-        return value;
+        return __sync_lock_test_and_set (lock, 1);
 }
 
 uint64_t atomic_fetch_add(volatile uint64_t* p, uint64_t incr)
@@ -32,7 +26,7 @@ uint64_t atomic_fetch_add(volatile uint64_t* p, uint64_t incr)
 
 void mutex_lock(mutex_t *m)
 {
-	while (spinlock_lock (&m->lock) == SPINLOCK_LOCKED);
+	while (__sync_lock_test_and_set (&m->lock, 1));
 	/*{
 		schedule(); // software interupt and schedule
 	}*/
@@ -40,7 +34,7 @@ void mutex_lock(mutex_t *m)
 
 void mutex_unlock(mutex_t *m)
 {
-	m->lock = 0;
+	__sync_lock_release(&m->lock);
 	/*
 	if(m->waiting)
 	{

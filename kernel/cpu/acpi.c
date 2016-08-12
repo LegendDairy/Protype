@@ -199,11 +199,15 @@ void parse_madt(void)
 processor_t *system_info_get_current_cpu(void)
 {
 	processor_t *current_cpu = system_info->cpu_list;
-	while(current_cpu && !(current_cpu->apic_id == lapic_read(apic_reg_id)))
+	while(current_cpu && (!((uint32_t)current_cpu->apic_id == lapic_read(apic_reg_id) >> 24)))
 	{
 		current_cpu = current_cpu->next;
 	}
-
+	if(!current_cpu)
+	{
+		printf("Error: couldn't find current_cpu");
+		for(;;);
+	}
 	return current_cpu;
 }
 

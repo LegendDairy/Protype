@@ -14,6 +14,7 @@
 #include <idt.h>
 #include <scheduler.h>
 
+extern mutex_t text_lock;
 
 /* TODO */
 /* -Setup a proper kernel stack. 				*/
@@ -24,16 +25,7 @@
 void thread(void)
 {
 	processor_t *curr =  system_info_get_current_cpu();
-	printf("Hello from thread 1 running on %x\n", curr->apic_id);
-	while(1)
-	{
-	}
-}
-
-void thread2(void)
-{
-	processor_t *curr =  system_info_get_current_cpu();
-	printf("Hello from thread 2 running on %x\n", curr->apic_id);
+	printf("Hello from %s running on logical cpu %x\n", curr->current_thread->name, curr->apic_id);
 	while(1)
 	{
 	}
@@ -41,9 +33,11 @@ void thread2(void)
 
 int main(ipl_info_t *info)
 {
+	mutex_unlock(&text_lock);
+
 	DebugClearScreen();
 	DebugSetTextColour(0x2, 0);
-	//printf("Protype v1.3\n");
+	printf("Protype v1.3\n");
 	DebugSetTextColour(0xF, 0);
 	init_idt();
 	setup_pmm(info);
@@ -51,23 +45,38 @@ int main(ipl_info_t *info)
 	parse_madt();
 	setup_apic();
 	setup_tm();
-	//
+
+	/* Proof of concept: preemptive SMP support: */
+	boot_ap(1);
+	boot_ap(2);
+	boot_ap(3);
 
 
 
 	vmm_map_frame(0x90000000, pmm_alloc_page(), 0x3);
+	vmm_map_frame(0x90001000, pmm_alloc_page(), 0x3);
+	vmm_map_frame(0x90002000, pmm_alloc_page(), 0x3);
+	vmm_map_frame(0x90003000, pmm_alloc_page(), 0x3);
+	vmm_map_frame(0x90004000, pmm_alloc_page(), 0x3);
+	vmm_map_frame(0x90005000, pmm_alloc_page(), 0x3);
+	vmm_map_frame(0x90006000, pmm_alloc_page(), 0x3);
 	vmm_map_frame(0xA0000000, pmm_alloc_page(), 0x3);
 
-boot_ap(1);
 
 	tm_thread_create(&thread, 0, 0,  0x10000, 1, 100, "Thread 1", 1, 0x90000F00, 0x10, 0x8, 0x10);
-	tm_thread_create(&thread2, 0, 0, 0x10000, 1, 100, "Thread 2", 1, 0xA0000F00, 0x10, 0x8, 0x10);
+	tm_thread_create(&thread, 0, 0, 0x10000, 1, 100, "Thread 2", 1, 0x90001F00, 0x10, 0x8, 0x10);
+	tm_thread_create(&thread, 0, 0,  0x10000, 1, 100, "Thread 3", 1, 0x90002F00, 0x10, 0x8, 0x10);
+	tm_thread_create(&thread, 0, 0,  0x10000, 1, 100, "Thread 4", 1, 0x90003F00, 0x10, 0x8, 0x10);
+	tm_thread_create(&thread, 0, 0, 0x10000, 1, 100, "Thread 5", 1, 0x90004F00, 0x10, 0x8, 0x10);
+	tm_thread_create(&thread, 0, 0,  0x10000, 1, 100, "Thread 6", 1, 0x90005F00, 0x10, 0x8, 0x10);
+	tm_thread_create(&thread, 0, 0,  0x10000, 1, 100, "Thread 7", 1, 0x90006F00, 0x10, 0x8, 0x10);
+	tm_thread_create(&thread, 0, 0, 0x10000, 1, 100, "Thread 8", 1, 0xA0000F00, 0x10, 0x8, 0x10);
+
 	asm volatile("sti");
 	while(1)
 	{
-		//printf("i");
+		asm("hlt");
 	}
-	for (;;);
 
 	return 0;
 }

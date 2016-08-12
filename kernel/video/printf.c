@@ -9,7 +9,6 @@ mutex_t text_lock;
 
 void printf(const char *str, ...)
 {
-	asm("cli");
 	mutex_lock(&text_lock);
 	va_list args;
 	va_start(args, str);
@@ -40,5 +39,4 @@ void printf(const char *str, ...)
 
 	va_end(args);
 	mutex_unlock(&text_lock);
-	asm("sti");
 }

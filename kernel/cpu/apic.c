@@ -99,6 +99,7 @@ void setup_apic(void)
 }
 void apic_ap_setup(void)
 {
+	printf("[SMP]: CPU %x is booting...\n", lapic_read(apic_reg_id) >> 24);
 	lapic_write(apic_reg_task_priority, 0x00);			// Accept all interrupts
 	lapic_write(apic_lvt_timer_reg, 0x10000);			// Disable timer interrupts
 	lapic_write(apic_lvt_thermal_reg, 0x10000);			// Dissable Thermal monitor
@@ -156,13 +157,13 @@ void setup_lapic_timer(void)
 void boot_ap(uint8_t id)
 {
 	id &= 0xF;
-        uint64_t *apb_idt_ptr = APB_BASE + 0x3;
+        uint64_t *apb_idt_ptr = APB_BASE + 0x8;
         *apb_idt_ptr = &idt_ptr;
 
-	uint64_t *apb_apic_setup = APB_BASE + 0xb;
+	uint64_t *apb_apic_setup = APB_BASE + 0x10;
 	*apb_apic_setup = &apic_ap_setup;
 
-	uint8_t *ap_count_ptr = (uint8_t *)(APB_BASE + 0x2);
+	volatile uint32_t *ap_count_ptr = (uint32_t *)(APB_BASE + 0x4);
 	*ap_count_ptr = system_info->active_cpus;
 
 	lapic_write(apic_ICR_32_63, id << 24);
@@ -205,9 +206,10 @@ void boot_ap(uint8_t id)
 	outb(0x61,(uint8_t)tmp|1);	//gate high
 
 	while(!(inb(0x61)&0x20));
-	if(*ap_count_ptr > system_info->active_cpus)
-	{
-		printf("\n[SMP]: AP %d booted! Currently %d active processors running.\n", id, *ap_count_ptr);
-		system_info->active_cpus = *ap_count_ptr;
-	}
+	while(*ap_count_ptr == system_info->active_cpus);
+
+
+		system_info->active_cpus++;
+		printf("[SMP]: AP %d booted! Currently %d active processors running.\n", id, *ap_count_ptr);
+
 }

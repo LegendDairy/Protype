@@ -51,7 +51,9 @@ Current realease number: r1,3 codenamed Hydrogen
 Build Instructions
 ------------------
 To build the kernel, you can use the build.sh script, first you'll need to give it permission on Linux:
+
 `chmod 777 build.sh`
+
 `cd /media`
 `sudo mkdir floppy1`
 `sudo chmod 777 /media`

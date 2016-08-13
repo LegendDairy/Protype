@@ -23,17 +23,17 @@ Roadmap:
 I try to follow a basic roadmap to implement new features. However sometimes I jump a head and try to implement a proof of concept.
 This breaks the tedious routine of research, implementation and testing+bugfixes.
 
--2 stage bootloader                     Done (TODO FAT32 i.o FAT10)
-  -Long mode jump                         Done (TODO higherhalf)
-  -physical memory manager:               Done & tested
-  -virtual memory manager                 Done and test (simple version)
-  -Heap:                                  Done & tested
-  -Preemptive support                     WIP (work in progress)
-  -SMP support                            POC (Proof of concept) with premtive support
-  -VFS
-  -IPC
-  -Usermode Exec loading
-  -grapics (module)
+*2 stage bootloader                     Done (TODO FAT32 i.o FAT10)
+  *Long mode jump                         Done (TODO higherhalf)
+  *physical memory manager:               Done & tested
+  *virtual memory manager                 Done and test (simple version)
+  *Heap:                                  Done & tested
+  *Preemptive support                     WIP (work in progress)
+  *SMP support                            POC (Proof of concept) with premtive support
+  *VFS
+  *IPC
+  *Usermode Exec loading
+  *grapics (module)
 
 
 

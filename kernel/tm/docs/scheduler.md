@@ -6,8 +6,8 @@ The scheduling algorithm is a simplistic priority based Round Robin. There are m
       `A-B-A-B-A-C`
 So every odd quantum a highest priority thread will be executed and every second and 6th quantum a medium priority and finally every 4th tick a lowest priority
 
-* current_thread: 	`A-C-A-B-A-B- A-C-A-B-A-B- A-C-A-B-A-B`
-* current_tick:		`1-2-3-...`
+* current_thread:				`A-C-A-B-A-B- A-C-A-B-A-B- A-C-A-B-A-B`
+* current_tick	:				`1-2-3-4-5-6...`
 
 In order to prevent race-conditions on SMP systems we must lock to queues before accessing them. This however can cause a big overhead inside the scheduler if only one spinlock is used. In a system with a large number of cpus this will create a very large overhead. I however haven't found a better method. Something that we could do is to have queues per logical cpu, and one low-priority process that inspects these queues to evenly distribute all the current running threads over the available cores.
 
@@ -22,32 +22,38 @@ Problems
 When the stack of a thread is overrun and creates a paging fault, the entire system will crash at a timer interrupt. In order to fix this we could use a tss with a kernel stack for interrupts. However we cant just use 1 kernel stack, as our GPR/system state after a context switch will be stored on this stack. So a solution to this could be to give each thread it's own small kernelstack, and change tss.rsp0 before a task switch. However this means that every kernel stack should be mapped in every address space. Or we change the page directory and the stack inside the scheduler C function.
 
 We could also use some virtual memory magic: Each kernel stack has its own physical frame but is always mapped to the same virtual address. When swapping task all we have to do is change the mappings of that virtual address.
-`vmm_map_frame(KERNEL_STACK, current_thread->kstack, 0x3);`
-`vmm_flush_page(KERNEL_STACK);`
+
+```C
+vmm_map_frame(KERNEL_STACK, current_thread->kstack, 0x3);
+```
+```C
+vmm_flush_page(KERNEL_STACK);
+```
+
 Note how in this solution e do not have to change the rsp, nor the tss to do a context switch. Here however we run in the following problem: Imagine thread1 one core0 and thread2 on core1 sharing the same address space...
 
 
 Pseudo Code
 -----------
 
-`void timer_handler_asm(uint64_t rsp)
-{
-        (Push all regs except edi)
-        (Push data selectors)
+```asm
+timer_handler_asm:
+	(Push all regs)	
+	(Push data selectors)
 	mov eax, cr3
 	push eax
-        mov rdi, rsp ; system V ABI: rdi=first arg
-        call timer_callback
-        mov rsp, rax ; system V ABI: rax=return value
+	mov rdi, rsp ; system V ABI: rdi=first arg
+	call tm_schedule
+	mov rsp, rax ; system V ABI: rax=return value
 	pop eax
 	mov cr3, eax
-        (pop all regs except edi)
-        (pop data selectors)
-         send_eoi
-         iretd
-}`
-
-`uint64_t tm_schedule(uint64_t rsp)
+	(pop data selectors)
+	(pop all regs)
+	send_eoi
+	iretq
+```
+```C
+uint64_t tm_schedule(uint64_t rsp)
 {
 current_tick++;
 current_thread->rsp = rsp;
@@ -57,9 +63,10 @@ sched_find_next_thread();
 spinlock_unlock();
 tss_set_esp0(current_thread->rsp);
 return current_thread->rsp;
-}`
-
-`void sched_find_next_thread()
+}
+```
+```C
+void sched_find_next_thread()
 {
 If(current_tick%2 && ready_que_high)
 {
@@ -74,4 +81,5 @@ else if(ready_que_medium)
 {
 ...
 }
-}`
+}
+```

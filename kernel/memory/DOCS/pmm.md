@@ -1,3 +1,7 @@
+Memory managment
+================
+Overview
+--------
 When the IPL loads the kernel the cpu is in Long Mode and thus paging is already enabled.
 To initialize the pmm the kernel needs some physical memory to setup a linked list and stack of free physical frames
 However because paging is enabled to write to this memory it needs to be mapped
@@ -25,18 +29,19 @@ More on this latter
 I also had to add "-mcmodel=large" to the linker and gcc flags, but this may not be very efficient, more research is needed...
 
 
+Pseudo Code
+-----------
 Here's some "Pseudo" code i wrote before writing the real code:
-*****************************************************************************************
-*****************************************************************************************
-*****************************************************************************************
 
+```C
 plm4t->pdpt->pdt-pt
-
 #define PLM4T_INDEX(a) ((u32int)a/(512*1024*1024*1024))
 #define PDPT_INDEX(a) ((u32int)a%512*1024*1024*1024)/(1024*1024*1024)
 #define PDT_INDEX(a) (((u32int)a%512*1024*1024*1024)%(1024*1024*1024))/(2*1024*1024)
 #define PT_INDEX(a) ((((u32int)a%512*1024*1024*1024)%(1024*1024*1024))%(2*1024*1024))
+```
 
+```C
 void pre_pmm_setup(ipl_info_t *info)
 {
   parse_mmap();
@@ -46,7 +51,8 @@ void pre_pmm_setup(ipl_info_t *info)
   allocate_region();
   pre_vmm_map_region();
 }
-
+```
+```C
 void pre_vmm_map(u32int paddress, u32int vaddress)
 {
   if(!PLM4T[PLM4T_INDEX(vaddress)])
@@ -72,3 +78,4 @@ void pre_vmm_map(u32int paddress, u32int vaddress)
   }
   PDT[PT_INDEX(vaddress)] = paddress;
 }
+```

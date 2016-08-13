@@ -49,6 +49,7 @@ typedef struct
 	uint8_t bootstrap;
 	uint32_t active_cpus;					// Number of active logical cpus.
 	uint32_t *lapic_address;				// Physical address for the APIC.
+	uint64_t bus_freq;
 	struct io_apic_t *io_apic;				// Linked list for available IO APICs.
 	uint32_t irq_map[16];					// ISA Overide f.e. pit = irq_map[0]
 	uint32_t flags;						// Flags (not yet used.)

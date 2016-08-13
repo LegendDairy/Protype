@@ -12,6 +12,37 @@ flush_idt:
     lidt [rax]                      ; Load the IDT pointer.
     ret
 
+
+[GLOBAL acquireLock]
+    acquireLock:
+        push rax
+	retry:
+	mov eax, [apic_base]              	; Apic Base in C-code
+        mov dword [eax + 0x80	], 0xFF		; Enable soft ints
+        xor rax, rax
+        lock bts [rdi],rax        ;Attempt to acquire the lock (in case lock is uncontended)
+        jc .spin_with_pause
+	pop rax
+        ret
+
+    .spin_with_pause:
+        pause                    ; Tell CPU we're spinning
+	mov eax, [apic_base]              	; Apic Base in C-code
+        mov dword [eax + 0x80	], 0x00		; Enable soft ints
+        test qword [rdi],1      ; Is the lock free?
+        jnz .spin_with_pause     ; no, wait
+        jmp retry          ; retry
+
+[GLOBAL releaseLock]
+    releaseLock:
+    	push rax
+        mov qword [rdi],0
+	mov eax, [apic_base]              	; Apic Base in C-code
+        mov dword [eax + 0x80	], 0x00		; Enable soft ints
+	pop rax
+        ret
+
+
 [GLOBAL isr_common_stub]
 [EXTERN isr_handler]
 isr_common_stub:
@@ -50,7 +81,8 @@ isr_common_stub:
 apic_timer:
   cli
   push rax                           	; Dissable interrupts
-
+  mov eax, [apic_base]              	; Apic Base in C-code
+  mov dword [eax + 0x80	], 0xFF		; Enable soft ints
   push rbx
   push rcx
   push rdx
@@ -106,6 +138,7 @@ apic_timer:
   xor rax, rax
   mov eax, [apic_base]			; Apic Base in C-code
   mov dword [eax + apic_eoi], 0x00		; Dissable software for this cpu
+  mov dword [eax + 0x80	], 0x00		; Enable soft ints
   pop rax
   iretq                             	; Return to code
 

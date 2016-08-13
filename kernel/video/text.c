@@ -8,6 +8,7 @@
 
 /* TODO: mutex this bitch. */
 
+
 uint16_t *video_memory = (uint16_t *)0xB8000;
 unsigned char x_csr = 0;
 unsigned char y_csr = 0;
@@ -103,7 +104,7 @@ uint16_t attword = attribute << 8;
     }
     scroll();
     move_cursor();
-}
+ }
 
 void DebugPuts(char *str)
 {

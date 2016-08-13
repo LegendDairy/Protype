@@ -14,7 +14,6 @@
 #include <idt.h>
 #include <scheduler.h>
 
-extern mutex_t text_lock;
 
 /* TODO */
 /* -Setup a proper kernel stack. 				*/
@@ -22,18 +21,21 @@ extern mutex_t text_lock;
 /* -Clean up debug-text code. 					*/
 /* -Graphics proof of concept.					*/
 
-void thread(void)
+uint64_t lockyedlock = 0;
+
+uint64_t thread(void)
 {
+	acquireLock(&lockyedlock);
 	processor_t *curr =  system_info_get_current_cpu();
 	printf("Hello from %s running on logical cpu %x\n", curr->current_thread->name, curr->apic_id);
-	while(1)
-	{
-	}
+	releaseLock(&lockyedlock);
+	while(1);
+for(;;);
+	return 5;
 }
 
 int main(ipl_info_t *info)
 {
-	mutex_unlock(&text_lock);
 
 	DebugClearScreen();
 	DebugSetTextColour(0x2, 0);

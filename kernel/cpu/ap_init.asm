@@ -78,7 +78,10 @@ jmp 0x08:longmode                   ; Jump into longmode
 
 [BITS 64]
 longmode:
-mov rax, 0x60000
+mov eax, [ap_count]
+mov edx, 0x1000
+mul dx
+add rax, 0x60000
 mov rsp, rax
 
 mov rax, cr0
@@ -89,15 +92,15 @@ mov rax, cr4
 or ax, 3 << 9		               ; Set CR4.OSFXSR and CR4.OSXMMEXCPT at the same time
 mov cr4, rax
 
+mov al, [ap_count]
+inc al
+mov [ap_count], al
+
 mov rax, [idt_ptr]
 lidt [rax]
 
 mov rax, [ap_setup_apic]
 call rax
-
-mov al, [ap_count]
-inc al
-mov [ap_count], al
 
 sti
 

@@ -142,8 +142,17 @@ void isr_handler(regs_t * regs)
 		//DebugClearScreen();
 		uint64_t faulting_address;
 		    asm volatile("mov %%cr2, %0" : "=r" (faulting_address));
+		putch('\n');
+		DebugPuts((const char *)exception_messages[regs->int_no]);
+		DebugPuts("Errorcode: ");
+		DebugPutHex(regs->err_code);
+		DebugPuts(" ,rip: ");
+		DebugPutHex(regs->rip);
+		DebugPuts(" Rax: ");
+		DebugPutHex(regs->rax);
+		DebugPuts(" RSP: ");
+		DebugPutHex(regs->rsp);
 
-		printf("%s: Errorcode: %x, address: %x, rip %x\n", (const char *)exception_messages[regs->int_no], regs->err_code,faulting_address, regs->rip);
 
 		for (;;);
 	}

@@ -44,7 +44,7 @@ uint64_t tm_thread_create(int (*fn)(void*), uint64_t argn, char *argv[], uint64_
 	entry->parent_thid	= tm_thread_get_current_thread_thid();
 
 	/* Prepare the thread stack. Set the intial register values. */
-	*--stack 		= (uint64_t)&thread_exit;			// Exit routine
+	
 	*--stack 		= (uint64_t)ss;					// Stack segment selector
 	*--stack 		= (uint64_t)(stack+1);				// Pointer to stack
 	*--stack 		= (uint64_t)0x200; 				// Interrupts enabled
@@ -76,8 +76,8 @@ void tm_start_thread(uint64_t thid)
 /* Thread exist routine. */
 void thread_exit(void)
 {
-	//  register uint64_t val asm ("eax");
-	//printf("\nThread with thid %d existed with value: %x.", tm_thread_get_current_thid(), val);
+	register uint64_t val asm ("rax");
+	printf("\nThread with thid %d existed with value: %x.", 1, val);
 	//sched_kill_curr_thread();
 	for(;;);
 }

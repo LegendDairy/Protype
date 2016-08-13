@@ -1,3 +1,7 @@
+Initial Program Loader
+======================
+Overview
+--------
 The IPL or Intial Program Loader, loads the kernel module (ELF formated).
 
 The IPL is loaded by the Pre-IPL at 0x500.
@@ -9,20 +13,21 @@ Then the IPL copies the kernel image to 0x100000, parses the module, and loads t
 After that the IPL enables PAE, Longmode and paging and does a far jump to Long mode code.
 Finaly the entry point is stored in RBP and the IPL calls the kernel
 
-Memory Map:
+Memory Map
+----------
 Before far jump(in RM):
-0x00000500 ->  0x02500:         GDT + IPL Code
-0x00004500 -> ~0x04FFF:         Scrap memory for Root Directory and FATS
-0x00005000 ->  0x0FFFF:         Pre IPL and IPL Stack
-0x00007C00 ->  0x07DFF:         Pre-IPL code
-0x00007E00 ->  0x9FFFF:         IPL stack (+- 10kb)
-0x00010000 ->  0x4FFFF:         Kernel Image buffer (256kb) + PLM4T (after loading kernel ELF)
-0x00050000 ->  0x7FFFF:         Modules (192kb)
+* 0x00000500 ->  0x02500:         GDT + IPL Code
+* 0x00004500 -> ~0x04FFF:         Scrap memory for Root Directory and FATS
+* 0x00005000 ->  0x0FFFF:         Pre IPL and IPL Stack
+* 0x00007C00 ->  0x07DFF:         Pre-IPL code
+* 0x00007E00 ->  0x9FFFF:         IPL stack (+- 10kb)
+* 0x00010000 ->  0x4FFFF:         Kernel Image buffer (256kb) + PLM4T (after loading kernel ELF)
+* 0x00050000 ->  0x7FFFF:         Modules (192kb)
 
 After far jump(in LM):
-0x00000500 -> 0x00002500:       GDT somewhere...
-0x0000a000 -> 0x0000FFFF:       Kernel Stack ~22k
-0x00010000 -> 0x00018FFF:       Kernel Page dir and some tables
+* 0x00000500 -> 0x00002500:       GDT somewhere...
+* 0x0000a000 -> 0x0000FFFF:       Kernel Stack ~22k
+* 0x00010000 -> 0x00018FFF:       Kernel Page dir and some tables
 
 Changelog
 v0.1: Original

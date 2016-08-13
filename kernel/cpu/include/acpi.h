@@ -54,6 +54,7 @@ typedef struct
 	uint32_t irq_map[16];					// ISA Overide f.e. pit = irq_map[0]
 	uint32_t flags;						// Flags (not yet used.)
 	processor_t *cpu_list;					// Linked list of Logical CPUs
+	uint64_t lock;
 } topology_t;
 
 typedef struct io_apic_t

@@ -8,6 +8,8 @@ uint64_t tm_current_thid 	= 1;
 extern topology_t *system_info;
 void tm_sched_add_to_queue(thread_t *thread);
 
+extern sched_spinlock_t sched_lock;
+
 static void thread_exit(void);
 
 thread_t *tm_thread_get_current_thread(void)
@@ -64,18 +66,22 @@ uint64_t tm_thread_create(fn_t fn, uint64_t argn, char *argv[], uint64_t PLM4T, 
 	entry->rsp		= (uint64_t)stack;				// pointer to the stack
 
 	/* Add to not ready queue. */
+	acquireLock(&sched_lock.sched_ready_queue_high);
 	tm_sched_add_to_queue(entry);
+	releaseLock(&sched_lock.sched_ready_queue_high);
+
 
 	return entry->thid;
 }
 
 /* Finds a thread in the not_ready_queue and puts it in the correct queue. */
-
+void tm_sched_kill_current_thread(void);
 /* Thread exist routine. */
 void thread_exit(void)
 {
-	register uint64_t val asm ("rax");
-	printf("Thread with thid %d existed with value: %x.\n", 1, val);
-	//sched_kill_curr_thread();
-	for(;;);
+	uint64_t val;
+	asm volatile ("movq %%rax, %0;":"=r"(val));
+	processor_t *curr =  system_info_get_current_cpu();
+	printf("%s with thid %d existed with value: %x.\n",curr->current_thread->name, curr->current_thread->thid, val);
+	tm_sched_kill_current_thread();
 }

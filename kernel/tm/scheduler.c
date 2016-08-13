@@ -39,9 +39,9 @@ void setup_tm(void)
 	current_cpu->current_thread->next		= 0;
 
 	/* Initialise the spinlocks to prevent race conditions. */
-	sched_lock.sched_ready_queue_high			= SPINLOCK_UNLOCKED;
-	sched_lock.sched_ready_queue_med			= SPINLOCK_UNLOCKED;
-	sched_lock.sched_ready_queue_low			= SPINLOCK_UNLOCKED;
+	sched_lock.sched_ready_queue_high		= SPINLOCK_UNLOCKED;
+	sched_lock.sched_ready_queue_med		= SPINLOCK_UNLOCKED;
+	sched_lock.sched_ready_queue_low		= SPINLOCK_UNLOCKED;
 	sched_lock.sched_notready_queue			= SPINLOCK_UNLOCKED;
 
 }
@@ -49,9 +49,10 @@ void setup_tm(void)
 /** Gets called by the timer routine to swap the current running thread with a new one from the queue. **/
 uint64_t tm_schedule(uint64_t rsp)
 {
-	acquireLock(&sched_big_locky);
-	processor_t *current_cpu	= system_info_get_current_cpu();
+	processor_t *current_cpu = system_info_get_current_cpu();
 
+	/* Increase schedule-counter. */
+	current_cpu->timer_current_tick++;
 
 	/* TODO:
 	char fxsave_region[512] __attribute__((aligned(16)));
@@ -66,173 +67,153 @@ uint64_t tm_schedule(uint64_t rsp)
 		for(;;);
 	}
 
-	current_cpu->timer_current_tick++;
-
-	/* Test if a thread is running on this logical cpu. */
-	if(!current_cpu->current_thread)
+	/* Test if a thread is running on this logical cpu. If so we must save it's progress. */
+	if(current_cpu->current_thread)
 	{
-		if(sched_ready_queue_high)
-		{
-			/* Attempt to unlock the spinlock on the list. */
-			while (spinlock_lock(&sched_lock.sched_ready_queue_high) == SPINLOCK_LOCKED);
-
-			/* Change current thread and change the begining of the appropriate list. */
-			current_cpu->current_thread 		= sched_ready_queue_high;
-			sched_ready_queue_high 			= sched_ready_queue_high->next;
-
-			/* Unlock the spinlock. */
-			sched_lock.sched_ready_queue_high = SPINLOCK_UNLOCKED;
-			current_cpu->current_thread->next = 0;
-			releaseLock(&sched_big_locky);
-			return current_cpu->current_thread->rsp;
-		}
-		else
-		{
-			releaseLock(&sched_big_locky);
-			return rsp;
-		}
-
+		/* Save current possition in the stack of the thread. */
+		current_cpu->current_thread->rsp = rsp;
 	}
 
-	/* Save current possition in the stack of the thread and increase the current tick. */
-	current_cpu->current_thread->rsp = rsp;
-
-	/* Figure out from which list we should pick the next thread. Every odd current tick is a high priority thread. */
+	/* Attempt to unlock the spinlock on the list. */
+	acquireLock(&sched_lock.sched_ready_queue_high);
 	if(sched_ready_queue_high && current_cpu->timer_current_tick%2)
 	{
 		/* Add the current thread to the end of the correct list. */
 		tm_sched_add_to_queue(current_cpu->current_thread);
 
-		/* Attempt to unlock the spinlock on the list. */
-		while (spinlock_lock(&sched_lock.sched_ready_queue_high) == SPINLOCK_LOCKED);
-
 		/* Change current thread and change the begining of the appropriate list. */
 		current_cpu->current_thread 		= sched_ready_queue_high;
-		sched_ready_queue_high 	= sched_ready_queue_high->next;
+		sched_ready_queue_high 			= sched_ready_queue_high->next;
 
 		/* Unlock the spinlock. */
-		sched_lock.sched_ready_queue_high = SPINLOCK_UNLOCKED;
+		releaseLock(&sched_lock.sched_ready_queue_high);
+		return current_cpu->current_thread->rsp;
 	}
-	/* If current tick is divisable by 6 it's time for a low priority thread. */
-	else if(sched_ready_queue_low && timer_current_tick%6)
+	releaseLock(&sched_lock.sched_ready_queue_high);
+	acquireLock(&sched_lock.sched_ready_queue_low);
+	if(sched_ready_queue_low  && current_cpu->timer_current_tick%6)
 	{
-		/* Add the current thread to the end of the correct list. */
+			/* Add the current thread to the end of the correct list. */
 		tm_sched_add_to_queue(current_cpu->current_thread);
-
-		/* Attempt to unlock the spinlock on the list. */
-		while (spinlock_lock(&sched_lock.sched_ready_queue_low) == SPINLOCK_LOCKED);
 
 		/* Change current thread and change the begining of the appropriate list. */
 		current_cpu->current_thread 		= sched_ready_queue_low;
-		sched_ready_queue_low 	= sched_ready_queue_low->next;
+		sched_ready_queue_low 			= sched_ready_queue_low->next;
 
-		/* Unlock the spinlock. */
-		sched_lock.sched_ready_queue_low = SPINLOCK_UNLOCKED;
+		releaseLock(&sched_lock.sched_ready_queue_low);
+		return current_cpu->current_thread->rsp;
+
 	}
-	/* If the current tick isn't divisable by 6 but is even it's time for a medium priority thread. */
-	else if(sched_ready_queue_med)
+	releaseLock(&sched_lock.sched_ready_queue_low);
+	acquireLock(&sched_lock.sched_ready_queue_med);
+	if(sched_ready_queue_med)
 	{
 		/* Add the current thread to the end of the correct list. */
 		tm_sched_add_to_queue(current_cpu->current_thread);
 
-		/* Attempt to unlock the spinlock on the list. */
-		while (spinlock_lock(&sched_lock.sched_ready_queue_med) == SPINLOCK_LOCKED);
-
 		/* Change current thread and change the begining of the appropriate list. */
 		current_cpu->current_thread 		= sched_ready_queue_med;
-		sched_ready_queue_med 	= sched_ready_queue_med->next;
+		sched_ready_queue_med 			= sched_ready_queue_med->next;
 
-		/* Unlock the spinlock. */
-		sched_lock.sched_ready_queue_med = SPINLOCK_UNLOCKED;
+		releaseLock(&sched_lock.sched_ready_queue_med);
+		return current_cpu->current_thread->rsp;
 	}
+	releaseLock(&sched_lock.sched_ready_queue_med);
 
-	/* Change pointer to the next thread. Return rsp for the actual task switch. */
-	current_cpu->current_thread->next = 0;
-	releaseLock(&sched_big_locky);
-	return current_cpu->current_thread->rsp;
+	return rsp;
 }
 
+void tm_sched_kill_current_thread(void)
+{
+	/* By erassing current_thread, the thread effectively be killed. */
+	processor_t *current_cpu = system_info_get_current_cpu();
+	current_cpu->current_thread = 0;
+	asm("int $48");
+
+	/* If there are no other threads, we will return here, and try again later. */
+	while(1);
+}
 
 /** Adds the current running thread to the end of the appropriate list. **/
 void tm_sched_add_to_queue(thread_t *thread)
 {
-	/* If the current thread has a high priority add it to the end of the high priority thread. */
-	if(thread->priority == THREAD_PRIORITY_HIGHEST)
+	if(thread)
 	{
-		/* Attempt to unlock the spinlock on the list. */
-		while (spinlock_lock(&sched_lock.sched_ready_queue_high) == SPINLOCK_LOCKED);
-
-		/* Check wether the appropriate list exists. */
-		if(sched_ready_queue_high)
+		/* If the current thread has a high priority add it to the end of the high priority thread. */
+		if(thread->priority == THREAD_PRIORITY_HIGHEST)
 		{
-			/* Itterate through the list till the end. */
-			thread_t *itterator = sched_ready_queue_high;
-			while(itterator->next)
-			{
-				itterator=itterator->next;
-			}
-			itterator->next = thread;
-			thread->next =0;
+			/* Attempt to unlock the spinlock on the list. */
 
+			/* Check wether the appropriate list exists. */
+			if(sched_ready_queue_high)
+			{
+				/* Itterate through the list till the end. */
+				thread_t *itterator = sched_ready_queue_high;
+				while(itterator->next)
+				{
+					itterator=itterator->next;
+				}
+				itterator->next = thread;
+				thread->next =0;
+
+			}
+			else
+			{
+				/* Else: create a list! */
+				sched_ready_queue_high = thread;
+				thread->next =0;
+			}
+
+			/* Unlock the spinlock. */
+		}
+		else if(thread->priority == THREAD_PRIORITY_NORMAL)
+		{
+			/* Attempt to unlock the spinlock on the list. */
+
+			/* Check wether the appropriate list exists. */
+			if(sched_ready_queue_med)
+			{
+				/* Itterate through the list till the end. */
+				thread_t *itterator = sched_ready_queue_med;
+				while(itterator->next)
+				{
+					itterator=itterator->next;
+				}
+				itterator->next = thread;
+				thread->next =0;
+			}
+			else
+			{
+				/* Else: create a list! */
+				sched_ready_queue_med = thread;
+				thread->next =0;
+			}
+
+			/* Unlock the spinlock. */
 		}
 		else
 		{
-			/* Else: create a list! */
-			sched_ready_queue_high = thread;
-			thread->next =0;
-		}
+			/* Attempt to unlock the spinlock on the list. */
 
-		/* Unlock the spinlock. */
-		sched_lock.sched_ready_queue_high = SPINLOCK_UNLOCKED;
-	}
-	else if(thread->priority == THREAD_PRIORITY_NORMAL)
-	{
-		/* Attempt to unlock the spinlock on the list. */
-		while (spinlock_lock(&sched_lock.sched_ready_queue_med) == SPINLOCK_LOCKED);
-
-		/* Check wether the appropriate list exists. */
-		if(sched_ready_queue_med)
-		{
-			/* Itterate through the list till the end. */
-			thread_t *itterator = sched_ready_queue_med;
-			while(itterator->next)
+			/* Check wether the appropriate list exists. */
+			if(sched_ready_queue_low)
 			{
-				itterator=itterator->next;
+				/* Itterate through the list till the end. */
+				thread_t *itterator = sched_ready_queue_low;
+				while(itterator->next)
+				{
+					itterator=itterator->next;
+				}
+				itterator->next = (thread_t *)thread;
+				thread->next =0;
 			}
-			itterator->next = thread;
-		}
-		else
-		{
-			/* Else: create a list! */
-			sched_ready_queue_med = thread;
-		}
-
-		/* Unlock the spinlock. */
-		sched_lock.sched_ready_queue_med = SPINLOCK_UNLOCKED;
-	}
-	else
-	{
-		/* Attempt to unlock the spinlock on the list. */
-		while (spinlock_lock(&sched_lock.sched_ready_queue_low) == SPINLOCK_LOCKED);
-
-		/* Check wether the appropriate list exists. */
-		if(sched_ready_queue_low)
-		{
-			/* Itterate through the list till the end. */
-			thread_t *itterator = sched_ready_queue_low;
-			while(itterator->next)
+			else
 			{
-				itterator=itterator->next;
+				/* Else: create a list! */
+				sched_ready_queue_low = thread;
+				thread->next =0;
 			}
-			itterator->next = (thread_t *)thread;
+			/* Unlock the spinlock. */
 		}
-		else
-		{
-			/* Else: create a list! */
-			sched_ready_queue_low = thread;
-		}
-
-		/* Unlock the spinlock. */
-		sched_lock.sched_ready_queue_low = SPINLOCK_UNLOCKED;
 	}
 }

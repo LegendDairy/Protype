@@ -39,5 +39,4 @@ void printf(const char *str, ...)
 
 	va_end(args);
 	releaseLock((uint64_t*)&text_lock);
-	text_lock = 0;
 }

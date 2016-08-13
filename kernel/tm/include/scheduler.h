@@ -8,14 +8,7 @@
 #include<thread.h>
 #include<mutex.h>
 
-/* Structure with all the spinlocks for the scheduler. */
-typedef struct
-{
-	spinlock_t sched_ready_queue_high;
-	spinlock_t sched_ready_queue_med;
-	spinlock_t sched_ready_queue_low;
-	spinlock_t sched_notready_queue;
-} sched_spinlock_t;
+
 
 /** Intialises multithreading. Creates a current thread structure for the BSP. **/
 void setup_tm(void);
@@ -25,5 +18,5 @@ extern "C" uint64_t tm_schedule(uint64_t);
 #endif
 
 void tm_sched_add_to_queue(thread_t *thread);
-
+//void tm_sched_start_thread(uint64_t thid);
 #endif

@@ -22,22 +22,17 @@ void parse_madt(void);
 /* -Clean up debug-text code. 					*/
 /* -Graphics proof of concept.					*/
 
-uint64_t lockyedlock = 0;
+void 	tm_sched_kill_current_thread(void);
 
 int thread(uint64_t argn, char **argv)
 {
-	acquireLock(&lockyedlock);
 	processor_t *curr =  system_info_get_current_cpu();
 	printf("Hello from %s running on logical cpu %x. Argn: %x, Argv: %x\n", curr->current_thread->name, curr->apic_id, argn, (uint64_t)argv);
-	releaseLock(&lockyedlock);
-
-	return 5;
+	return 0xDEADBEEF;
 }
 
 int main(ipl_info_t *info)
 {
-
-
 	DebugClearScreen();
 	DebugSetTextColour(0x2, 0);
 	printf("Protype v1.3\n");
@@ -48,14 +43,14 @@ int main(ipl_info_t *info)
 	setup_vmm();
 	parse_madt();
 	setup_apic();
+
+	/* Interrupts shouldn't be enabled before setup_tm! */
 	setup_tm();
 
 	/* Proof of concept: preemptive SMP support: */
 	boot_ap(1);
 	boot_ap(2);
 	boot_ap(3);
-
-
 
 	vmm_map_frame(0x90000000, pmm_alloc_page(), 0x3);
 	vmm_map_frame(0x90001000, pmm_alloc_page(), 0x3);
@@ -77,6 +72,7 @@ int main(ipl_info_t *info)
 	tm_thread_create(&thread, 0, 0, 0x10000, 1, 100, "Thread 8", 1,  (uint64_t *)0xA0000F00, 0x10, 0x8, 0x10);
 
 	asm volatile("sti");
+	tm_sched_kill_current_thread();
 	while(1)
 	{
 		asm("hlt");

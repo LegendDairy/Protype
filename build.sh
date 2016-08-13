@@ -13,5 +13,5 @@ sudo cp bin/kernel.sys /media/floppy1/
 sudo cp bin/apbm.sys /media/floppy1/
 sudo umount /dev/loop0
 sudo losetup -d /dev/loop0
-sudo rm bin/*.sys
+#sudo rm bin/*.sys
 echo "Done"

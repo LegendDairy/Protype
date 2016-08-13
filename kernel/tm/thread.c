@@ -31,7 +31,7 @@ uint64_t tm_thread_get_current_thread_thid(void)
 }
 
 /* Creates a new thread. */
-uint64_t tm_thread_create(int (*fn)(void*), uint64_t argn, char *argv[], uint64_t PLM4T, uint8_t priority, uint64_t quantum, const char *name, uint32_t flags, uint64_t *stack, uint8_t ds, uint8_t cs, uint8_t ss)
+uint64_t tm_thread_create(fn_t fn, uint64_t argn, char *argv[], uint64_t PLM4T, uint8_t priority, uint64_t quantum, const char *name, uint32_t flags, uint64_t *stack, uint8_t ds, uint8_t cs, uint8_t ss)
 {
 
 	/* Create and initialise an entry thread structure. */
@@ -47,8 +47,8 @@ uint64_t tm_thread_create(int (*fn)(void*), uint64_t argn, char *argv[], uint64_
 	/* Prepare the thread stack. Set the intial register values. */
 	*--stack		= (uint64_t)&thread_exit;
 	*--stack 		= (uint64_t)ss;					// Stack segment selector
-	uint64_t usrrsp = (uint64_t)stack + 1;
-	*--stack 		= (uint64_t)((uint64_t)usrrsp);				// Pointer to stack
+	uint64_t usrrsp 	= (uint64_t)stack + 8;
+	*--stack 		= (uint64_t)((uint64_t)usrrsp);			// Pointer to stack
 	*--stack 		= (uint64_t)0x200; 				// Interrupts enabled
 	*--stack 		= (uint64_t)cs; 				// Code segment selector
 	*--stack 		= (uint64_t)fn; 				// RIP
@@ -61,7 +61,7 @@ uint64_t tm_thread_create(int (*fn)(void*), uint64_t argn, char *argv[], uint64_
 
 	*--stack 		= (uint64_t)ds;					// Setup data segment
 	*--stack 		= (uint64_t)PLM4T;				// Setup PLM4T for this thread
-	entry->rsp		= (uint64_t)stack;					// pointer to the stack
+	entry->rsp		= (uint64_t)stack;				// pointer to the stack
 
 	/* Add to not ready queue. */
 	tm_sched_add_to_queue(entry);
@@ -75,7 +75,7 @@ uint64_t tm_thread_create(int (*fn)(void*), uint64_t argn, char *argv[], uint64_
 void thread_exit(void)
 {
 	register uint64_t val asm ("rax");
-	printf("\nThread with thid %d existed with value: %x.", 1, val);
+	printf("Thread with thid %d existed with value: %x.\n", 1, val);
 	//sched_kill_curr_thread();
 	for(;;);
 }

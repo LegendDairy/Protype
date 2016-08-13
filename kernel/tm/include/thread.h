@@ -45,9 +45,9 @@ typedef struct thread_t
   uint64_t parent_thid;					// ID of the thread that created this one
 } thread_t;
 
-typedef int(*fn_t)(void*);
+typedef int(*fn_t)(uint64_t argn, char **argv);
 
-uint64_t tm_thread_create(int (*fn)(void*), uint64_t argn, char *argv[], uint64_t PLM4T, uint8_t priority, uint64_t quantum, const char *name, uint32_t flags, uint64_t *stack, uint8_t ds, uint8_t cs, uint8_t ss);
+uint64_t tm_thread_create(fn_t fn, uint64_t argn, char *argv[], uint64_t PLM4T, uint8_t priority, uint64_t quantum, const char *name, uint32_t flags, uint64_t *stack, uint8_t ds, uint8_t cs, uint8_t ss);
 
 thread_t *tm_thread_get_current_thread(void);
 uint64_t tm_thread_get_current_thread_thid(void);

@@ -123,15 +123,12 @@ jump_long_mode:
   mov DWORD [PML4T], 0x11003		; PML4T[0]   = &PD_ptr[0] | flags
   mov DWORD [PML4T + 0xFF8], 0x10003	; PML4T[511] = &PML4T     | flags
   mov DWORD [PML4T + 0x1000], 0x12003	; PDT[0]     = &PD_ptr[0] | flags
-  mov DWORD [PML4T + 0x1018], 0x15003	; PDT[3]     = &PD_ptr[3] | flags
-
-  mov DWORD [0x12000], 0x16003        	; PD0[0]   = &PT_ptr[0]
-  mov DWORD [0x15FF8], 0x10003       	; Virtual addresses of the PDPTs
+  mov DWORD [PML4T + 0x2000], 0x13003	; PD0[0]     = &PT_ptr[0]
 
   mov ecx, 512
   xor eax, eax	                      	; 512 PT entries
   mov eax, 0x00003                      ; Physical address
-  mov ebx, 0x16000                      ; Pagetable address
+  mov ebx, (PML4T + 0x3000)         	; Pagetable address
 
   .l2:                                	; Fill table
   mov DWORD [ebx], eax                	; Physical address

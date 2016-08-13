@@ -7,8 +7,6 @@
 #include<heap.h>
 #include<mutex.h>
 
-
-
 topology_t *system_info;
 
 RSDT_t *find_rsdt(void)
@@ -40,14 +38,14 @@ RSDT_t *find_rsdt(void)
 
 	/* TODO: Search 1kb of the EBDA. */
 
-	return NULL;
+	return (RSDT_t *)NULL;
 }
 
 ACPISDTHeader_t *find_acpi_header(RSDT_t *root, const char *signature)
 {
 	if(!root)
 	{
-		return NULL;
+		return (ACPISDTHeader_t *)NULL;
 	}
 
 	uint32_t i = 0;
@@ -86,7 +84,7 @@ ACPISDTHeader_t *find_acpi_header(RSDT_t *root, const char *signature)
 		}
 	}
 
-	return NULL;
+	return (ACPISDTHeader_t *)NULL;
 }
 
 void parse_madt(void)
@@ -95,7 +93,7 @@ void parse_madt(void)
 	madt_t *madt = (madt_t *)find_acpi_header((RSDT_t *)find_rsdt(), "APIC");
 
 	/* Initialise system_info structure. */
-	system_info 			= malloc(sizeof(topology_t));
+	system_info 			= (topology_t*)malloc(sizeof(topology_t));
 	system_info->cpu_list 		= 0;
 	system_info->io_apic 		= 0;
 	system_info->active_cpus 	= 1;
@@ -110,7 +108,7 @@ void parse_madt(void)
 	uint32_t i 			= sizeof(madt_t);
 	madt_entry_t *curr 		= (madt_entry_t *)((uint64_t)madt + sizeof(madt_t));
 	system_info->flags		= madt->flags;
-	system_info->lapic_address 	= (uint32_t *)madt->lapic_address;
+	system_info->lapic_address 	= (uint32_t *)((uint64_t)madt->lapic_address);
 
 	/* If PCAT flag is set, a PICs are present and must be dissabled to use ioapic. */
 	if(system_info->flags & ACPI_MADT_FLAG_PCAT_COMPAT)
@@ -130,7 +128,7 @@ void parse_madt(void)
 			if(tmp->flags)
 			{
 				/* Initialise a new entry for the cpu structure in system_info. */
-				processor_t *cpu_entry 				= malloc(sizeof(processor_t));
+				processor_t *cpu_entry 				= (processor_t *)malloc(sizeof(processor_t));
 				cpu_entry->proc_id 				= tmp->proc_id;
 				cpu_entry->apic_id 				= tmp->apic_id;
 				cpu_entry->current_thread			= 0;
@@ -163,7 +161,7 @@ void parse_madt(void)
 			io_apic_t *io_apic_entry 	= (io_apic_t *)malloc(sizeof(io_apic_t));
 			io_apic_entry->next 		= 0;
 			io_apic_entry->id 		= tmp->ioap_id;
-			io_apic_entry->address		= (uint32_t *)tmp->address;
+			io_apic_entry->address		= (uint32_t *)((uint64_t)tmp->address);
 			io_apic_entry->int_base		= tmp->int_base;
 
 			if(system_info->io_apic)
@@ -211,12 +209,12 @@ processor_t *system_info_get_current_cpu(void)
 	return current_cpu;
 }
 
-uint32_t *system_info_get_lapic_base(void)
+uint32_t volatile *system_info_get_lapic_base(void)
 {
 	return system_info->lapic_address;
 }
 
-uint32_t *system_info_get_ioapic_base(uint8_t id)
+uint32_t volatile *system_info_get_ioapic_base(uint8_t id)
 {
 	io_apic_t *itterator = system_info->io_apic;
 	while( itterator && itterator->id != id)

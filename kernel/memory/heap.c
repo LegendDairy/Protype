@@ -11,7 +11,7 @@ volatile uint64_t heap_end	= HEAP_START;											// End of the heap (virtual a
 uint64_t vmm_test_mapping(uint64_t va);
 
 /* Internal function, shouldn't be called from outside!*/
-void expand_heap (uint64_t start, uint64_t len);
+static void expand_heap (uint64_t start, uint64_t len);
 static void split_chunk(header_t *chunk, uint64_t sz);										// Splits a chunk in two.
 static void free_chunk (header_t *chunk);											// Frees a chunk (must be the last chunk of the heap).
 static void glue_chunk (header_t *chunk);											// Glues the chunk to surounding chunks if possible.
@@ -28,7 +28,7 @@ void *malloc(uint64_t sz)
 			split_chunk(cur_header, sz);
 		        cur_header->allocated = 1;
 			void *tmp = cur_header;
-			tmp += sizeof(header_t);
+			tmp = (void*)((uint64_t)tmp + sizeof(header_t));
 			return tmp;
 		}
 
@@ -56,7 +56,7 @@ void *malloc(uint64_t sz)
 	cur_header->prev->next 	= cur_header;
 	cur_header->magic 	= MAGIC;
 	void *tmp = cur_header;
-	tmp += sizeof(header_t);
+	tmp = (void*)((uint64_t)tmp + sizeof(header_t));
 	return tmp;
 }
 

@@ -14,6 +14,7 @@
 #include <idt.h>
 #include <scheduler.h>
 
+void parse_madt(void);
 
 /* TODO */
 /* -Setup a proper kernel stack. 				*/
@@ -23,7 +24,7 @@
 
 uint64_t lockyedlock = 0;
 
-uint64_t thread(void)
+int thread(void *argv)
 {
 	acquireLock(&lockyedlock);
 	processor_t *curr =  system_info_get_current_cpu();
@@ -37,10 +38,12 @@ for(;;);
 int main(ipl_info_t *info)
 {
 
+
 	DebugClearScreen();
 	DebugSetTextColour(0x2, 0);
 	printf("Protype v1.3\n");
 	DebugSetTextColour(0xF, 0);
+
 	init_idt();
 	setup_pmm(info);
 	setup_vmm();
@@ -65,14 +68,14 @@ int main(ipl_info_t *info)
 	vmm_map_frame(0xA0000000, pmm_alloc_page(), 0x3);
 
 
-	tm_thread_create(&thread, 0, 0,  0x10000, 1, 100, "Thread 1", 1, 0x90000F00, 0x10, 0x8, 0x10);
-	tm_thread_create(&thread, 0, 0, 0x10000, 1, 100, "Thread 2", 1, 0x90001F00, 0x10, 0x8, 0x10);
-	tm_thread_create(&thread, 0, 0,  0x10000, 1, 100, "Thread 3", 1, 0x90002F00, 0x10, 0x8, 0x10);
-	tm_thread_create(&thread, 0, 0,  0x10000, 1, 100, "Thread 4", 1, 0x90003F00, 0x10, 0x8, 0x10);
-	tm_thread_create(&thread, 0, 0, 0x10000, 1, 100, "Thread 5", 1, 0x90004F00, 0x10, 0x8, 0x10);
-	tm_thread_create(&thread, 0, 0,  0x10000, 1, 100, "Thread 6", 1, 0x90005F00, 0x10, 0x8, 0x10);
-	tm_thread_create(&thread, 0, 0,  0x10000, 1, 100, "Thread 7", 1, 0x90006F00, 0x10, 0x8, 0x10);
-	tm_thread_create(&thread, 0, 0, 0x10000, 1, 100, "Thread 8", 1, 0xA0000F00, 0x10, 0x8, 0x10);
+	tm_thread_create(&thread, 0, 0,  0x10000, 1, 100, "Thread 1", 1, (uint64_t *)0x90000F00, 0x10, 0x8, 0x10);
+	tm_thread_create(&thread, 0, 0, 0x10000, 1, 100, "Thread 2", 1,  (uint64_t *)0x90001F00, 0x10, 0x8, 0x10);
+	tm_thread_create(&thread, 0, 0,  0x10000, 1, 100, "Thread 3", 1,  (uint64_t *) (uint64_t *)0x90002F00, 0x10, 0x8, 0x10);
+	tm_thread_create(&thread, 0, 0,  0x10000, 1, 100, "Thread 4", 1,  (uint64_t *)0x90003F00, 0x10, 0x8, 0x10);
+	tm_thread_create(&thread, 0, 0, 0x10000, 1, 100, "Thread 5", 1,  (uint64_t *)0x90004F00, 0x10, 0x8, 0x10);
+	tm_thread_create(&thread, 0, 0,  0x10000, 1, 100, "Thread 6", 1,  (uint64_t *)0x90005F00, 0x10, 0x8, 0x10);
+	tm_thread_create(&thread, 0, 0,  0x10000, 1, 100, "Thread 7", 1,  (uint64_t *)0x90006F00, 0x10, 0x8, 0x10);
+	tm_thread_create(&thread, 0, 0, 0x10000, 1, 100, "Thread 8", 1,  (uint64_t *)0xA0000F00, 0x10, 0x8, 0x10);
 
 	asm volatile("sti");
 	while(1)

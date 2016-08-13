@@ -27,7 +27,7 @@
 #define ACPI_MADT_GICD						0xC
 #define ACPI_MADT_FLAG_PCAT_COMPAT				0x1
 
-struct io_apic_t;
+typedef struct io_apic_t io_apic_t;
 typedef struct thread_t thread_t;
 
 typedef struct processor_t
@@ -41,16 +41,16 @@ typedef struct processor_t
 } processor_t;
 
 processor_t *system_info_get_current_cpu(void);
-uint32_t *system_info_get_lapic_base(void);
-uint32_t *system_info_get_ioapic_base(uint8_t id);
+uint32_t volatile *system_info_get_lapic_base(void);
+uint32_t volatile *system_info_get_ioapic_base(uint8_t id);
 
 typedef struct
 {
 	uint8_t bootstrap;
 	uint32_t active_cpus;					// Number of active logical cpus.
-	uint32_t *lapic_address;				// Physical address for the APIC.
+	uint32_t volatile *lapic_address;				// Physical address for the APIC.
 	uint64_t bus_freq;
-	struct io_apic_t *io_apic;				// Linked list for available IO APICs.
+	io_apic_t *io_apic;				// Linked list for available IO APICs.
 	uint32_t irq_map[16];					// ISA Overide f.e. pit = irq_map[0]
 	uint32_t flags;						// Flags (not yet used.)
 	processor_t *cpu_list;					// Linked list of Logical CPUs
@@ -59,7 +59,7 @@ typedef struct
 typedef struct io_apic_t
 {
 	struct io_apic_t *next;					// Pointer to next entry in the list.
-	uint32_t *address;					// Physical address of this ioapic
+	uint32_t volatile *address;					// Physical address of this ioapic
 	uint8_t id;						// ID of this IO APIC
 	uint32_t int_base;					// ?
 } io_apic_t;

@@ -8,8 +8,7 @@
 idt_entry_t 	idt_entry[256];
 idt_ptr_t	idt_ptr;
 idt_handler_t 	interrupt_handlers[256];
-extern void 	flush_idt(uint32_t);
-void 		pit_handler(regs_t *r);
+void pit_handler(regs_t *r);
 
 void idt_set_gate(uint8_t num, uint64_t base, uint16_t sel, uint8_t flags);
 
@@ -143,7 +142,7 @@ void isr_handler(regs_t * regs)
 		uint64_t faulting_address;
 		    asm volatile("mov %%cr2, %0" : "=r" (faulting_address));
 		putch('\n');
-		DebugPuts((const char *)exception_messages[regs->int_no]);
+		DebugPuts(exception_messages[regs->int_no]);
 		DebugPuts("Errorcode: ");
 		DebugPutHex(regs->err_code);
 		DebugPuts(" ,rip: ");

@@ -5,7 +5,7 @@
 SOURCES=\
 main.o video/text.o video/printf.o cpu/apic.o  cpu/acpi.o cpu/mutex.o hardware/idt.o hardware/interrupts.o memory/string.o memory/pmm.o memory/vmm.o memory/heap.o tm/thread.o tm/scheduler.o\
 
-CC = x86_64-elf-gcc
+CC = x86_64-elf-g++
 CFLAGS=\
 -nostdlib -lgcc -ffreestanding -mno-red-zone -fno-exceptions -O2 -Wall -Wextra   -mcmodel=large\
 -I./memory/include -I./cpu/include -I./video/include -I./include/stdinc -I./include -I./hardware/include -I./tm/include\

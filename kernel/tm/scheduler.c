@@ -16,7 +16,6 @@ sched_spinlock_t sched_lock;
 uint64_t sched_big_locky = 0;
 
 
-void tm_sched_add_to_queue(thread_t *thread);
 
 /** Set's multithreading up. Creates a current thread structure for kernel setup thread. **/
 void setup_tm(void)
@@ -30,7 +29,7 @@ void setup_tm(void)
 	}
 
 	/* Initialise the current thread structure with the kernel thread info. */
-	current_cpu->current_thread 			= malloc(sizeof(thread_t));
+	current_cpu->current_thread 			= (thread_t*)malloc(sizeof(thread_t));
 	current_cpu->current_thread->thid 		= 0x00;
 	current_cpu->current_thread->flags 		= THREAD_FLAG_READY |  THREAD_FLAG_KERNEL | THREAD_FLAG_PROCESS;
 	current_cpu->current_thread->name		= "Kernel Setup";
@@ -225,7 +224,7 @@ void tm_sched_add_to_queue(thread_t *thread)
 			{
 				itterator=itterator->next;
 			}
-			itterator->next = thread;
+			itterator->next = (thread_t *)thread;
 		}
 		else
 		{

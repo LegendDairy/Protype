@@ -5,7 +5,7 @@
 #ifndef THREAD_H
 #define THREAD_H
 
-#include <scheduler.h>
+//#include <scheduler.h>
 //#include <vmm.h>
 #include <heap.h>
 #include <acpi.h>
@@ -31,9 +31,11 @@
 #define KERNEL_STACK_SIZE               0x4000
 #define KERNEL_STACK_BASE               0xC0000000
 
+typedef struct thread_t thread_t;
+
 typedef struct thread_t
 {
-  struct thread_struct *next;
+  thread_t *next;
   uint64_t thid;					// Threads ID number
   const char *name;					// Thread name (for debugging)
   uint32_t flags;					// Thread flags

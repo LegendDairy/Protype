@@ -5,14 +5,11 @@
 #include <stdio.h>
 #include <mutex.h>
 
-extern void acquireLock(uint64_t);
-extern void releaseLock(uint64_t);
-
 uint64_t volatile text_lock = 0;
 
 void printf(const char *str, ...)
 {
-	acquireLock(&text_lock);
+	acquireLock((uint64_t*)&text_lock);
 	va_list args;
 	va_start(args, str);
 
@@ -41,6 +38,6 @@ void printf(const char *str, ...)
 	}
 
 	va_end(args);
-	releaseLock(&text_lock);
+	releaseLock((uint64_t*)&text_lock);
 	text_lock = 0;
 }

@@ -14,6 +14,10 @@ extern idt_ptr_t idt_ptr;
 extern topology_t *system_info;
 uint64_t pit_lock = 0;
 
+#ifdef __cplusplus
+extern "C" void pit_handler(void);
+#endif
+
 uint8_t inb(uint16_t port)
 {
     uint8_t byte;
@@ -32,23 +36,21 @@ uint8_t apic_check(void)
 	return edx & CPUID_FLAG_APIC;
 }
 
-volatile uint32_t lapic_read(uint32_t r)
+uint32_t lapic_read(uint32_t r)
 {
-	volatile uint32_t *apic = (uint32_t volatile *)apic_base;
-	return ((uint32_t)(apic[r / 4]));
+	return ((uint32_t)(system_info->lapic_address[r / 4]));
 }
 
-void volatile lapic_write(uint32_t r, uint32_t val)
+void lapic_write(uint32_t r, uint32_t val)
 {
-	volatile uint32_t *apic = (uint32_t volatile *)apic_base;
-	apic[r / 4] = (uint32_t)val;
+	system_info->lapic_address[r / 4] = (uint32_t)val;
 }
 
 void setup_apic(void)
 {
 	/* Parse the multiprocessor table. */
 	/* Address label for the asm code. */
-	apic_base = (uint32_t *) system_info->lapic_address;
+	apic_base = (uint32_t)((uint64_t) system_info->lapic_address);
 	/* Map the local apic to a virtual address. */
 	vmm_map_frame((uint64_t) apic_base,(uint64_t) apic_base, 0x3);
 
@@ -59,7 +61,7 @@ void setup_apic(void)
         /* -Make some documentation.                                    */
         /* -Mask all IRQs (not the "cascade" line) in the PIC chips     */
         /* -Mask everything in all IO APICs.                            */
-        /* Create an IDT with interrupt vectors for the local APIC's spurious IRQ,
+        /* Create an IDT with interrupt vectors for the local APIC's spurious IRQ, */
         /* the master PIC's spurious IRQ and the slave PIC's spurious IRQ. */
         /* LINT0 and LINT1 should be setup dynamically (according to whatever
         the MPS table or ACPI says), rather than hardcoded. Harcoding them
@@ -87,7 +89,7 @@ void setup_apic(void)
 	uint32_t * volatile ioapic_reg 	= (uint32_t *)system_info->io_apic->address;
  	uint32_t * volatile ioapic_io 	= (uint32_t *)(system_info->io_apic->address+0x4);
 
-	vmm_map_frame(ioapic_reg, ioapic_reg, 0x3); 			// Identity map io apic address
+	vmm_map_frame((uint64_t)ioapic_reg, (uint64_t)ioapic_reg, 0x3); 			// Identity map io apic address
  	*(uint32_t*)ioapic_reg 	= (uint32_t)0x14;
  	*ioapic_io 		= (uint32_t)0x000 ;
  	*(uint32_t*)ioapic_reg 	= (uint32_t)0x15;
@@ -162,11 +164,11 @@ void boot_ap(uint8_t id)
 	lapic_write(apic_reg_task_priority, 0xFF);			// Accept all interrupts
 
 	id &= 0xF;
-        uint64_t *apb_idt_ptr = APB_BASE + 0x8;
-        *apb_idt_ptr = &idt_ptr;
+        uint64_t *apb_idt_ptr = (uint64_t *)(APB_BASE + 0x8);
+        *apb_idt_ptr = (uint64_t)&idt_ptr;
 
-	uint64_t *apb_apic_setup = APB_BASE + 0x10;
-	*apb_apic_setup = &apic_ap_setup;
+	uint64_t *apb_apic_setup = (uint64_t*)(APB_BASE + 0x10);
+	*apb_apic_setup = (uint64_t)&apic_ap_setup;
 
 	volatile uint32_t *ap_count_ptr = (uint32_t *)(APB_BASE + 0x4);
 	*ap_count_ptr = system_info->active_cpus;

@@ -53,7 +53,7 @@ mov ss, ax                          	; Set up Stack descriptor
 
 xor eax, eax
 add eax, gdt_64_start
-mov [gdt_64_ptr + 2], qword eax
+mov [gdt_64_ptr + 2],  eax
 mov eax, gdt_64_end
 sub eax, gdt_64_start
 mov [gdt_64_start], ax

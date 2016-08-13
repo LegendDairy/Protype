@@ -20,5 +20,10 @@ typedef struct
 /** Intialises multithreading. Creates a current thread structure for the BSP. **/
 void setup_tm(void);
 /** Gets called by the timer routine to swap the current running thread with a new one. **/
+#ifdef __cplusplus
+extern "C" uint64_t tm_schedule(uint64_t);
+#endif
+
+void tm_sched_add_to_queue(thread_t *thread);
 
 #endif

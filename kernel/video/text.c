@@ -106,7 +106,7 @@ uint16_t attword = attribute << 8;
     move_cursor();
  }
 
-void DebugPuts(char *str)
+void DebugPuts(const char *str)
 {
 	int i;
 	for (i = 0; i<strlen(str); i++)

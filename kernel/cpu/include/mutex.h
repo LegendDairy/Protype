@@ -18,6 +18,14 @@ typedef struct
 	//thread_list_t *waiting;
 } mutex_t;
 
+#ifdef __cplusplus
+extern "C" void acquireLock(uint64_t *ptr);
+extern "C" void releaseLock(uint64_t *ptr);
+#else
+extern void acquireLock(uint64_t *ptr);
+extern void releaseLock(uint64_t *ptr);
+#endif
+
 /** Tests and locks a given spinlock. 		**/
 void mutex_lock(mutex_t *m);
 /** Unlock a given spinlock. 			**/

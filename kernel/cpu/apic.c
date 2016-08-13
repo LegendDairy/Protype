@@ -126,7 +126,6 @@ void setup_lapic_timer(void)
 	/* Set LAPIC timer as reg int 48 */
 	lapic_write(apic_lvt_timer_reg, 0x00030);      // int 48
 	lapic_write(apic_div_conf, apic_timer_div_4);  // Divide by 4
-
 	/* Set up PIT */
 	outb(0x61, (inb(0x61) & 0xFD) | 1);            //
 	outb(0x43,0xB2);                               //

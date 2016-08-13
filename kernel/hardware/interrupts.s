@@ -17,9 +17,7 @@ flush_idt:
     acquireLock:
         push rax
 	retry:
-	mov eax, [apic_base]              	; Apic Base in C-code
-        mov dword [eax + 0x80	], 0xFF		; Enable soft ints
-        xor rax, rax
+	xor rax, rax
         lock bts [rdi],rax        ;Attempt to acquire the lock (in case lock is uncontended)
         jc .spin_with_pause
 	pop rax
@@ -27,8 +25,6 @@ flush_idt:
 
     .spin_with_pause:
         pause                    ; Tell CPU we're spinning
-	mov eax, [apic_base]              	; Apic Base in C-code
-        mov dword [eax + 0x80	], 0x00		; Enable soft ints
         test qword [rdi],1      ; Is the lock free?
         jnz .spin_with_pause     ; no, wait
         jmp retry          ; retry
@@ -37,8 +33,6 @@ flush_idt:
     releaseLock:
     	push rax
         mov qword [rdi],0
-	mov eax, [apic_base]              	; Apic Base in C-code
-        mov dword [eax + 0x80	], 0x00		; Enable soft ints
 	pop rax
         ret
 

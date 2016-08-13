@@ -5,6 +5,10 @@ vga: extension = vbe
 floppya: 1_44=bin/floppy.img, status=inserted
 boot: a
 log: bin/bochsout.txt
+debug: action=ignore, pci=report
+  info: action=report
+  error: action=report
+  panic: action=ask
 mouse: enabled=0
 clock: sync=none
 cpu: count=1:4:2

@@ -13,8 +13,8 @@ The kernel will support Long Mode and SMP, in fact it demands support for Long M
 The target cpu is a 2600k
 
 Future Ideas:
--unmap pages arround the stack to detect stack overruns
--Possibility to allign heap structures
+* unmap pages arround the stack to detect stack overruns
+* Possibility to allign heap structures
 
 
 

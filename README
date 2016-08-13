@@ -1,7 +1,11 @@
+Protype x86_64 Microkernel
+==========================
+Overview
+--------
 Protype is an x86_64-based microkernel mostly written in C.
 The microkernel has it's own two stage bootloader (i.e. the Pre-IPL and IPL).
 The kernel is written in C and x86-assembler.
-I will try to add documentation in the DOCS folders for every part of the microkernel to clarify the code.
+I will try to add documentation in the DOCS folders for every part of the microkernel to clarify the code and discuss algorithms.
 
 The goal is to write a lightweight and fast kernel and use all the options that the x86_64 platform has to offer.
 The code is not meant to be portable at all because that would either overcomplicate things or make the code slow.
@@ -12,6 +16,29 @@ Future Ideas:
 -unmap pages arround the stack to detect stack overruns
 -Possibility to allign heap structures
 
+
+
+Roadmap:
+--------
+I try to follow a basic roadmap to implement new features. However sometimes I jump a head and try to implement a proof of concept.
+This breaks the tedious routine of research, implementation and testing+bugfixes.
+
+-2 stage bootloader                     Done (TODO FAT32 i.o FAT10)
+  -Long mode jump                         Done (TODO higherhalf)
+  -physical memory manager:               Done & tested
+  -virtual memory manager                 Done and test (simple version)
+  -Heap:                                  Done & tested
+  -Preemptive support                     WIP (work in progress)
+  -SMP support                            POC (Proof of concept) with premtive support
+  -VFS
+  -IPC
+  -Usermode Exec loading
+  -grapics (module)
+
+
+
+Repository Overview
+-------------------
 Current realease number: r1,3 codenamed Hydrogen
 
 /bin  :   Contains the binaries, i.e. the Floppy image, modules...
@@ -19,6 +46,10 @@ Current realease number: r1,3 codenamed Hydrogen
 /ipl  :   Contains the IPL code, i.e. stage 2 of the bootloader
 /kernel:  Contains the actual kernel, mainly in C
 
+
+
+Build Instructions
+------------------
 To build the kernel, you can use the build.sh script, first you'll need to give it permission on Linux:
 chmod 777 build.sh
 cd /media

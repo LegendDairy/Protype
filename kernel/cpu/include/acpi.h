@@ -38,6 +38,7 @@ typedef struct processor_t
 	uint32_t flags;						// Flags from the MADT
 	thread_t *current_thread;				// Pointer to the current running thread on this logical cpu
 	uint64_t timer_current_tick;				// Curent tick of lapic timer.
+	uint64_t idle_rsp;
 } processor_t;
 
 processor_t *system_info_get_current_cpu(void);

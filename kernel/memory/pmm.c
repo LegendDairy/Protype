@@ -211,24 +211,29 @@ uint64_t pre_pmm_allocate_frame(void)
 
 void pmm_free_page(uint64_t address)
 {
+	mutex_lock(&pmm_lock);
 	if(pmm_test_bmap(address))
 	{
+
 		pmm_bclear(address);
 		pmm_stack--;
 		*pmm_stack = address;
-
 	}
+	mutex_unlock(&pmm_lock);
 }
 
 uint64_t pmm_alloc_page(void)
 {
+	mutex_lock(&pmm_lock);
 	if ((uint64_t)pmm_stack < pmm_top)
 	{
 		uint64_t address = *pmm_stack;
 		pmm_stack++;
 		pmm_bset(address);
+		mutex_unlock(&pmm_lock);
 		return address;
 	}
+	mutex_unlock(&pmm_lock);
 	for(;;)
 	return 0;
 }

@@ -142,7 +142,8 @@ apic_timer:
 pit_routine:
 cli
 push rax                           	; Dissable interrupts
-
+mov eax, [apic_base]              	; Apic Base in C-code
+mov dword [eax + 0x80	], 0xFF		; Enable soft ints
 push rbx
 push rcx
 push rdx
@@ -158,29 +159,8 @@ push r13
 push r14
 push r15
 
-xor rax, rax
-mov ax, ds
-push rax
-
-mov rax, cr3
-push rax
-
-
-mov rdi, rsp
 cld
 call pit_handler           ; Call C function
-xor rax, rax
-mov eax, [apic_base]              ; Apic Base in C-code
-mov dword [eax + apic_eoi],  0    ; Send EOI to LAPIC
-
-pop rax
-mov cr3, rax
-
-xor rax, rax
-pop rax
-mov ds, ax
-mov es, ax
-mov fs, ax
 
 pop r15
 pop r14
@@ -196,14 +176,14 @@ pop rsi
 pop rdx
 pop rcx
 pop rbx
-xor rax, rax                 ; Call C function
-xor rax, rax
 
-  mov eax, [apic_base]              	; Apic Base in C-code
-  mov dword [eax + 0x80	], 0x00		; Enable soft ints
-  pop rax
 
-  iretq                             ; Return to code
+mov eax, [apic_base]              	; Apic Base in C-code
+mov dword [eax + 0x80	], 0x00		; Enable soft ints
+mov dword [eax + apic_eoi],  0    ; Send EOI to LAPIC
+pop rax
+
+iretq                             ; Return to code
 
 [GLOBAL apic_spurious]
 apic_spurious:                      ; Spurious Interrupt for IOAPIC

@@ -143,7 +143,7 @@ void isr_handler(regs_t * regs)
 		    asm volatile("mov %%cr2, %0" : "=r" (faulting_address));
 		putch('\n');
 		DebugPuts(exception_messages[regs->int_no]);
-		DebugPuts("Errorcode: ");
+		DebugPuts(": Errorcode: ");
 		DebugPutHex(regs->err_code);
 		DebugPuts(" ,rip: ");
 		DebugPutHex(regs->rip);
@@ -151,6 +151,8 @@ void isr_handler(regs_t * regs)
 		DebugPutHex(regs->rax);
 		DebugPuts(" RSP: ");
 		DebugPutHex(regs->rsp);
+		DebugPuts(" ,RDI: ");
+		DebugPutHex(regs->rdi);
 
 
 		for (;;);

@@ -18,15 +18,33 @@ uint64_t pit_lock = 0;
 extern "C" void pit_handler(void);
 #endif
 
+void tm_sched_add_to_queue_synced(thread_t*);
+extern thread_t*sched_sleep_queue;
+
 uint8_t inb(uint16_t port)
 {
     uint8_t byte;
     asm volatile("inb %1, %0":"=a"(byte): "dN" (port));
     return byte;
 }
-
+extern uint64_t sleep_lock;
 void pit_handler(void)
 {
+	acquireLock(&sleep_lock);
+	if(sched_sleep_queue)
+	{
+		if(!__sync_sub_and_fetch(&sched_sleep_queue->sleep_millis, 1))
+		{
+			while(sched_sleep_queue)
+			{
+				printf("f");
+				thread_t *tmp = sched_sleep_queue;
+				sched_sleep_queue = sched_sleep_queue->next;
+				tm_sched_add_to_queue_synced(tmp);
+			}
+		}
+	}
+	releaseLock(&sleep_lock);
 }
 
 uint8_t apic_check(void)
@@ -78,7 +96,7 @@ void setup_apic(void)
 	lapic_write(apic_lvt_lint1_reg, 0x00400);			// Enable normal NMI processing
 	lapic_write(apic_lvt_error_reg, 0x10000);			// Disable error interrupts
         lapic_write(apic_reg_dest_format, 0xF0000000);               	// Flatmode
-        lapic_write(apic_reg_logical_dest, 0xFF000000);			// Destination bits for this apic
+        lapic_write(apic_reg_logical_dest, 0x01000000);			// Destination bits for this apic
 	lapic_write(apic_reg_spur_int_vect, 0x0013F);			// Enable the APIC and set spurious vector to 0x3F
 	lapic_write(apic_lvt_lint0_reg, 0x08700);			// Enable normal external interrupts
 	lapic_write(apic_lvt_lint1_reg, 0x00400);			// Enable normal NMI processing
@@ -91,13 +109,33 @@ void setup_apic(void)
 
 	vmm_map_frame((uint64_t)ioapic_reg, (uint64_t)ioapic_reg, 0x3); 			// Identity map io apic address
  	*(uint32_t*)ioapic_reg 	= (uint32_t)0x14;
- 	*ioapic_io 		= (uint32_t)0x000 ;
+ 	*ioapic_io 		= (uint32_t)0x30 ;
  	*(uint32_t*)ioapic_reg 	= (uint32_t)0x15;
- 	*ioapic_io 		= (uint32_t)0x00000000;
+ 	*ioapic_io 		= (uint32_t)0x01000000;
+
 
 
 	/* Set up LAPIC Timer. */
 	setup_lapic_timer();
+
+	#define PIT_CHAN0_REG_COUNT	0x40
+	#define PIT_CHAN1_REG_COUNT	0x41
+	#define PIT_CHAN2_REG_COUNT	0x42
+	#define PIT_CONTROL_REG		0x43
+
+	int32_t divisor = 1193180 / 100;
+
+        // Send the command byte.
+    	// outb(PIT_CONTROL_REG, PIT_COM_MODE3 | PIT_COM_BINAIRY | PIT_COM_LSBMSB | PIT_SEL_CHAN0);
+        outb(PIT_CONTROL_REG, 0x36);
+
+        // Divisor has to be sent byte-wise, so split here into upper/lower bytes.
+        int8_t l = (uint8_t)(divisor & 0xFF);
+    	int8_t h = (uint8_t)((divisor>>8) & 0xFF );
+
+        // Send the frequency divisor.
+        outb(PIT_CHAN0_REG_COUNT, l);
+	outb(PIT_CHAN0_REG_COUNT, h);
 }
 void apic_ap_setup(void)
 {
@@ -110,7 +148,7 @@ void apic_ap_setup(void)
 	lapic_write(apic_lvt_lint1_reg, 0x00400);			// Enable normal NMI processing
 	lapic_write(apic_lvt_error_reg, 0x10000);			// Disable error interrupts
         lapic_write(apic_reg_dest_format, 0xF0000000);               	// Flatmode
-        lapic_write(apic_reg_logical_dest, 0xFF000000);			// Destination bits for this apic
+        lapic_write(apic_reg_logical_dest, 0xF0000000);			// Destination bits for this apic
 	lapic_write(apic_reg_spur_int_vect, 0x0013F);			// Enable the APIC and set spurious vector to 0x3F
 	lapic_write(apic_lvt_lint0_reg, 0x08700);			// Enable normal external interrupts
 	lapic_write(apic_lvt_lint1_reg, 0x00400);			// Enable normal NMI processing

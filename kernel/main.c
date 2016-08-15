@@ -23,11 +23,15 @@ void parse_madt(void);
 /* -Graphics proof of concept.					*/
 
 void 	tm_sched_kill_current_thread(void);
-
+void tm_schedule_sleep(uint64_t);
 int thread(uint64_t argn, char **argv)
 {
 	processor_t *curr =  system_info_get_current_cpu();
+	while(!curr->current_thread);
 	printf("Hello from %s running on logical cpu %x. Argn: %x, Argv: %x\n", curr->current_thread->name, curr->apic_id, argn, (uint64_t)argv);
+	tm_schedule_sleep(10);
+	printf("Thread woke up!\n");
+	while(1);
 	return 0xDEADBEEF;
 }
 
@@ -62,7 +66,7 @@ int main(ipl_info_t *info)
 	vmm_map_frame(0xA0000000, pmm_alloc_page(), 0x3);
 
 
-	tm_thread_create(&thread, 1,  (char **)2,  0x10000, 1, 100, "Thread 1", 1, (uint64_t *)0x90000F00, 0x10, 0x8, 0x10);
+	tm_thread_create(&thread, 1,  (char **)1,  0x10000, 1, 100, "Thread 1", 1, (uint64_t *)0x90000F00, 0x10, 0x8, 0x10);
 	tm_thread_create(&thread, 0, 0, 0x10000, 1, 100, "Thread 2", 1,  (uint64_t *)0x90001F00, 0x10, 0x8, 0x10);
 	tm_thread_create(&thread, 0, 0,  0x10000, 1, 100, "Thread 3", 1,  (uint64_t *) (uint64_t *)0x90002F00, 0x10, 0x8, 0x10);
 	tm_thread_create(&thread, 0, 0,  0x10000, 1, 100, "Thread 4", 1,  (uint64_t *)0x90003F00, 0x10, 0x8, 0x10);

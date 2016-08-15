@@ -6,7 +6,7 @@
 
 uint64_t tm_current_thid 	= 1;
 extern topology_t *system_info;
-void tm_sched_add_to_queue(thread_t *thread);
+void tm_sched_add_to_queue_synced(thread_t *thread);
 
 extern sched_spinlock_t sched_lock;
 
@@ -65,11 +65,10 @@ uint64_t tm_thread_create(fn_t fn, uint64_t argn, char *argv[], uint64_t PLM4T, 
 	*--stack 		= (uint64_t)PLM4T;				// Setup PLM4T for this thread
 	entry->rsp		= (uint64_t)stack;				// pointer to the stack
 
+	asm("cli");
 	/* Add to not ready queue. */
-	acquireLock(&sched_lock.sched_ready_queue_high);
-	tm_sched_add_to_queue(entry);
-	releaseLock(&sched_lock.sched_ready_queue_high);
-
+	tm_sched_add_to_queue_synced(entry);
+	asm("sti");
 
 	return entry->thid;
 }

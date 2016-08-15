@@ -50,6 +50,7 @@ typedef struct thread_t
   uint32_t flags;					// Thread flags
   uint64_t rsp;						// Thread stack pointer
   uint64_t quantum;					// Thread's quantum (=alive time)
+  uint32_t sleep_millis;
   uint8_t priority;					// Thread's priority level (1, 2 or 3)
   uint64_t parent_thid;					// ID of the thread that created this one
 } thread_t;

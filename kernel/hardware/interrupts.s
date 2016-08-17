@@ -68,6 +68,70 @@ isr_common_stub:
     add rsp, 16                     ; Cleans up the pushed error code and pushed ISR number
     iretq                           ; pops 5 things at once: CS, EIP, EFLAGS, SS, and ESP
 
+    [GLOBAL yield]
+    yield:
+      cli
+      push rax                           	; Dissable interrupts
+      mov eax, [apic_base]              	; Apic Base in C-code
+      mov dword [eax + 0x80	], 0xFF		; Enable soft ints
+      push rbx
+      push rcx
+      push rdx
+      push r8
+      push r9
+      push r10
+      push r11
+      push r12
+      push r13
+      push r14
+      push r15
+      push rbp
+      push rdi
+      push rsi
+
+      xor rax, rax
+      mov ax, ds
+      push rax
+
+      mov rax, cr3
+      push rax
+
+
+      mov rdi, rsp
+      cld
+      call tm_schedule           ; Call C function
+      mov rsp, rax
+
+      pop rax
+      mov cr3, rax
+
+      xor rax, rax
+      pop rax
+      mov ds, ax
+      mov es, ax
+      mov fs, ax
+
+
+      pop rsi
+      pop rdi
+      pop rbp
+      pop r15
+      pop r14
+      pop r13
+      pop r12
+      pop r11
+      pop r10
+      pop r9
+      pop r8
+      pop rdx
+      pop rcx
+      pop rbx
+      xor rax, rax
+      mov eax, [apic_base]			; Apic Base in C-code
+      mov dword [eax + 0x80	], 0x00		; Enable soft ints
+      pop rax
+      iretq
+
 [GLOBAL apic_timer]
 [EXTERN tm_schedule]
 ; TODO: Save the SSE MMX etc registers before thread switch. */
@@ -76,7 +140,7 @@ apic_timer:
   cli
   push rax                           	; Dissable interrupts
   mov eax, [apic_base]              	; Apic Base in C-code
-  mov dword [eax + 0x80	], 0xFF		; Enable soft ints
+  mov dword [eax + 0x80	], 0xFF		; Dissable soft ints
   push rbx
   push rcx
   push rdx

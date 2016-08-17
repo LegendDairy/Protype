@@ -197,8 +197,9 @@ void parse_madt(void)
 /* TODO: move to seperate file system_info.c */
 processor_t *system_info_get_current_cpu(void)
 {
+	asm("cli");
 	acquireLock(&system_info->lock);
-	processor_t *current_cpu = system_info->cpu_list;
+	register processor_t * current_cpu asm("r12") = system_info->cpu_list;
 	while(current_cpu && (!((uint32_t)current_cpu->apic_id == lapic_read(apic_reg_id) >> 24)))
 	{
 		current_cpu = current_cpu->next;
@@ -209,6 +210,7 @@ processor_t *system_info_get_current_cpu(void)
 		for(;;);
 	}
 	releaseLock(&system_info->lock);
+	asm("sti");
 	return current_cpu;
 }
 

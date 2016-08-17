@@ -11,5 +11,5 @@ debug: action=ignore, pci=report
   panic: action=ask
 mouse: enabled=0
 clock: sync=none
-cpu: count=1:4:2, model=corei7_sandy_bridge_2600k
+cpu: count=1:4:2, model=corei7_sandy_bridge_2600k, reset_on_triple_fault=0
 display_library: x, options="gui_debug"

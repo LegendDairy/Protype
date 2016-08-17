@@ -14,7 +14,7 @@ static void thread_exit(void);
 
 thread_t *tm_thread_get_current_thread(void)
 {
-	processor_t *curr = system_info_get_current_cpu();
+	register processor_t *curr asm("r12") = system_info_get_current_cpu();
 	if(!curr)
 	{
 		return 0;
@@ -24,7 +24,7 @@ thread_t *tm_thread_get_current_thread(void)
 
 uint64_t tm_thread_get_current_thread_thid(void)
 {
-	thread_t *curr = tm_thread_get_current_thread();
+	register thread_t *curr asm("r12") = tm_thread_get_current_thread();
 	if(!curr)
 	{
 		return 0;
@@ -65,10 +65,10 @@ uint64_t tm_thread_create(fn_t fn, uint64_t argn, char *argv[], uint64_t PLM4T, 
 	*--stack 		= (uint64_t)PLM4T;				// Setup PLM4T for this thread
 	entry->rsp		= (uint64_t)stack;				// pointer to the stack
 
-	asm("cli");
+	asm volatile("cli");
 	/* Add to not ready queue. */
 	tm_sched_add_to_queue_synced(entry);
-	asm("sti");
+	asm volatile("sti");
 
 	return entry->thid;
 }

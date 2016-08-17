@@ -22,15 +22,20 @@ void parse_madt(void);
 /* -Clean up debug-text code. 					*/
 /* -Graphics proof of concept.					*/
 
+
+uint64_t locker = 0;
 void 	tm_sched_kill_current_thread(void);
 void tm_schedule_sleep(uint64_t);
 int thread(uint64_t argn, char **argv)
 {
-	processor_t *curr =  system_info_get_current_cpu();
+	asm("cli");
+	register processor_t *curr asm("r12") =  system_info_get_current_cpu();
+	asm("sti");
 	while(!curr->current_thread);
 	printf("Hello from %s running on logical cpu %x. Argn: %x, Argv: %x\n", curr->current_thread->name, curr->apic_id, argn, (uint64_t)argv);
-	tm_schedule_sleep(10);
-	printf("Thread woke up!\n");
+	tm_schedule_sleep(1000);
+	//curr =  system_info_get_current_cpu();
+	printf("Woke up!\n");
 	while(1);
 	return 0xDEADBEEF;
 }
@@ -76,10 +81,10 @@ int main(ipl_info_t *info)
 	tm_thread_create(&thread, 0, 0, 0x10000, 1, 100, "Thread 8", 1,  (uint64_t *)0xA0000F00, 0x10, 0x8, 0x10);
 
 	asm volatile("sti");
-	tm_sched_kill_current_thread();
+	//tm_sched_kill_current_thread();
 	while(1)
 	{
-		asm("hlt");
+		//asm volatile("hlt");
 	}
 
 	return 0;

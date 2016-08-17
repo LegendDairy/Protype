@@ -7,6 +7,7 @@
 #include<idt.h>
 
 #define APB_BASE 0x50000
+#define THREAD_FLAG_STOPPED 0xf00
 
 volatile uint64_t tick;
 uint32_t apic_base;
@@ -31,14 +32,14 @@ extern uint64_t sleep_lock;
 void pit_handler(void)
 {
 	acquireLock(&sleep_lock);
-	if(sched_sleep_queue)
+	if((volatile thread_t*volatile)sched_sleep_queue)
 	{
-		if(!__sync_sub_and_fetch(&sched_sleep_queue->sleep_millis, 1))
+		if((!__sync_sub_and_fetch(&sched_sleep_queue->sleep_millis, 1)) && (!sched_sleep_queue->sleep_millis))
 		{
-			while(sched_sleep_queue)
+			while(sched_sleep_queue )
 			{
-				printf("f");
 				thread_t *tmp = sched_sleep_queue;
+				sched_sleep_queue->flags &= !THREAD_FLAG_STOPPED;
 				sched_sleep_queue = sched_sleep_queue->next;
 				tm_sched_add_to_queue_synced(tmp);
 			}
@@ -95,8 +96,8 @@ void setup_apic(void)
 	lapic_write(apic_lvt_lint0_reg, 0x08700);			// Enable normal external interrupts
 	lapic_write(apic_lvt_lint1_reg, 0x00400);			// Enable normal NMI processing
 	lapic_write(apic_lvt_error_reg, 0x10000);			// Disable error interrupts
-        lapic_write(apic_reg_dest_format, 0xF0000000);               	// Flatmode
-        lapic_write(apic_reg_logical_dest, 0x01000000);			// Destination bits for this apic
+        lapic_write(apic_reg_dest_format, 0xFF000000);               	// Flatmode
+        lapic_write(apic_reg_logical_dest, 0xFF000000);			// Destination bits for this apic
 	lapic_write(apic_reg_spur_int_vect, 0x0013F);			// Enable the APIC and set spurious vector to 0x3F
 	lapic_write(apic_lvt_lint0_reg, 0x08700);			// Enable normal external interrupts
 	lapic_write(apic_lvt_lint1_reg, 0x00400);			// Enable normal NMI processing
@@ -111,7 +112,7 @@ void setup_apic(void)
  	*(uint32_t*)ioapic_reg 	= (uint32_t)0x14;
  	*ioapic_io 		= (uint32_t)0x30 ;
  	*(uint32_t*)ioapic_reg 	= (uint32_t)0x15;
- 	*ioapic_io 		= (uint32_t)0x01000000;
+ 	*ioapic_io 		= (uint32_t)0xFF000000;
 
 
 
@@ -147,7 +148,7 @@ void apic_ap_setup(void)
 	lapic_write(apic_lvt_lint0_reg, 0x08700);			// Enable normal external interrupts
 	lapic_write(apic_lvt_lint1_reg, 0x00400);			// Enable normal NMI processing
 	lapic_write(apic_lvt_error_reg, 0x10000);			// Disable error interrupts
-        lapic_write(apic_reg_dest_format, 0xF0000000);               	// Flatmode
+        lapic_write(apic_reg_dest_format, 0xFF000000);               	// Flatmode
         lapic_write(apic_reg_logical_dest, 0xF0000000);			// Destination bits for this apic
 	lapic_write(apic_reg_spur_int_vect, 0x0013F);			// Enable the APIC and set spurious vector to 0x3F
 	lapic_write(apic_lvt_lint0_reg, 0x08700);			// Enable normal external interrupts
@@ -191,15 +192,15 @@ void setup_lapic_timer(void)
 	printf("[APIC]: Bus frequency:  %dMHz\n", freq);
 	system_info->bus_freq = freq;
 	/* Setup intial count */
-	lapic_write(apic_init_count, freq * 1000);                                    // Fire every micro second
+	lapic_write(apic_init_count, (freq) * 1000);                                    // Fire every micro second
 	lapic_write(apic_lvt_timer_reg, (uint32_t)(0x20 | apic_timer_period)); //int 48, periodic
 }
 
 /* Proof of concept: */
 void boot_ap(uint8_t id)
 {
-	asm("cli");
-	lapic_write(apic_reg_task_priority, 0xFF);			// Accept all interrupts
+	asm volatile("cli");
+	//lapic_write(apic_reg_task_priority, 0xFF);
 
 	id &= 0xF;
         uint64_t *apb_idt_ptr = (uint64_t *)(APB_BASE + 0x8);

@@ -72,6 +72,7 @@ void init_idt(void)
 	idt_set_gate (30, (uint64_t)isr30, 0x08, 0xEE);
 	idt_set_gate (31, (uint64_t)isr31, 0x08, 0xEE);
 	idt_set_gate (32, (uint64_t)apic_timer, 0x08, 0xEE);
+	idt_set_gate (33, (uint64_t)yield, 0x08, 0xEE);
 	idt_set_gate (0x30, (uint64_t)pit_routine, 0x08, 0xEE);
 	idt_set_gate (0x3F, (uint64_t)apic_spurious, 0x08, 0xEE);
 
@@ -141,6 +142,7 @@ void isr_handler(regs_t * regs)
 		//DebugClearScreen();
 		uint64_t faulting_address;
 		    asm volatile("mov %%cr2, %0" : "=r" (faulting_address));
+		    DebugClearScreen();
 		putch('\n');
 		DebugPuts(exception_messages[regs->int_no]);
 		DebugPuts(": Errorcode: ");

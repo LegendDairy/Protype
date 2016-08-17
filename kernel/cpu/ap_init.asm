@@ -79,7 +79,7 @@ jmp 0x08:longmode                   ; Jump into longmode
 [BITS 64]
 longmode:
 mov eax, [ap_count]
-mov edx, 0x1000
+mov edx, 0x2000
 mul dx
 add rax, 0x60000
 mov rsp, rax

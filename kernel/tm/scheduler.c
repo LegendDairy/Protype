@@ -15,13 +15,14 @@ thread_t *sched_ready_queue_med	= 0;
 thread_t *sched_ready_queue_low	= 0;
 sched_spinlock_t sched_lock;
 thread_t *sched_sleep_queue = 0;
+extern topology_t *system_info;
 
 
 /** Set's multithreading up. Creates a current thread structure for kernel setup thread. **/
 void setup_tm(void)
 {
 	/* Itterate through system info structure to find current (BSP) processor. */
-	processor_t *current_cpu = system_info_get_current_cpu();
+	register processor_t volatile* volatile current_cpu asm("r12")= system_info_get_current_cpu();
 	if(!current_cpu)
 	{
 		printf("\n[TM]: Error: 0x01: Couldn't find current CPU in system_info structure!");
@@ -45,11 +46,16 @@ void setup_tm(void)
 	sched_lock.sched_notready_queue			= SPINLOCK_UNLOCKED;
 
 }
-
+uint64_t lock = 0;
 /** Gets called by the timer routine to swap the current running thread with a new one from the queue. **/
 uint64_t tm_schedule(uint64_t rsp)
 {
-	processor_t *current_cpu = system_info_get_current_cpu();
+	acquireLock(&lock);
+	register processor_t volatile * volatile current_cpu asm("r12") = system_info->cpu_list;
+	while(current_cpu && (!((uint32_t)current_cpu->apic_id == lapic_read(apic_reg_id) >> 24)))
+	{
+		current_cpu = current_cpu->next;
+	}
 
 	/* Increase schedule-counter. */
 	current_cpu->timer_current_tick++;
@@ -84,7 +90,7 @@ uint64_t tm_schedule(uint64_t rsp)
 	acquireLock(&sched_lock.sched_ready_queue_med);
 	acquireLock(&sched_lock.sched_ready_queue_low);
 
-	if(sched_ready_queue_high && current_cpu->timer_current_tick%2)
+	if(sched_ready_queue_high)
 	{
 		/* Add the current thread to the end of the correct list. */
 		tm_sched_add_to_queue(current_cpu->current_thread);
@@ -97,6 +103,7 @@ uint64_t tm_schedule(uint64_t rsp)
 		releaseLock(&sched_lock.sched_ready_queue_high);
 		releaseLock(&sched_lock.sched_ready_queue_med);
 		releaseLock(&sched_lock.sched_ready_queue_low);
+		releaseLock(&lock);
 
 		return current_cpu->current_thread->rsp;
 	}
@@ -112,6 +119,7 @@ uint64_t tm_schedule(uint64_t rsp)
 		releaseLock(&sched_lock.sched_ready_queue_high);
 		releaseLock(&sched_lock.sched_ready_queue_med);
 		releaseLock(&sched_lock.sched_ready_queue_low);
+		releaseLock(&lock);
 		return current_cpu->current_thread->rsp;
 
 	}
@@ -127,24 +135,32 @@ uint64_t tm_schedule(uint64_t rsp)
 		releaseLock(&sched_lock.sched_ready_queue_high);
 		releaseLock(&sched_lock.sched_ready_queue_med);
 		releaseLock(&sched_lock.sched_ready_queue_low);
+		releaseLock(&lock);
+
 		return current_cpu->current_thread->rsp;
 	}
 	releaseLock(&sched_lock.sched_ready_queue_high);
 	releaseLock(&sched_lock.sched_ready_queue_med);
 	releaseLock(&sched_lock.sched_ready_queue_low);
 
+	releaseLock(&lock);
 	return rsp;
 }
 
 void tm_sched_kill_current_thread(void)
 {
+	asm volatile("cli");
 	/* By erassing current_thread, the thread effectively be killed. */
-	processor_t *current_cpu = system_info_get_current_cpu();
-	current_cpu->current_thread = 0;
-	asm("int $32");
+	register processor_t *current_cpu asm("r12") = system_info_get_current_cpu();
+	current_cpu->current_thread->flags |= THREAD_FLAG_STOPPED;
+	asm volatile("sti");
+	asm volatile("int $33");
 
 	/* If there are no other threads, we will return here, and try again later. */
-	while(1);
+	while(1)
+	{
+		//asm volatile("hlt");
+	}
 }
 
 /** Adds the current running thread to the end of the appropriate list. **/
@@ -253,7 +269,6 @@ void tm_sched_add_to_queue_synced(thread_t *thread)
 			}
 			else
 			{
-
 				/* Else: create a list! */
 				sched_ready_queue_high = thread;
 				thread->next =0;
@@ -314,10 +329,11 @@ void tm_sched_add_to_queue_synced(thread_t *thread)
 uint64_t sleep_lock = 0;
 void tm_schedule_sleep(uint64_t millis)
 {
-	asm("cli");
+	asm volatile("cli");
 	acquireLock(&sleep_lock);
+	lapic_write(0x80, 0xFF);
 
-	processor_t *cpu = system_info_get_current_cpu();
+	register processor_t *cpu asm("rbx") = system_info_get_current_cpu();
 
 	if(sched_sleep_queue)
 	{
@@ -326,28 +342,12 @@ void tm_schedule_sleep(uint64_t millis)
 
 		while(iterator->next)
 		{
-			if(millis == iterator->sleep_millis)
-			{
-				cpu->current_thread->sleep_millis 	= 0;
-				cpu->current_thread->next 		= iterator->next;
-				iterator->next		 		= cpu->current_thread;
-				cpu->current_thread->flags		|= THREAD_FLAG_STOPPED;
-				releaseLock(&sleep_lock);
-				asm("sti");
-				asm("int $32");
-				while(!cpu->current_thread)
-				{
-					//asm("int $32");
-				}
-				return;
-			}
-			else
 			if(millis < iterator->sleep_millis)
 			{
 				cpu->current_thread->sleep_millis 	= millis;
 				if(prev)
 				{
-					prev->next 		= cpu->current_thread;
+					prev->next 			= cpu->current_thread;
 				}
 				else
 				{
@@ -363,11 +363,12 @@ void tm_schedule_sleep(uint64_t millis)
 
 				cpu->current_thread->flags		|= THREAD_FLAG_STOPPED;
 				releaseLock(&sleep_lock);
-				asm("sti");
-				asm("int $32");
-				while(!cpu->current_thread)
+				lapic_write(0x80, 0x00);
+				asm volatile("sti");
+				asm volatile("int $33");
+				while(!tm_thread_get_current_thread())
 				{
-					asm("int $32");
+					asm volatile("hlt");
 				}
 				return;
 			}
@@ -394,11 +395,12 @@ void tm_schedule_sleep(uint64_t millis)
 
 			cpu->current_thread->flags		|= THREAD_FLAG_STOPPED;
 			releaseLock(&sleep_lock);
-			asm("sti");
-			asm("int $32");
-			while(!cpu->current_thread)
+			lapic_write(0x80, 0x00);
+			asm volatile("sti");
+			asm volatile("int $33");
+			while(!tm_thread_get_current_thread())
 			{
-				asm("int $32");
+				asm volatile("hlt");
 			}
 			return;
 		}
@@ -407,13 +409,15 @@ void tm_schedule_sleep(uint64_t millis)
 		cpu->current_thread->sleep_millis 		= millis - iterator->sleep_millis;
 		iterator->next 					= cpu->current_thread;
 		cpu->current_thread->next = 0;
-		cpu->current_thread->flags		|= THREAD_FLAG_STOPPED;
+		cpu->current_thread->flags			|= THREAD_FLAG_STOPPED;
 		releaseLock(&sleep_lock);
-		asm("sti");
-		asm("int $32");
-		while(!cpu->current_thread)
+		asm volatile("sti");
+		lapic_write(0x80, 0x00);
+
+		asm volatile("int $33");
+		while(!tm_thread_get_current_thread())
 		{
-			//asm("int $32");
+			asm volatile("hlt");
 		}
 		return;
 		}
@@ -423,17 +427,18 @@ void tm_schedule_sleep(uint64_t millis)
 		sched_sleep_queue 					= (thread_t *)cpu->current_thread;
 		cpu->current_thread->sleep_millis 			= millis;
 		cpu->current_thread->next 				= 0;
-		cpu->current_thread->flags		|= THREAD_FLAG_STOPPED;
+		cpu->current_thread->flags				|= THREAD_FLAG_STOPPED;
 		releaseLock(&sleep_lock);
-		asm("sti");
-		asm("int $32");
-		while(!cpu->current_thread)
+		asm volatile("sti");
+		lapic_write(0x80, 0x00);
+
+		asm volatile("int $33");
+		while(!tm_thread_get_current_thread())
 		{
-			asm("int $32");
+			asm volatile("hlt");
 		}
+
 		return;
 	}
 	releaseLock(&sleep_lock);
-
-
 }

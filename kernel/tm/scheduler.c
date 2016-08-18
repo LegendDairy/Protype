@@ -157,13 +157,17 @@ uint64_t tm_schedule(uint64_t rsp)
 		return current_cpu->idle_thread->rsp;
 	}
 }
-
+uint64_t kill_lock = 0;
 void tm_sched_kill_current_thread(void)
 {
 	asm volatile("cli");
 	lapic_write(0x80, 0xFF);
+	acquireLock(&kill_lock);
+	__sync_synchronize();
 	register processor_t *current_cpu asm("r12") = system_info_get_current_cpu();
 	current_cpu->current_thread->flags |= THREAD_FLAG_STOPPED;
+	releaseLock(&kill_lock);
+	__sync_synchronize();
 	asm volatile("sti");
 	lapic_write(0x80, 0x00);
 	asm volatile("int $33");
@@ -377,9 +381,11 @@ void tm_schedule_sleep(uint64_t millis)
 
 				cpu->current_thread->flags		|= THREAD_FLAG_STOPPED;
 				releaseLock(&sleep_lock);
+				__sync_synchronize();
 				lapic_write(0x80, 0x00);
 				asm volatile("sti");
 				asm volatile("int $33");
+
 				return;
 			}
 			else
@@ -405,6 +411,7 @@ void tm_schedule_sleep(uint64_t millis)
 
 			cpu->current_thread->flags		|= THREAD_FLAG_STOPPED;
 			releaseLock(&sleep_lock);
+			__sync_synchronize();
 			lapic_write(0x80, 0x00);
 			asm volatile("sti");
 			asm volatile("int $33");
@@ -417,6 +424,7 @@ void tm_schedule_sleep(uint64_t millis)
 		cpu->current_thread->next = 0;
 		cpu->current_thread->flags			|= THREAD_FLAG_STOPPED;
 		releaseLock(&sleep_lock);
+		__sync_synchronize();
 		asm volatile("sti");
 		lapic_write(0x80, 0x00);
 		asm volatile("int $33");
@@ -430,10 +438,10 @@ void tm_schedule_sleep(uint64_t millis)
 		cpu->current_thread->next 				= 0;
 		cpu->current_thread->flags				|= THREAD_FLAG_STOPPED;
 		releaseLock(&sleep_lock);
+		__sync_synchronize();
 		asm volatile("sti");
 		lapic_write(0x80, 0x00);
 		asm volatile("int $33");
 		return;
 	}
-	releaseLock(&sleep_lock);
 }

@@ -27,6 +27,7 @@ uint64_t atomic_fetch_add(volatile uint64_t* p, uint64_t incr)
 void mutex_lock(mutex_t *m)
 {
 	while (__sync_lock_test_and_set (&m->lock, 1));
+	__sync_synchronize();
 	/*{
 		schedule(); // software interupt and schedule
 	}*/
@@ -35,6 +36,7 @@ void mutex_lock(mutex_t *m)
 void mutex_unlock(mutex_t *m)
 {
 	__sync_lock_release(&m->lock);
+	__sync_synchronize();
 	/*
 	if(m->waiting)
 	{

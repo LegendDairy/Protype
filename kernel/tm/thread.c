@@ -86,11 +86,20 @@ uint64_t tm_thread_create(fn_t fn, uint64_t argn, char *argv[], uint64_t PLM4T, 
 /* Finds a thread in the not_ready_queue and puts it in the correct queue. */
 void tm_sched_kill_current_thread(void);
 /* Thread exist routine. */
+uint64_t exit_lock = 0;
 void thread_exit(void)
 {
+	asm volatile("cli");
+	lapic_write(0x80, 0xFF);
+	acquireLock(&exit_lock);
+	__sync_synchronize();
 	uint64_t val;
 	asm volatile ("movq %%rax, %0;":"=r"(val));
 	processor_t *curr =  system_info_get_current_cpu();
 	printf("%s with thid %d existed with value: %x.\n",curr->current_thread->name, curr->current_thread->thid, val);
+	releaseLock(&exit_lock);
+	__sync_synchronize();
+	lapic_write(0x80, 0x00);
+	asm volatile ("sti");
 	tm_sched_kill_current_thread();
 }

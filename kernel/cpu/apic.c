@@ -156,7 +156,7 @@ void apic_ap_setup(void)
 	id = id >> 24;
 	printf("[SMP]: CPU %x is booting...\n", id);
 
-	lapic_write(apic_init_count, system_info->bus_freq*1000);                                    // Fire every micro second
+	lapic_write(apic_init_count, system_info->bus_freq/4*1000*10);                                    // Fire every micro second
 	lapic_write(apic_lvt_timer_reg, (uint32_t)(0x20 | apic_timer_period)); //int 48, periodic
 }
 void setup_lapic_timer(void)
@@ -190,7 +190,7 @@ void setup_lapic_timer(void)
 	printf("[APIC]: Bus frequency:  %dMHz\n", freq);
 	system_info->bus_freq = freq;
 	/* Setup intial count */
-	lapic_write(apic_init_count, (freq) * 1000);                                    // Fire every micro second
+	lapic_write(apic_init_count, (freq)/4 * 1000*10);                                    // Fire every micro second
 	lapic_write(apic_lvt_timer_reg, (uint32_t)(0x20 | apic_timer_period)); //int 48, periodic
 }
 

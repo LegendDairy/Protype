@@ -29,17 +29,22 @@ void tm_schedule_sleep(uint64_t);
 extern topology_t *system_info;
 int thread(uint64_t argn, char **argv)
 {
-	asm("cli");
+	asm volatile("cli");
 	lapic_write(0x80, 0xFF);
+	acquireLock(&locker);
+	__sync_synchronize();
 	register processor_t *curr asm("r12") = system_info->cpu_list;
 	while(curr && (!((uint32_t)curr->apic_id == lapic_read(apic_reg_id) >> 24)))
 	{
 		curr = curr->next;
 	}
-	lapic_write(0x80, 0x00);
-	asm("sti");
+
 	printf("Hello from %s running on logical cpu %x. Argn: %x, Argv: %x\n", curr->current_thread->name, curr->apic_id, argn, (uint64_t)argv);
-	//tm_schedule_sleep(1000);
+	releaseLock(&locker);
+	__sync_synchronize();
+	lapic_write(0x80, 0x00);
+	asm volatile("sti");
+	tm_schedule_sleep(1000);
 	return 0xDEADBEEF;
 }
 
@@ -64,7 +69,6 @@ int main(ipl_info_t *info)
 	boot_ap(2);
 	boot_ap(3);
 
-
 	vmm_map_frame(0x90000000, pmm_alloc_page(), 0x3);
 	vmm_map_frame(0x90001000, pmm_alloc_page(), 0x3);
 	vmm_map_frame(0x90002000, pmm_alloc_page(), 0x3);
@@ -72,7 +76,7 @@ int main(ipl_info_t *info)
 	vmm_map_frame(0x90004000, pmm_alloc_page(), 0x3);
 	vmm_map_frame(0x90005000, pmm_alloc_page(), 0x3);
 	vmm_map_frame(0x90006000, pmm_alloc_page(), 0x3);
-	vmm_map_frame(0xA0000000, pmm_alloc_page(), 0x3);
+	vmm_map_frame(0x90007000, pmm_alloc_page(), 0x3);
 
 	tm_thread_create(&thread, 1,  (char **)1,  0x10000, 1, 100, "Thread 1", 1, (uint64_t *)0x90000F00, 0x10, 0x8, 0x10);
 	tm_thread_create(&thread, 0, 0, 0x10000, 1, 100, "Thread 2", 1,  (uint64_t *)0x90001F00, 0x10, 0x8, 0x10);
@@ -81,7 +85,7 @@ int main(ipl_info_t *info)
 	tm_thread_create(&thread, 0, 0, 0x10000, 1, 100, "Thread 5", 1,  (uint64_t *)0x90004F00, 0x10, 0x8, 0x10);
 	tm_thread_create(&thread, 0, 0,  0x10000, 1, 100, "Thread 6", 1,  (uint64_t *)0x90005F00, 0x10, 0x8, 0x10);
 	tm_thread_create(&thread, 0, 0,  0x10000, 1, 100, "Thread 7", 1,  (uint64_t *)0x90006F00, 0x10, 0x8, 0x10);
-	tm_thread_create(&thread, 0, 0, 0x10000, 1, 100, "Thread 8", 1,  (uint64_t *)0xA0000F00, 0x10, 0x8, 0x10);
+	tm_thread_create(&thread, 0, 0, 0x10000, 1, 100, "Thread 8", 1,   (uint64_t *)0x90007F00, 0x10, 0x8, 0x10);
 
 	asm volatile("sti");
 	tm_sched_kill_current_thread();

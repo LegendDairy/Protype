@@ -7,14 +7,20 @@
 uint64_t tm_current_thid 	= 1;
 extern topology_t *system_info;
 void tm_sched_add_to_queue_synced(thread_t *thread);
-
+void thread_exit(void);
 extern sched_spinlock_t sched_lock;
 
-static void thread_exit(void);
-
+uint64_t l = 0;
 thread_t *tm_thread_get_current_thread(void)
 {
-	register processor_t *curr asm("r12") = system_info_get_current_cpu();
+	acquireLock(&l);
+	register processor_t *curr asm("r12") = system_info->cpu_list;
+	while(curr && (!((uint32_t)curr->apic_id == lapic_read(apic_reg_id) >> 24)))
+	{
+		curr = curr->next;
+	}
+	releaseLock(&l);
+
 	if(!curr)
 	{
 		return 0;
@@ -65,13 +71,16 @@ uint64_t tm_thread_create(fn_t fn, uint64_t argn, char *argv[], uint64_t PLM4T, 
 	*--stack 		= (uint64_t)PLM4T;				// Setup PLM4T for this thread
 	entry->rsp		= (uint64_t)stack;				// pointer to the stack
 
-	asm volatile("cli");
 	/* Add to not ready queue. */
 	tm_sched_add_to_queue_synced(entry);
-	asm volatile("sti");
 
 	return entry->thid;
 }
+
+/*thread_t *tm_thread_create_idle(void)
+{
+
+}*/
 
 /* Finds a thread in the not_ready_queue and puts it in the correct queue. */
 void tm_sched_kill_current_thread(void);

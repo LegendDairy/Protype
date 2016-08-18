@@ -103,7 +103,6 @@ void setup_apic(void)
 	lapic_write(apic_lvt_lint1_reg, 0x00400);			// Enable normal NMI processing
 	lapic_write(apic_reg_eoi, 0x00);				// Make sure no interrupts are left
 
-
 	/* Set up IO APIC for the PIT (POC) */
 	uint32_t * volatile ioapic_reg 	= (uint32_t *)system_info->io_apic->address;
  	uint32_t * volatile ioapic_io 	= (uint32_t *)(system_info->io_apic->address+0x4);
@@ -113,8 +112,6 @@ void setup_apic(void)
  	*ioapic_io 		= (uint32_t)0x30 ;
  	*(uint32_t*)ioapic_reg 	= (uint32_t)0x15;
  	*ioapic_io 		= (uint32_t)0xFF000000;
-
-
 
 	/* Set up LAPIC Timer. */
 	setup_lapic_timer();

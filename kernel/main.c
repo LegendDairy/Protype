@@ -29,13 +29,15 @@ void tm_schedule_sleep(uint64_t);
 int thread(uint64_t argn, char **argv)
 {
 	asm("cli");
+	lapic_write(0x80, 0xFF);
 	register processor_t *curr asm("r12") =  system_info_get_current_cpu();
+	lapic_write(0x80, 0x00);
 	asm("sti");
 	while(!curr->current_thread);
 	printf("Hello from %s running on logical cpu %x. Argn: %x, Argv: %x\n", curr->current_thread->name, curr->apic_id, argn, (uint64_t)argv);
 	tm_schedule_sleep(1000);
-	//curr =  system_info_get_current_cpu();
-	printf("Woke up!\n");
+	curr =  system_info_get_current_cpu();
+	printf("%s woke up on cpu %d!\n", curr->current_thread->name, curr->apic_id);
 	while(1);
 	return 0xDEADBEEF;
 }
@@ -70,7 +72,6 @@ int main(ipl_info_t *info)
 	vmm_map_frame(0x90006000, pmm_alloc_page(), 0x3);
 	vmm_map_frame(0xA0000000, pmm_alloc_page(), 0x3);
 
-
 	tm_thread_create(&thread, 1,  (char **)1,  0x10000, 1, 100, "Thread 1", 1, (uint64_t *)0x90000F00, 0x10, 0x8, 0x10);
 	tm_thread_create(&thread, 0, 0, 0x10000, 1, 100, "Thread 2", 1,  (uint64_t *)0x90001F00, 0x10, 0x8, 0x10);
 	tm_thread_create(&thread, 0, 0,  0x10000, 1, 100, "Thread 3", 1,  (uint64_t *) (uint64_t *)0x90002F00, 0x10, 0x8, 0x10);
@@ -81,11 +82,8 @@ int main(ipl_info_t *info)
 	tm_thread_create(&thread, 0, 0, 0x10000, 1, 100, "Thread 8", 1,  (uint64_t *)0xA0000F00, 0x10, 0x8, 0x10);
 
 	asm volatile("sti");
-	//tm_sched_kill_current_thread();
-	while(1)
-	{
-		//asm volatile("hlt");
-	}
+	tm_sched_kill_current_thread();
+	while(1);
 
 	return 0;
 }

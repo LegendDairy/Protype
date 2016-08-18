@@ -27,8 +27,11 @@ RSDT_t *find_rsdt(void)
 
 			if (check == 0)
 			{
-				pmm_bset((uint64_t)(*(uint32_t*)(curr - 4)));
-				vmm_map_frame((uint64_t)(*(uint32_t*)(curr - 4)), (uint64_t)(*(uint32_t*)(curr - 4)), 0x3);
+				if(!vmm_test_mapping((uint64_t)(*(uint32_t*)(curr - 4))))
+				{
+					pmm_bset((uint64_t)(*(uint32_t*)(curr - 4)));
+					vmm_map_frame((uint64_t)(*(uint32_t*)(curr - 4)), (uint64_t)(*(uint32_t*)(curr - 4)), 0x3);
+				}
 				return  (RSDT_t *)((uint64_t)(*(uint32_t*)(curr - 4)));
 			}
 			curr -= 20;
@@ -87,6 +90,11 @@ ACPISDTHeader_t *find_acpi_header(RSDT_t *root, const char *signature)
 	return (ACPISDTHeader_t *)NULL;
 }
 
+void idle_fn(void)
+{
+	while(1);
+}
+
 void parse_madt(void)
 {
 	/* Parse ACPI information for the MADT header. */
@@ -135,6 +143,47 @@ void parse_madt(void)
 				cpu_entry->current_thread			= 0;
 				cpu_entry->next 				= 0;
 				cpu_entry->timer_current_tick			= 0;
+
+				extern uint64_t tm_current_thid;
+
+				/* Create and initialise an entry thread structure. */
+				thread_t *idle 	= (thread_t*)malloc(sizeof(thread_t));
+				idle->next		= 0;
+				idle->thid		= atomic_fetch_add(&tm_current_thid, 1);
+				idle->name		= "Idle";
+				idle->flags		= 0x0;
+				idle->quantum		= 10;
+				idle->priority		= 0x3;
+				idle->parent_thid	= 0;
+
+				uint64_t *stack = malloc(0x1000);
+				stack += 0x900/8;
+
+				extern void thread_exit(void);
+
+				/* Prepare the thread stack. Set the intial register values. */
+				*--stack		= (uint64_t)&thread_exit;
+				*--stack 		= (uint64_t)0x10;					// Stack segment selector
+				uint64_t usrrsp 	= (uint64_t)stack + 8;
+				*--stack 		= (uint64_t)((uint64_t)usrrsp);			// Pointer to stack
+				*--stack 		= (uint64_t)0x200; 				// Interrupts enabled
+				*--stack 		= (uint64_t)0x08; 				// Code segment selector
+				*--stack 		= (uint64_t)&idle_fn; 				// RIP
+
+				//memsetq(stack, 0, 12);						// Set gprs to 0
+				stack 			-= 12;						// Make room for the GPR on the stack.
+				*--stack 		= 0;						// rbp
+				*--stack 		= (uint64_t)0;				// rdi
+				*--stack 		= (uint64_t)0;				// rsi
+
+				*--stack 		= (uint64_t)0x10;					// Setup data segment
+				*--stack 		= (uint64_t)0x10000;				// Setup PLM4T for this thread
+				idle->rsp		= (uint64_t)stack;				// pointer to the stack
+
+				cpu_entry->idle_thread = idle;
+
+
+
 				/* Iterate through the cpu list to find the last entry. */
 				processor_t *itterator 	= (processor_t *)system_info->cpu_list;
 				if(itterator)
@@ -192,14 +241,17 @@ void parse_madt(void)
 		i    += curr->length;
 		curr  = (madt_entry_t *)((uint64_t)curr + (uint32_t)curr->length);
 	}
+
+
 }
 
+
+
 /* TODO: move to seperate file system_info.c */
-processor_t *system_info_get_current_cpu(void)
+inline processor_t *system_info_get_current_cpu(void)
 {
-	asm("cli");
 	acquireLock(&system_info->lock);
-	register processor_t * current_cpu asm("r12") = system_info->cpu_list;
+	register processor_t *current_cpu asm("r12") = system_info->cpu_list;
 	while(current_cpu && (!((uint32_t)current_cpu->apic_id == lapic_read(apic_reg_id) >> 24)))
 	{
 		current_cpu = current_cpu->next;
@@ -210,7 +262,6 @@ processor_t *system_info_get_current_cpu(void)
 		for(;;);
 	}
 	releaseLock(&system_info->lock);
-	asm("sti");
 	return current_cpu;
 }
 

@@ -22,7 +22,7 @@ extern topology_t *system_info;
 void setup_tm(void)
 {
 	/* Itterate through system info structure to find current (BSP) processor. */
-	register processor_t volatile* volatile current_cpu asm("r12")= system_info_get_current_cpu();
+	register processor_t* current_cpu asm("r12")= system_info_get_current_cpu();
 	if(!current_cpu)
 	{
 		printf("\n[TM]: Error: 0x01: Couldn't find current CPU in system_info structure!");
@@ -51,7 +51,8 @@ uint64_t lock = 0;
 uint64_t tm_schedule(uint64_t rsp)
 {
 	acquireLock(&lock);
-	register processor_t volatile * volatile current_cpu asm("r12") = system_info->cpu_list;
+
+	register processor_t *current_cpu asm("r12") = system_info->cpu_list;
 	while(current_cpu && (!((uint32_t)current_cpu->apic_id == lapic_read(apic_reg_id) >> 24)))
 	{
 		current_cpu = current_cpu->next;
@@ -144,23 +145,27 @@ uint64_t tm_schedule(uint64_t rsp)
 	releaseLock(&sched_lock.sched_ready_queue_low);
 
 	releaseLock(&lock);
-	return rsp;
+
+	if(current_cpu->current_thread)
+	{
+		return current_cpu->current_thread->rsp;
+	}
+	else
+	{
+		current_cpu->current_thread = current_cpu->idle_thread;
+		return current_cpu->idle_thread->rsp;
+	}
 }
 
 void tm_sched_kill_current_thread(void)
 {
 	asm volatile("cli");
-	/* By erassing current_thread, the thread effectively be killed. */
+	lapic_write(0x80, 0xFF);
 	register processor_t *current_cpu asm("r12") = system_info_get_current_cpu();
 	current_cpu->current_thread->flags |= THREAD_FLAG_STOPPED;
 	asm volatile("sti");
+	lapic_write(0x80, 0x00);
 	asm volatile("int $33");
-
-	/* If there are no other threads, we will return here, and try again later. */
-	while(1)
-	{
-		//asm volatile("hlt");
-	}
 }
 
 /** Adds the current running thread to the end of the appropriate list. **/
@@ -330,10 +335,14 @@ uint64_t sleep_lock = 0;
 void tm_schedule_sleep(uint64_t millis)
 {
 	asm volatile("cli");
-	acquireLock(&sleep_lock);
 	lapic_write(0x80, 0xFF);
+	acquireLock(&sleep_lock);
 
-	register processor_t *cpu asm("rbx") = system_info_get_current_cpu();
+	register processor_t *cpu asm("r12") = system_info->cpu_list;
+	while(cpu && (!((uint32_t)cpu->apic_id == lapic_read(apic_reg_id) >> 24)))
+	{
+		cpu = cpu->next;
+	}
 
 	if(sched_sleep_queue)
 	{
@@ -366,10 +375,6 @@ void tm_schedule_sleep(uint64_t millis)
 				lapic_write(0x80, 0x00);
 				asm volatile("sti");
 				asm volatile("int $33");
-				while(!tm_thread_get_current_thread())
-				{
-					asm volatile("hlt");
-				}
 				return;
 			}
 			else
@@ -398,10 +403,6 @@ void tm_schedule_sleep(uint64_t millis)
 			lapic_write(0x80, 0x00);
 			asm volatile("sti");
 			asm volatile("int $33");
-			while(!tm_thread_get_current_thread())
-			{
-				asm volatile("hlt");
-			}
 			return;
 		}
 		if(millis >= iterator->sleep_millis)
@@ -413,12 +414,7 @@ void tm_schedule_sleep(uint64_t millis)
 		releaseLock(&sleep_lock);
 		asm volatile("sti");
 		lapic_write(0x80, 0x00);
-
 		asm volatile("int $33");
-		while(!tm_thread_get_current_thread())
-		{
-			asm volatile("hlt");
-		}
 		return;
 		}
 	}
@@ -431,13 +427,7 @@ void tm_schedule_sleep(uint64_t millis)
 		releaseLock(&sleep_lock);
 		asm volatile("sti");
 		lapic_write(0x80, 0x00);
-
 		asm volatile("int $33");
-		while(!tm_thread_get_current_thread())
-		{
-			asm volatile("hlt");
-		}
-
 		return;
 	}
 	releaseLock(&sleep_lock);

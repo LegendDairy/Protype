@@ -37,6 +37,7 @@ typedef struct processor_t
 	uint8_t apic_id;					// ID for the logical cpu, ie ID of the local apic
 	uint32_t flags;						// Flags from the MADT
 	thread_t *current_thread;				// Pointer to the current running thread on this logical cpu
+	thread_t *idle_thread;
 	uint64_t timer_current_tick;				// Curent tick of lapic timer.
 	uint64_t idle_rsp;
 } processor_t;

@@ -14,6 +14,7 @@ uint64_t l = 0;
 thread_t *tm_thread_get_current_thread(void)
 {
 	acquireLock(&l);
+	__sync_synchronize();
 	register processor_t *curr asm("r12") = system_info->cpu_list;
 	while(curr && (!((uint32_t)curr->apic_id == lapic_read(apic_reg_id) >> 24)))
 	{

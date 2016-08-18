@@ -26,19 +26,20 @@ void parse_madt(void);
 uint64_t locker = 0;
 void 	tm_sched_kill_current_thread(void);
 void tm_schedule_sleep(uint64_t);
+extern topology_t *system_info;
 int thread(uint64_t argn, char **argv)
 {
 	asm("cli");
 	lapic_write(0x80, 0xFF);
-	register processor_t *curr asm("r12") =  system_info_get_current_cpu();
+	register processor_t *curr asm("r12") = system_info->cpu_list;
+	while(curr && (!((uint32_t)curr->apic_id == lapic_read(apic_reg_id) >> 24)))
+	{
+		curr = curr->next;
+	}
 	lapic_write(0x80, 0x00);
 	asm("sti");
-	while(!curr->current_thread);
 	printf("Hello from %s running on logical cpu %x. Argn: %x, Argv: %x\n", curr->current_thread->name, curr->apic_id, argn, (uint64_t)argv);
-	tm_schedule_sleep(1000);
-	curr =  system_info_get_current_cpu();
-	printf("%s woke up on cpu %d!\n", curr->current_thread->name, curr->apic_id);
-	while(1);
+	//tm_schedule_sleep(1000);
 	return 0xDEADBEEF;
 }
 
@@ -62,6 +63,7 @@ int main(ipl_info_t *info)
 	boot_ap(1);
 	boot_ap(2);
 	boot_ap(3);
+
 
 	vmm_map_frame(0x90000000, pmm_alloc_page(), 0x3);
 	vmm_map_frame(0x90001000, pmm_alloc_page(), 0x3);

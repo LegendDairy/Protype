@@ -9,7 +9,7 @@
 /* TODO: mutex this bitch. */
 
 
-uint16_t *video_memory = (uint16_t *)0xB8000;
+volatile uint16_t *video_memory = (uint16_t *)0xB8000;
 unsigned char x_csr = 0;
 unsigned char y_csr = 0;
 unsigned char attribute = 0x0F;

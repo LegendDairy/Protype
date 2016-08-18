@@ -51,6 +51,7 @@ uint64_t lock = 0;
 uint64_t tm_schedule(uint64_t rsp)
 {
 	acquireLock(&lock);
+	__sync_synchronize();
 
 	register processor_t *current_cpu asm("r12") = system_info->cpu_list;
 	while(current_cpu && (!((uint32_t)current_cpu->apic_id == lapic_read(apic_reg_id) >> 24)))
@@ -90,7 +91,7 @@ uint64_t tm_schedule(uint64_t rsp)
 	acquireLock(&sched_lock.sched_ready_queue_high);
 	acquireLock(&sched_lock.sched_ready_queue_med);
 	acquireLock(&sched_lock.sched_ready_queue_low);
-
+	__sync_synchronize();
 	if(sched_ready_queue_high)
 	{
 		/* Add the current thread to the end of the correct list. */
@@ -259,6 +260,7 @@ void tm_sched_add_to_queue_synced(thread_t *thread)
 		if(thread->priority == THREAD_PRIORITY_HIGHEST)
 		{
 			acquireLock(&sched_lock.sched_ready_queue_high);
+			__sync_synchronize();
 			/* Check wether the appropriate list exists. */
 			if(sched_ready_queue_high)
 			{
@@ -283,6 +285,7 @@ void tm_sched_add_to_queue_synced(thread_t *thread)
 		else if(thread->priority == THREAD_PRIORITY_NORMAL)
 		{
 			acquireLock(&sched_lock.sched_ready_queue_med);
+			__sync_synchronize();
 			/* Check wether the appropriate list exists. */
 			if(sched_ready_queue_med)
 			{
@@ -307,6 +310,7 @@ void tm_sched_add_to_queue_synced(thread_t *thread)
 		else
 		{
 			acquireLock(&sched_lock.sched_ready_queue_low);
+			__sync_synchronize();
 			/* Check wether the appropriate list exists. */
 			if(sched_ready_queue_low)
 			{
@@ -337,6 +341,7 @@ void tm_schedule_sleep(uint64_t millis)
 	asm volatile("cli");
 	lapic_write(0x80, 0xFF);
 	acquireLock(&sleep_lock);
+	__sync_synchronize();
 
 	register processor_t *cpu asm("r12") = system_info->cpu_list;
 	while(cpu && (!((uint32_t)cpu->apic_id == lapic_read(apic_reg_id) >> 24)))

@@ -10,6 +10,7 @@ uint64_t volatile text_lock = 0;
 void printf(const char *str, ...)
 {
 	acquireLock((uint64_t*)&text_lock);
+	__sync_synchronize();
 	va_list args;
 	va_start(args, str);
 

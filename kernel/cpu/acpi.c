@@ -251,6 +251,7 @@ void parse_madt(void)
 inline processor_t *system_info_get_current_cpu(void)
 {
 	acquireLock(&system_info->lock);
+	__sync_synchronize();
 	register processor_t *current_cpu asm("r12") = system_info->cpu_list;
 	while(current_cpu && (!((uint32_t)current_cpu->apic_id == lapic_read(apic_reg_id) >> 24)))
 	{
@@ -273,6 +274,7 @@ uint32_t volatile *system_info_get_lapic_base(void)
 uint32_t volatile *system_info_get_ioapic_base(uint8_t id)
 {
 	acquireLock(&system_info->lock);
+	__sync_synchronize();
 	io_apic_t *itterator = system_info->io_apic;
 	while( itterator && itterator->id != id)
 	{

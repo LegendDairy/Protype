@@ -32,6 +32,7 @@ extern uint64_t sleep_lock;
 void pit_handler(void)
 {
 	acquireLock(&sleep_lock);
+	__sync_synchronize();
 	if((volatile thread_t*volatile)sched_sleep_queue)
 	{
 		if((!__sync_sub_and_fetch(&sched_sleep_queue->sleep_millis, 1)) && (!sched_sleep_queue->sleep_millis))

@@ -142,7 +142,7 @@ void isr_handler(regs_t * regs)
 		//DebugClearScreen();
 		uint64_t faulting_address;
 		    asm volatile("mov %%cr2, %0" : "=r" (faulting_address));
-		    DebugClearScreen();
+		    //DebugClearScreen();
 		putch('\n');
 		DebugPuts(exception_messages[regs->int_no]);
 		DebugPuts(": Errorcode: ");

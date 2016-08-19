@@ -19,7 +19,7 @@ mutex_t heap_lock;
 /** Simple dynamic allocater for the kernel. **/
 void *malloc(uint64_t sz)
 {
-	mutex_lock(&heap_lock);
+	//mutex_lock(&heap_lock);
 	header_t *cur_header = (header_t *)heap_start, *prev_header = 0;
 
 	while(cur_header)
@@ -28,10 +28,10 @@ void *malloc(uint64_t sz)
 		{
 			split_chunk(cur_header, sz);
 		        cur_header->allocated = 1;
+			//mutex_unlock(&heap_lock);
 			void *tmp = cur_header;
-			tmp = (void*)((uint64_t)tmp + sizeof(header_t));
-			mutex_unlock(&heap_lock);
-			return tmp;
+			tmp = (void*)((uint64_t)tmp + (uint64_t)sizeof(header_t));
+			return (void*)tmp;
 		}
 
 		prev_header 	= cur_header;
@@ -57,9 +57,9 @@ void *malloc(uint64_t sz)
 	cur_header->prev 	= prev_header;
 	cur_header->prev->next 	= cur_header;
 	cur_header->magic 	= MAGIC;
+	//mutex_unlock(&heap_lock);
 	void *tmp = cur_header;
-	tmp = (void*)((uint64_t)tmp + sizeof(header_t));
-	mutex_unlock(&heap_lock);
+	tmp = (void*)((uint64_t)tmp + (uint64_t)sizeof(header_t));
 	return tmp;
 }
 

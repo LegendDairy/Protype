@@ -10,18 +10,21 @@
 #include <stdio.h>
 
 
-/* Reads a specified register from the LAPIC */
+/** Reads a specified register from the LAPIC 		**/
 uint32_t lapic_read(uint32_t r);
-/* Writes val to a specified register of the LAPIC */
+/** Writes val to a specified register of the LAPIC 	**/
 void lapic_write(uint32_t r, uint32_t val);
-/* Initialises the Local and IO APIC. */
+/** Initialises the Local and IO APIC. 			**/
 void setup_apic(void);
+/** Initialises local apic timer.			**/
 void setup_lapic_timer(void);
+/** Boots a given aplication processor. 		**/
 void boot_ap(uint8_t id);
 
-#define CPUID_FLAG_MSR 0x20
-#define CPUID_FLAG_APIC 0x200
 
+/* Model Specific Register Flags */
+#define CPUID_FLAG_MSR 						0x20
+#define CPUID_FLAG_APIC 					0x200
 #define CPU_FLAG_BOOTSTRAP					0x0001
 
 /* Local APIC register map */
@@ -100,7 +103,6 @@ void boot_ap(uint8_t id);
 #define apic_timer_tsc_dead					0x40000
 
 /* LAPIC ICR register flags (TODO vol3: 10-27)*/
-
 
 
 /* MSR index */

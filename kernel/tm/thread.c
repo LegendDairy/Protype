@@ -4,8 +4,11 @@
 
 #include <thread.h>
 #include <scheduler.h>
+#include <acpi.h>
+#include <heap.h>
 
 uint64_t tm_current_thid 	= 0;
+thread_t *not_ready_queue 	= 0;
 
 extern topology_t *system_info;
 extern sched_spinlock_t sched_lock;
@@ -13,33 +16,7 @@ extern sched_spinlock_t sched_lock;
 static void thread_exit(void);
 static void tm_idle_thread_fn(void);
 
-/* Returns the thread structure of the current running thread. */
-thread_t *tm_thread_get_current_thread(void)
-{
-	register processor_t *curr asm("r12") = system_info_get_current_cpu();
-
-	if(!curr)
-	{
-		return 0;
-	}
-
-	return curr->current_thread;
-}
-
-/* Returns the thread-id of the current running thread. */
-uint64_t tm_thread_get_current_thread_thid(void)
-{
-	register thread_t *curr asm("r12") = tm_thread_get_current_thread();
-
-	if(!curr)
-	{
-		return 0;
-	}
-
-	return curr->thid;
-}
-
-/* Creates a new thread. */
+/** Creates a new thread and adds it to the not-ready queue. Returns Thread id. 	**/
 uint64_t tm_thread_create(fn_t fn, uint64_t argn, char *argv[], uint64_t PLM4T, uint8_t priority, uint64_t quantum, const char *name, uint32_t flags, uint64_t *stack, uint8_t ds, uint8_t cs, uint8_t ss)
 {
 
@@ -72,10 +49,84 @@ uint64_t tm_thread_create(fn_t fn, uint64_t argn, char *argv[], uint64_t PLM4T, 
 	*--stack 		= (uint64_t)PLM4T;				// Setup PLM4T for this thread
 	entry->rsp		= (uint64_t)stack;				// pointer to the stack
 
-	/* Add to not ready queue. */
-	tm_sched_add_to_queue(entry);
+	if(not_ready_queue)
+	{
+		thread_t *iterator = not_ready_queue;
+		while(iterator->next)
+		{
+			iterator = iterator->next;
+		}
+		iterator->next = entry;
+	}
+	else
+	{
+		not_ready_queue = entry;
+	}
 
+	/* Add to not ready queue. */
+	tm_thread_start(entry->thid);
 	return entry->thid;
+}
+
+uint64_t tm_thread_start(uint64_t thid)
+{
+	thread_t *iterator 	= not_ready_queue;
+	thread_t *prev 		= 0;
+
+	/* Iterate through the not ready queue to find the desired thread. */
+	while(iterator && iterator->thid != thid)
+	{
+		prev = iterator;
+		iterator = iterator->next;
+	}
+
+	/* Did we find the desired thread? */
+	if(iterator)
+	{
+		/* If there is an entry before this one, remove iterator from the list. */
+		if(prev)
+		{
+			prev->next = iterator->next;
+		}
+		/* else: this was the first entry in the queue. */
+		else
+		{
+			not_ready_queue = iterator->next;
+		}
+
+		/* Add the thread to the correct queue. */
+		tm_sched_add_to_queue(iterator);
+		return 0;
+	}
+
+	/* Failure! */
+	return 1;
+}
+
+/** Returns the thread structure of the current running thread. 			**/
+thread_t *tm_thread_get_current_thread(void)
+{
+	register processor_t *curr asm("r12") = system_info_get_current_cpu();
+
+	if(!curr)
+	{
+		return 0;
+	}
+
+	return curr->current_thread;
+}
+
+/** Returns the thread-id of the current running thread. 				**/
+uint64_t tm_thread_get_current_thread_thid(void)
+{
+	register thread_t *curr asm("r12") = tm_thread_get_current_thread();
+
+	if(!curr)
+	{
+		return 0;
+	}
+
+	return curr->thid;
 }
 
 /* Thread exist routine. */

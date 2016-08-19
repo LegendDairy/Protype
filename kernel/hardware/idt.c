@@ -154,6 +154,8 @@ void isr_handler(regs_t * regs)
 		DebugPutHex(regs->rsp);
 		DebugPuts(" ,RDI: ");
 		DebugPutHex(regs->rdi);
+		DebugPuts(" ,Faulting address: ");
+		DebugPutHex(faulting_address);
 
 		for (;;);
 	}

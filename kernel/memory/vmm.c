@@ -3,12 +3,14 @@
 /* By LegendMythe		*/
 
 #include <vmm.h>
+#include <mutex.h>
 
 volatile uint64_t *vmm_tables			= (uint64_t *)TABLES_VADDRESS;
 volatile uint64_t *vmm_directories		= (uint64_t *)DIRS_VADDRESS;
 volatile uint64_t *vmm_dir_ptrs			= (uint64_t *)DIR_PTRS_VADDRESS;
 volatile uint64_t *vmm_plm4t			= (uint64_t *)PLM4T_VADDRESS;
 mutex_t vmm_lock;
+extern mutex_t heap_lock;
 
 /* Current TODO: 				*/
 /* -Send IPI when ivplg.			*/
@@ -18,7 +20,8 @@ mutex_t vmm_lock;
 
 void setup_vmm(void)
 {
-	mutex_unlock(&vmm_lock);
+	mutex_setup(&vmm_lock);
+	mutex_setup(&heap_lock);
 }
 
 /* Maps a given frame (pa) to a given virtual address (va) to kernel PLM4T before pmm is setup. */

@@ -7,15 +7,15 @@
 #include <idt.h>
 #include <thread.h>
 #include <scheduler.h>
+#include <vmm.h>
+#include <pmm.h>
 
 #define APB_BASE 0x50000
-#define THREAD_FLAG_STOPPED 0xf00
 
 volatile uint64_t tick;
 uint32_t apic_base;
 extern idt_ptr_t idt_ptr;
 extern topology_t *system_info;
-uint64_t pit_lock = 0;
 
 #ifdef __cplusplus
 extern "C" void pit_handler(void);

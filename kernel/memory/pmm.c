@@ -3,6 +3,7 @@
 /* By LegendMythe		*/
 
 #include <pmm.h>
+#include <mutex.h>
 
 uint64_t *pmm_bmap				= 0;
 uint64_t *pmm_stack				= 0;
@@ -23,7 +24,7 @@ uint64_t pre_pmm_entries			= 0;
 
 void setup_pmm(ipl_info_t *info)
 {
-	mutex_unlock(&pmm_lock);
+	mutex_setup(&pmm_lock);
 
 	/* Page allign the end of kernel */
 	end = (uint64_t)&end;

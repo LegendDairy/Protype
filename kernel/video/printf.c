@@ -9,7 +9,7 @@ uint32_t volatile text_lock = 0;
 
 void printf(const char *str, ...)
 {
-	acquireLock((uint64_t*)&text_lock);
+	acquireLock((uint32_t*)&text_lock);
 	__sync_synchronize();
 	va_list args;
 	va_start(args, str);
@@ -39,6 +39,6 @@ void printf(const char *str, ...)
 	}
 
 	va_end(args);
-	releaseLock((uint64_t*)&text_lock);
+	releaseLock((uint32_t*)&text_lock);
 	__sync_synchronize();
 }

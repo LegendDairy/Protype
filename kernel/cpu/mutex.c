@@ -3,6 +3,7 @@
 /* By LegendMythe		*/
 
 #include <mutex.h>
+#include<scheduler.h>
 
 /* TODO: Locked Arthmetic and test functions. */
 /* -ie inc, dec, add, or, not, */
@@ -36,25 +37,50 @@ uint64_t atomic_fetch_add(volatile uint64_t* p, uint64_t incr)
     return result;
 }
 
+void mutex_setup(mutex_t *m)
+{
+	m->lock 		= 0;
+	m->waiting_queue 	= 0;
+	m->waiting_queue_lock	= 0;
+}
+
+/* NOT yet tested! */
 void mutex_lock(mutex_t *m)
 {
-	while (__sync_lock_test_and_set (&m->lock, 1));
-	__sync_synchronize();
-	/*{
-		schedule(); // software interupt and schedule
-	}*/
+	while (__sync_lock_test_and_set (&m->lock, 1))
+	{
+		__sync_synchronize();
+		while (__sync_lock_test_and_set (&m->waiting_queue_lock, 1));
+		__sync_synchronize();
+		if(m->waiting_queue)
+		{
+			while(m->waiting_queue->next)
+			{
+				m->waiting_queue = m->waiting_queue->next;
+			}
+			m->waiting_queue->next = tm_thread_get_current_thread();
+		}
+		else
+		{
+			m->waiting_queue = tm_thread_get_current_thread();
+		}
+		__sync_lock_release(&m->waiting_queue_lock, 1);
+		tm_sched_kill_current_thread();
+	}
 }
 
 void mutex_unlock(mutex_t *m)
 {
 	__sync_lock_release(&m->lock);
 	__sync_synchronize();
-	/*
-	if(m->waiting)
+
+
+	while (__sync_lock_test_and_set (&m->waiting_queue_lock, 1));
+	__sync_synchronize();
+	if(m->waiting_queue)
 	{
-		ProWakeThread(m->waiting);
-		m->waiting = m->waiting->next;
-		m->waiting->prev = 0;
+		tm_sched_add_to_queue(m->waiting_queue);
+		m->waiting_queue = m->waiting_queue->next;
 	}
-	*/
+	__sync_lock_release(&m->waiting_queue_lock, 1);
 }

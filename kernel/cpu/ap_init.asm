@@ -18,8 +18,6 @@ mov ss, ax
 xor ax, ax
 mov sp, ax
 
-
-
 xor eax, eax
 mov ax, ds
 shl eax, 4
@@ -28,7 +26,6 @@ mov [gdt_ptr + 2], eax
 mov eax, gdt_end
 sub eax, gdt_start
 mov eax, dword gdt_ptr
-
 
 cli                                 	; Dissable interupts
 lgdt [gdt_ptr]                      	; Load the GDT
@@ -107,7 +104,6 @@ sti
 loop:
 hlt			   ; Wait for interrupt
 jmp loop		   ; Jump to wait
-
 
 gdt_start:
   dd 0                      ; Null descriptor

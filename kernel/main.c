@@ -11,10 +11,9 @@
 #include <vmm.h>
 #include <heap.h>
 #include <apic.h>
+#include <acpi.h>
 #include <idt.h>
 #include <scheduler.h>
-
-void parse_madt(void);
 
 /* TODO */
 /* -Setup a proper kernel stack. 				*/
@@ -23,8 +22,7 @@ void parse_madt(void);
 /* -Graphics proof of concept.					*/
 
 
-uint32_t locker = 0;
-void 	tm_sched_kill_current_thread(void);
+void tm_sched_kill_current_thread(void);
 void tm_schedule_sleep(uint64_t);
 extern topology_t *system_info;
 int thread(uint64_t argn, char **argv)

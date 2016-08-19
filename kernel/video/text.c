@@ -10,7 +10,7 @@
 
 /* These define our textpointer, our background and foreground
 *  colors (attributes), and x and y cursor coordinates */
-uint16_t *textmemptr = 0xB8000;
+uint16_t *textmemptr = (uint16_t *)0xB8000;
 uint16_t attrib = 0x0F;
 uint32_t csr_x = 0, csr_y = 0;
 

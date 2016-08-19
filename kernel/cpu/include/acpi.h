@@ -12,21 +12,6 @@
 #include<apic.h>
 #include<thread.h>
 
-#define ACPI_MADT_PROC						0
-#define ACPI_MADT_IOAP						1
-#define ACPI_MADT_OVERRIDE					2
-#define ACPI_MADT_NMI						3
-#define ACPI_MADT_LAPIC_NMI					4
-#define ACPI_MADT_LAPIC_ADDR_OVERRIDE				5
-#define ACPI_MADT_IO_SAPIC					6
-#define ACPI_MADT_LOCAL_SAPIC					7
-#define ACPI_MADT_PLATFORM_INTERRUPT_SOURCES			8
-#define ACPI_MADT_PROCESSOR_LOCAL_x2APIC			9
-#define ACPI_MADT_LOCAL_x2APIC_NMI				0xA
-#define ACPI_MADT_GIC						0xB
-#define ACPI_MADT_GICD						0xC
-#define ACPI_MADT_FLAG_PCAT_COMPAT				0x1
-
 typedef struct io_apic_t io_apic_t;
 typedef struct thread_t thread_t;
 
@@ -42,10 +27,6 @@ typedef struct processor_t
 	uint64_t idle_rsp;
 } processor_t;
 
-processor_t *system_info_get_current_cpu(void);
-uint32_t volatile *system_info_get_lapic_base(void);
-uint32_t volatile *system_info_get_ioapic_base(uint8_t id);
-
 typedef struct
 {
 	uint8_t bootstrap;
@@ -56,8 +37,32 @@ typedef struct
 	uint32_t irq_map[16];					// ISA Overide f.e. pit = irq_map[0]
 	uint32_t flags;						// Flags (not yet used.)
 	processor_t *cpu_list;					// Linked list of Logical CPUs
-	uint64_t lock;
+	uint32_t lock;
 } topology_t;
+
+/** Parses the MADT-table end fills the system info structure. 	**/
+void parse_madt(void);
+/** Returns current cpu structure. 				**/
+processor_t *system_info_get_current_cpu(void);
+/** Returns current local apic address. 			**/
+uint32_t volatile *system_info_get_lapic_base(void);
+/** Returns io apic address.					**/
+uint32_t volatile *system_info_get_ioapic_base(uint8_t id);
+
+#define ACPI_MADT_PROC						0
+#define ACPI_MADT_IOAP						1
+#define ACPI_MADT_OVERRIDE					2
+#define ACPI_MADT_NMI						3
+#define ACPI_MADT_LAPIC_NMI					4
+#define ACPI_MADT_LAPIC_ADDR_OVERRIDE				5
+#define ACPI_MADT_IO_SAPIC					6
+#define ACPI_MADT_LOCAL_SAPIC					7
+#define ACPI_MADT_PLATFORM_INTERRUPT_SOURCES			8
+#define ACPI_MADT_PROCESSOR_LOCAL_x2APIC			9
+#define ACPI_MADT_LOCAL_x2APIC_NMI				0xA
+#define ACPI_MADT_GIC						0xB
+#define ACPI_MADT_GICD						0xC
+#define ACPI_MADT_FLAG_PCAT_COMPAT				0x1
 
 typedef struct io_apic_t
 {

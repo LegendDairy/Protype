@@ -3,6 +3,11 @@
 /* By LegendMythe		*/
 
 #include <scheduler.h>
+#include <heap.h>
+#include <mutex.h>
+#include <apic.h>
+#include <acpi.h>
+
 
 thread_t *sched_ready_queue_high	= 0;
 thread_t *sched_ready_queue_med		= 0;
@@ -147,6 +152,7 @@ uint64_t tm_schedule(uint64_t rsp)
 	}
 }
 
+/** Stops excecution of current running thread. **/
 void tm_sched_kill_current_thread(void)
 {
 	asm volatile ("cli");

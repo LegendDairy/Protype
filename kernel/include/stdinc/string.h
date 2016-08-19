@@ -20,7 +20,7 @@ char *strcat(char *dest, const char *src);
 int strlen(const char *str);
 
 /** Copy len bytes from src to dest. **/
-void memcpy(uint8_t *dest, const uint8_t *src, uint32_t len);
+void *memcpy(void *dest, const void *src, uint32_t count);
 /** Write len copies of a u8int val into dest. **/
 void memset(uint8_t *dest, uint8_t val, uint32_t len);
 /** Write len copies of a u16int val into dest. **/

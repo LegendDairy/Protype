@@ -10,7 +10,7 @@ void tm_sched_add_to_queue_synced(thread_t *thread);
 void thread_exit(void);
 extern sched_spinlock_t sched_lock;
 
-uint64_t l = 0;
+volatile uint32_t  l = 0;
 thread_t *tm_thread_get_current_thread(void)
 {
 	acquireLock(&l);
@@ -20,13 +20,14 @@ thread_t *tm_thread_get_current_thread(void)
 	{
 		curr = curr->next;
 	}
-	releaseLock(&l);
-
+	thread_t *tmp = curr->current_thread;
 	if(!curr)
 	{
+		releaseLock(&l);
 		return 0;
 	}
-	return curr->current_thread;
+	releaseLock(&l);
+	return tmp;
 }
 
 uint64_t tm_thread_get_current_thread_thid(void)
@@ -86,7 +87,7 @@ uint64_t tm_thread_create(fn_t fn, uint64_t argn, char *argv[], uint64_t PLM4T, 
 /* Finds a thread in the not_ready_queue and puts it in the correct queue. */
 void tm_sched_kill_current_thread(void);
 /* Thread exist routine. */
-uint64_t exit_lock = 0;
+volatile uint32_t exit_lock = 0;
 void thread_exit(void)
 {
 	asm volatile("cli");
@@ -96,7 +97,7 @@ void thread_exit(void)
 	uint64_t val;
 	asm volatile ("movq %%rax, %0;":"=r"(val));
 	processor_t *curr =  system_info_get_current_cpu();
-	printf("%s with thid %d existed with value: %x.\n",curr->current_thread->name, curr->current_thread->thid, val);
+	printf("%s with thid %d running on cpu %d existed with value: %x.\n",curr->current_thread->name, curr->current_thread->thid, curr->apic_id, val);
 	releaseLock(&exit_lock);
 	__sync_synchronize();
 	lapic_write(0x80, 0x00);

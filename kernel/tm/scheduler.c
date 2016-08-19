@@ -46,12 +46,11 @@ void setup_tm(void)
 	sched_lock.sched_notready_queue			= SPINLOCK_UNLOCKED;
 
 }
-uint64_t lock = 0;
+volatile uint32_t lock = 0;
 /** Gets called by the timer routine to swap the current running thread with a new one from the queue. **/
 uint64_t tm_schedule(uint64_t rsp)
 {
 	acquireLock(&lock);
-	__sync_synchronize();
 
 	register processor_t *current_cpu asm("r12") = system_info->cpu_list;
 	while(current_cpu && (!((uint32_t)current_cpu->apic_id == lapic_read(apic_reg_id) >> 24)))
@@ -85,13 +84,16 @@ uint64_t tm_schedule(uint64_t rsp)
 			current_cpu->current_thread = 0;
 		}
 	}
+	else
+	{
+		current_cpu->idle_thread->rsp = rsp;
+	}
 
 
 	/* Attempt to unlock the spinlock on the list. */
 	acquireLock(&sched_lock.sched_ready_queue_high);
 	acquireLock(&sched_lock.sched_ready_queue_med);
 	acquireLock(&sched_lock.sched_ready_queue_low);
-	__sync_synchronize();
 	if(sched_ready_queue_high)
 	{
 		/* Add the current thread to the end of the correct list. */
@@ -145,29 +147,30 @@ uint64_t tm_schedule(uint64_t rsp)
 	releaseLock(&sched_lock.sched_ready_queue_med);
 	releaseLock(&sched_lock.sched_ready_queue_low);
 
-	releaseLock(&lock);
 
 	if(current_cpu->current_thread)
 	{
-		return current_cpu->current_thread->rsp;
+		uint64_t tmp = current_cpu->current_thread->rsp;
+		releaseLock(&lock);
+		return tmp;
 	}
 	else
 	{
-		current_cpu->current_thread = current_cpu->idle_thread;
-		return current_cpu->idle_thread->rsp;
+		//current_cpu->current_thread = current_cpu->idle_thread;
+		uint64_t tmp = current_cpu->idle_thread->rsp;
+		releaseLock(&lock);
+		return tmp;
 	}
 }
-uint64_t kill_lock = 0;
+volatile uint32_t kill_lock = 0;
 void tm_sched_kill_current_thread(void)
 {
 	asm volatile("cli");
+	acquireLock(&lock);
 	lapic_write(0x80, 0xFF);
-	acquireLock(&kill_lock);
-	__sync_synchronize();
 	register processor_t *current_cpu asm("r12") = system_info_get_current_cpu();
 	current_cpu->current_thread->flags |= THREAD_FLAG_STOPPED;
-	releaseLock(&kill_lock);
-	__sync_synchronize();
+	releaseLock(&lock);
 	asm volatile("sti");
 	lapic_write(0x80, 0x00);
 	asm volatile("int $33");
@@ -260,6 +263,9 @@ void tm_sched_add_to_queue_synced(thread_t *thread)
 {
 	if(thread)
 	{
+		lapic_write(0x80, 0xFF);
+		acquireLock(&lock);
+		__sync_synchronize();
 		/* If the current thread has a high priority add it to the end of the high priority thread. */
 		if(thread->priority == THREAD_PRIORITY_HIGHEST)
 		{
@@ -335,11 +341,14 @@ void tm_sched_add_to_queue_synced(thread_t *thread)
 			}
 			releaseLock(&sched_lock.sched_ready_queue_low);
 		}
+		releaseLock(&lock);
+		__sync_synchronize();
+		lapic_write(0x80, 0x00);
 	}
 }
 
 
-uint64_t sleep_lock = 0;
+uint32_t sleep_lock = 0;
 void tm_schedule_sleep(uint64_t millis)
 {
 	asm volatile("cli");
@@ -362,6 +371,7 @@ void tm_schedule_sleep(uint64_t millis)
 		{
 			if(millis < iterator->sleep_millis)
 			{
+				acquireLock(&lock);
 				cpu->current_thread->sleep_millis 	= millis;
 				if(prev)
 				{
@@ -378,10 +388,9 @@ void tm_schedule_sleep(uint64_t millis)
 					iterator->sleep_millis -= millis;
 					iterator 		= iterator->next;
 				}
-
 				cpu->current_thread->flags		|= THREAD_FLAG_STOPPED;
+				releaseLock(&lock);
 				releaseLock(&sleep_lock);
-				__sync_synchronize();
 				lapic_write(0x80, 0x00);
 				asm volatile("sti");
 				asm volatile("int $33");
@@ -397,6 +406,7 @@ void tm_schedule_sleep(uint64_t millis)
 
 		if(millis < iterator->sleep_millis)
 		{
+			acquireLock(&lock);
 			cpu->current_thread->sleep_millis = millis;
 			if(prev)
 			{
@@ -408,9 +418,8 @@ void tm_schedule_sleep(uint64_t millis)
 			}
 			cpu->current_thread->next 			= iterator;
 			iterator->sleep_millis 			-= millis;
-
 			cpu->current_thread->flags		|= THREAD_FLAG_STOPPED;
-			releaseLock(&sleep_lock);
+			releaseLock(&lock);			releaseLock(&sleep_lock);
 			__sync_synchronize();
 			lapic_write(0x80, 0x00);
 			asm volatile("sti");
@@ -419,11 +428,12 @@ void tm_schedule_sleep(uint64_t millis)
 		}
 		if(millis >= iterator->sleep_millis)
 		{
+		acquireLock(&lock);
 		cpu->current_thread->sleep_millis 		= millis - iterator->sleep_millis;
 		iterator->next 					= cpu->current_thread;
 		cpu->current_thread->next = 0;
-		cpu->current_thread->flags			|= THREAD_FLAG_STOPPED;
-		releaseLock(&sleep_lock);
+		cpu->current_thread->flags		|= THREAD_FLAG_STOPPED;
+		releaseLock(&lock);		releaseLock(&sleep_lock);
 		__sync_synchronize();
 		asm volatile("sti");
 		lapic_write(0x80, 0x00);
@@ -433,11 +443,12 @@ void tm_schedule_sleep(uint64_t millis)
 	}
 	else
 	{
+		acquireLock(&lock);
 		sched_sleep_queue 					= (thread_t *)cpu->current_thread;
 		cpu->current_thread->sleep_millis 			= millis;
 		cpu->current_thread->next 				= 0;
-		cpu->current_thread->flags				|= THREAD_FLAG_STOPPED;
-		releaseLock(&sleep_lock);
+		cpu->current_thread->flags		|= THREAD_FLAG_STOPPED;
+		releaseLock(&lock);		releaseLock(&sleep_lock);
 		__sync_synchronize();
 		asm volatile("sti");
 		lapic_write(0x80, 0x00);

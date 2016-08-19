@@ -15,10 +15,11 @@ static void expand_heap (uint64_t start, uint64_t len);
 static void split_chunk(header_t *chunk, uint64_t sz);										// Splits a chunk in two.
 static void free_chunk (header_t *chunk);											// Frees a chunk (must be the last chunk of the heap).
 static void glue_chunk (header_t *chunk);											// Glues the chunk to surounding chunks if possible.
-
+mutex_t heap_lock;
 /** Simple dynamic allocater for the kernel. **/
 void *malloc(uint64_t sz)
 {
+	mutex_lock(&heap_lock);
 	header_t *cur_header = (header_t *)heap_start, *prev_header = 0;
 
 	while(cur_header)
@@ -29,6 +30,7 @@ void *malloc(uint64_t sz)
 		        cur_header->allocated = 1;
 			void *tmp = cur_header;
 			tmp = (void*)((uint64_t)tmp + sizeof(header_t));
+			mutex_unlock(&heap_lock);
 			return tmp;
 		}
 
@@ -57,15 +59,18 @@ void *malloc(uint64_t sz)
 	cur_header->magic 	= MAGIC;
 	void *tmp = cur_header;
 	tmp = (void*)((uint64_t)tmp + sizeof(header_t));
+	mutex_unlock(&heap_lock);
 	return tmp;
 }
 
 /** Frees an allocated address. **/
 void free(void *p)
 {
+	mutex_lock(&heap_lock);
 	header_t *header 	= (header_t*)((uint64_t)p - (uint64_t)sizeof(header_t));	// Find the header.
 	header->allocated 	= 0;													// Deallocate the chunk.
-	glue_chunk(header);													// Glue chunks and possibly contract
+	glue_chunk(header);
+	mutex_unlock(&heap_lock);												// Glue chunks and possibly contract
 }
 
 void expand_heap(uint64_t start, uint64_t len)

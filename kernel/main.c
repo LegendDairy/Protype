@@ -23,7 +23,7 @@ void parse_madt(void);
 /* -Graphics proof of concept.					*/
 
 
-uint64_t locker = 0;
+uint32_t locker = 0;
 void 	tm_sched_kill_current_thread(void);
 void tm_schedule_sleep(uint64_t);
 extern topology_t *system_info;
@@ -60,14 +60,17 @@ int main(ipl_info_t *info)
 	setup_vmm();
 	parse_madt();
 	setup_apic();
-
-	/* Interrupts shouldn't be enabled before setup_tm! */
 	setup_tm();
 
 	/* Proof of concept: preemptive SMP support: */
 	boot_ap(1);
 	boot_ap(2);
 	boot_ap(3);
+	/*boot_ap(4);
+	boot_ap(5);
+	boot_ap(6);
+	boot_ap(7);*/
+
 
 	vmm_map_frame(0x90000000, pmm_alloc_page(), 0x3);
 	vmm_map_frame(0x90001000, pmm_alloc_page(), 0x3);
@@ -78,14 +81,14 @@ int main(ipl_info_t *info)
 	vmm_map_frame(0x90006000, pmm_alloc_page(), 0x3);
 	vmm_map_frame(0x90007000, pmm_alloc_page(), 0x3);
 
-	tm_thread_create(&thread, 1,  (char **)1,  0x10000, 1, 100, "Thread 1", 1, (uint64_t *)0x90000F00, 0x10, 0x8, 0x10);
-	tm_thread_create(&thread, 0, 0, 0x10000, 1, 100, "Thread 2", 1,  (uint64_t *)0x90001F00, 0x10, 0x8, 0x10);
-	tm_thread_create(&thread, 0, 0,  0x10000, 1, 100, "Thread 3", 1,  (uint64_t *) (uint64_t *)0x90002F00, 0x10, 0x8, 0x10);
-	tm_thread_create(&thread, 0, 0,  0x10000, 1, 100, "Thread 4", 1,  (uint64_t *)0x90003F00, 0x10, 0x8, 0x10);
-	tm_thread_create(&thread, 0, 0, 0x10000, 1, 100, "Thread 5", 1,  (uint64_t *)0x90004F00, 0x10, 0x8, 0x10);
-	tm_thread_create(&thread, 0, 0,  0x10000, 1, 100, "Thread 6", 1,  (uint64_t *)0x90005F00, 0x10, 0x8, 0x10);
-	tm_thread_create(&thread, 0, 0,  0x10000, 1, 100, "Thread 7", 1,  (uint64_t *)0x90006F00, 0x10, 0x8, 0x10);
-	tm_thread_create(&thread, 0, 0, 0x10000, 1, 100, "Thread 8", 1,   (uint64_t *)0x90007F00, 0x10, 0x8, 0x10);
+	tm_thread_create(&thread, 0, 0, 0x10000, 1, 30, "Thread 1", 1, (uint64_t *)0x90000F00, 0x10, 0x8, 0x10);
+	tm_thread_create(&thread, 0, 0, 0x10000, 1, 30, "Thread 2", 1, (uint64_t *)0x90001F00, 0x10, 0x8, 0x10);
+	tm_thread_create(&thread, 0, 0, 0x10000, 1, 30, "Thread 3", 1, (uint64_t *)0x90002F00, 0x10, 0x8, 0x10);
+	tm_thread_create(&thread, 0, 0, 0x10000, 1, 30, "Thread 4", 1, (uint64_t *)0x90003F00, 0x10, 0x8, 0x10);
+	tm_thread_create(&thread, 0, 0, 0x10000, 1, 30, "Thread 5", 1, (uint64_t *)0x90004F00, 0x10, 0x8, 0x10);
+	tm_thread_create(&thread, 0, 0, 0x10000, 1, 30, "Thread 6", 1, (uint64_t *)0x90005F00, 0x10, 0x8, 0x10);
+	tm_thread_create(&thread, 0, 0, 0x10000, 1, 30, "Thread 7", 1, (uint64_t *)0x90006F00, 0x10, 0x8, 0x10);
+	tm_thread_create(&thread, 0, 0, 0x10000, 1, 30, "Thread 8", 1, (uint64_t *)0x90007F00, 0x10, 0x8, 0x10);
 
 	asm volatile("sti");
 	tm_sched_kill_current_thread();

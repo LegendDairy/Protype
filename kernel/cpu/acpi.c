@@ -156,8 +156,7 @@ void parse_madt(void)
 				idle->priority		= 0x3;
 				idle->parent_thid	= 0;
 
-				uint64_t *stack = malloc(0x1000);
-				stack += 0x900/8;
+				uint64_t *stack = (uint64_t*)((uint64_t)malloc(0x8000)+0x1000);
 
 				extern void thread_exit(void);
 

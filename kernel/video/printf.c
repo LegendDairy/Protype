@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <mutex.h>
 
-uint64_t volatile text_lock = 0;
+uint32_t volatile text_lock = 0;
 
 void printf(const char *str, ...)
 {

@@ -8,7 +8,6 @@
 idt_entry_t 	idt_entry[256];
 idt_ptr_t	idt_ptr;
 idt_handler_t 	interrupt_handlers[256];
-void pit_handler(regs_t *r);
 
 void idt_set_gate(uint8_t num, uint64_t base, uint16_t sel, uint8_t flags);
 
@@ -36,8 +35,8 @@ void init_idt(void)
 	outb(0x21, 0xff);	// Mask all interrupts, ie dissable master
 	outb(0xA1, 0xff);	// Mask all interrupts, ie dissable slave
 
-	outb(0xa1, 0xFF);	// SMP Mode old hardware
-	outb(0x21, 0xFF);	// We should read the ACPI
+	//outb(0xa1, 0xFF);	// SMP Mode old hardware
+	//outb(0x21, 0xFF);	// We should read the ACPI
 
 	idt_set_gate ( 0, (uint64_t)isr0 , 0x08, 0xEE);
 	idt_set_gate ( 1, (uint64_t)isr1 , 0x08, 0xEE);
@@ -141,8 +140,8 @@ void isr_handler(regs_t * regs)
 	{
 		//DebugClearScreen();
 		uint64_t faulting_address;
-		    asm volatile("mov %%cr2, %0" : "=r" (faulting_address));
-		    //DebugClearScreen();
+		asm volatile("mov %%cr2, %0" : "=r" (faulting_address));
+
 		putch('\n');
 		DebugPuts(exception_messages[regs->int_no]);
 		DebugPuts(": Errorcode: ");
@@ -155,7 +154,6 @@ void isr_handler(regs_t * regs)
 		DebugPutHex(regs->rsp);
 		DebugPuts(" ,RDI: ");
 		DebugPutHex(regs->rdi);
-
 
 		for (;;);
 	}

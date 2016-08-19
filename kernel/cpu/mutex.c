@@ -7,6 +7,18 @@
 /* TODO: Locked Arthmetic and test functions. */
 /* -ie inc, dec, add, or, not, */
 
+void acquireLock(volatile uint32_t *l)
+{
+	while (__sync_lock_test_and_set (l, 1));
+	__sync_synchronize();
+}
+
+void releaseLock(volatile uint32_t *l)
+{
+	__sync_synchronize();
+	__sync_lock_release(l);
+}
+
 uint64_t spinlock_lock (volatile spinlock_t *lock)
 {
 

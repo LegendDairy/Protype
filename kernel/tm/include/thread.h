@@ -36,10 +36,10 @@ typedef struct thread_t thread_t;
 /* Structure with all the spinlocks for the scheduler. */
 typedef struct
 {
-	uint64_t sched_ready_queue_high;
-	uint64_t sched_ready_queue_med;
-	uint64_t sched_ready_queue_low;
-	uint64_t sched_notready_queue;
+	uint32_t sched_ready_queue_high;
+	uint32_t sched_ready_queue_med;
+	uint32_t sched_ready_queue_low;
+	uint32_t sched_notready_queue;
 } sched_spinlock_t;
 
 typedef struct thread_t

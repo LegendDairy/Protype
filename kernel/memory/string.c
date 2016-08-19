@@ -56,9 +56,12 @@ return str - start;
 }
 
 /* Copy len bytes from src to dest. */
-void memcpy(uint8_t *dest, const uint8_t *src, uint32_t len)
+void *memcpy(void *dest, const void *src, uint32_t count)
 {
-    for(; len != 0; len--) dest[len - 1] = src[len - 1];
+    const char *sp = (const char *)src;
+    char *dp = (char *)dest;
+    for(; count != 0; count--) *dp++ = *sp++;
+    return dest;
 }
 
 /* Write len copies of val into dest. */

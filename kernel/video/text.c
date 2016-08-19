@@ -8,111 +8,162 @@
 
 /* TODO: mutex this bitch. */
 
-
-volatile uint16_t *video_memory = (uint16_t *)0xB8000;
-unsigned char x_csr = 0;
-unsigned char y_csr = 0;
-unsigned char attribute = 0x0F;
+/* These define our textpointer, our background and foreground
+*  colors (attributes), and x and y cursor coordinates */
+uint16_t *textmemptr = 0xB8000;
+uint16_t attrib = 0x0F;
+uint32_t csr_x = 0, csr_y = 0;
 
 void outb(uint16_t port, uint8_t byte)
 {
     asm volatile("outb %1, %0":: "dN" (port), "a" (byte));
 }
 
-/** Updates the hardware cursor. **/
-void move_cursor(void)
-{
-	uint16_t tmp = (y_csr * 80) + x_csr;
 
-	outb(0x3D4, 14);
-	outb(0x3D5, tmp >> 8);
-	outb(0x3D4, 15);
-	outb(0x3D5, tmp);
-}
-/** Clears the screen. **/
-void DebugClearScreen(void)
-{
-	int i;
-	for(i=0;i<80*25;i++)
-	{
-		video_memory[i]= 0 | (attribute << 8);
-	}
-	x_csr = 0;
-	y_csr = 0;
-	move_cursor();
 
-}
-/** Scrolls the text if y > 24. **/
-void scroll (void)
+
+/* Scrolls the screen */
+void scroll(void)
 {
-    if (y_csr>=25)
+    unsigned blank, temp;
+
+    /* A blank is defined as a space... we need to give it
+    *  backcolor too */
+    blank = 0x20 | (attrib << 8);
+
+    /* Row 25 is the end, this means we need to scroll up */
+    if(csr_y >= 25)
     {
-        uint16_t temp;
-        temp = y_csr - 25 + 1;// Protection against y>25
-        // Write line 2-23 to line 1-22, copies in bytes -> *2
-        memcpy((uint8_t *)video_memory, (const uint8_t *)video_memory+80*temp,(25-temp)*80*2);
-        // Make a blank line at y = 24
-        memsetw(video_memory+80*(25-temp), (0 | (attribute << 8) ), 80);
-        y_csr = 24;           // Get y back at 24.
-	x_csr = 0;
-    }
+        /* Move the current text chunk that makes up the screen
+        *  back in the buffer by a line */
+        temp = csr_y - 25 + 1;
+        memcpy (textmemptr, textmemptr + temp * 80, (25 - temp) * 80 * 2);
 
+        /* Finally, we set the chunk of memory that occupies
+        *  the last line of text to our 'blank' character */
+        memsetw (textmemptr + (25 - temp) * 80, blank, 80);
+        csr_y = 25 - 1;
+    }
 }
-/** Changes the foreground and background colour **/
-void DebugSetTextColour(uint8_t foreground,uint8_t background)
+
+/* Updates the hardware cursor: the little blinking line
+*  on the screen under the last character pressed! */
+void move_csr(void)
 {
-	attribute = (foreground | (background << 4) );
+    unsigned temp;
+
+    /* The equation for finding the index in a linear
+    *  chunk of memory can be represented by:
+    *  Index = [(y * width) + x] */
+    temp = csr_y * 80 + csr_x;
+
+    /* This sends a command to indicies 14 and 15 in the
+    *  CRT Control Register of the VGA controller. These
+    *  are the high and low bytes of the index that show
+    *  where the hardware cursor is to be 'blinking'. To
+    *  learn more, you should look up some VGA specific
+    *  programming documents. A great start to graphics:
+    *  http://www.brackeen.com/home/vga */
+    outb(0x3D4, 14);
+    outb(0x3D5, temp >> 8);
+    outb(0x3D4, 15);
+    outb(0x3D5, temp);
 }
-/** Puts a single char on the screen **/
+
+/* Clears the screen */
+void DebugClearScreen()
+{
+    unsigned blank;
+    int i;
+
+    /* Again, we need the 'short' that will be used to
+    *  represent a space with color */
+    blank = 0x20 | (attrib << 8);
+
+    /* Sets the entire screen to spaces in our current
+    *  color */
+    for(i = 0; i < 25; i++)
+        memsetw (textmemptr + i * 80, blank, 80);
+
+    /* Update out virtual cursor, and then move the
+    *  hardware cursor */
+    csr_x = 0;
+    csr_y = 0;
+    move_csr();
+}
+
+/* Puts a single character on the screen */
 void putch(char c)
 {
-uint16_t attword = attribute << 8;
-    // Handle newline by moving cursor back to left and increasing the row
-    if(c=='\n')
+    unsigned short *where;
+    unsigned att = attrib << 8;
+
+    /* Handle a backspace, by moving the cursor back one space */
+    if(c == 0x08)
     {
-       y_csr++;
-       x_csr=0;
+        if(csr_x != 0) csr_x--;
     }
-    // Handle carriage return
-    else if(c=='\r')
+    /* Handles a tab by incrementing the cursor's x, but only
+    *  to a point that will make it divisible by 8 */
+    else if(c == 0x09)
     {
-        x_csr=0;
+        csr_x = (csr_x + 8) & ~(8 - 1);
     }
-    // Handle a backspace, by moving the cursor back one space
-    else if (c == 0x08 && x_csr)
+    /* Handles a 'Carriage Return', which simply brings the
+    *  cursor back to the margin */
+    else if(c == '\r')
     {
-       video_memory[y_csr*80+x_csr] = (0 | (attribute << 8) );
-       x_csr--;
+        csr_x = 0;
     }
-    // Handle a tab by increasing the cursor's X, but only to a point
-    // where it is divisible by 8.
-    else if (c == 0x09)
+    /* We handle our newlines the way DOS and the BIOS do: we
+    *  treat it as if a 'CR' was also there, so we bring the
+    *  cursor to the margin and we increment the 'y' value */
+    else if(c == '\n')
     {
-       x_csr = (x_csr+8) & ~(8-1);
+        csr_x = 0;
+        csr_y++;
     }
-    // Handle any other printable character.
+    /* Any character greater than and including a space, is a
+    *  printable character. The equation for finding the index
+    *  in a linear chunk of memory can be represented by:
+    *  Index = [(y * width) + x] */
     else if(c >= ' ')
     {
-        uint16_t val = c | attword;
-        video_memory[x_csr+y_csr*80] = val;
-        x_csr++;
+        where = textmemptr + (csr_y * 80 + csr_x);
+        *where = c | att;	/* Character AND attributes: color */
+        csr_x++;
     }
-    if (x_csr>=80)
-    {
-        y_csr++;
-        x_csr=0;
-    }
-    scroll();
-    move_cursor();
- }
 
-void DebugPuts(const char *str)
+    /* If the cursor has reached the edge of the screen's width, we
+    *  insert a new line in there */
+    if(csr_x >= 80)
+    {
+        csr_x = 0;
+        csr_y++;
+    }
+
+    /* Scroll the screen if needed, and finally move the cursor */
+    scroll();
+    move_csr();
+}
+
+/* Uses the above routine to output a string... */
+void DebugPuts(const char *text)
 {
-	int i;
-	for (i = 0; i<strlen(str); i++)
-	{
-		putch(str[i]);
-	}
+    int i;
+
+    for (i = 0; i < strlen(text); i++)
+    {
+        putch(text[i]);
+    }
+}
+
+/* Sets the forecolor and backcolor that we will use */
+void DebugSetTextColour(uint8_t foreground, uint8_t background)
+{
+    /* Top 4 bytes are the background, bottom 4 bytes
+    *  are the foreground color */
+    attrib = (background << 4) | (foreground & 0x0F);
 }
 
 /** Prints a hexadecimal on the screen. **/

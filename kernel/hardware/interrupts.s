@@ -13,28 +13,6 @@ flush_idt:
     ret
 
 
-[GLOBAL acquireLock]
-    acquireLock:
-        push rax
-	retry:
-	xor rax, rax
-        lock bts [rdi],rax        ;Attempt to acquire the lock (in case lock is uncontended)
-        jc .spin_with_pause
-	pop rax
-        ret
-
-    .spin_with_pause:
-        pause                    ; Tell CPU we're spinning
-        test qword [rdi],1      ; Is the lock free?
-        jnz .spin_with_pause     ; no, wait
-        jmp retry          ; retry
-
-[GLOBAL releaseLock]
-    releaseLock:
-    	push rax
-        mov qword [rdi],0
-	pop rax
-        ret
 
 
 [GLOBAL isr_common_stub]
@@ -243,7 +221,7 @@ pop rbx
 
 
 mov eax, [apic_base]              	; Apic Base in C-code
-mov dword [eax + 0x80	], 0x00		; Enable soft ints
+mov dword [eax + 0x80], 0x00		; Enable soft ints
 mov dword [eax + apic_eoi],  0    ; Send EOI to LAPIC
 pop rax
 

@@ -7,10 +7,13 @@
 
 #include<common.h>
 
+void acquireLock(volatile uint32_t *l);
+void releaseLock(volatile uint32_t *l);
+
 #define SPINLOCK_LOCKED 1
 #define SPINLOCK_UNLOCKED 0
 
-typedef volatile uint64_t spinlock_t;
+typedef volatile uint32_t spinlock_t;
 
 typedef struct
 {
@@ -18,13 +21,6 @@ typedef struct
 	//thread_list_t *waiting;
 } mutex_t;
 
-#ifdef __cplusplus
-extern "C" void acquireLock(uint64_t *ptr);
-extern "C" void releaseLock(uint64_t *ptr);
-#else
-extern void acquireLock(uint64_t *ptr);
-extern void releaseLock(uint64_t *ptr);
-#endif
 
 /** Tests and locks a given spinlock. 		**/
 void mutex_lock(mutex_t *m);

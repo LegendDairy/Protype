@@ -28,16 +28,17 @@ uint8_t inb(uint16_t port)
     asm volatile("inb %1, %0":"=a"(byte): "dN" (port));
     return byte;
 }
-extern uint64_t sleep_lock;
+extern uint32_t sleep_lock;
 void pit_handler(void)
 {
 	acquireLock(&sleep_lock);
 	__sync_synchronize();
 	if((volatile thread_t*volatile)sched_sleep_queue)
 	{
-		if((!__sync_sub_and_fetch(&sched_sleep_queue->sleep_millis, 1)) && (!sched_sleep_queue->sleep_millis))
+		if((!__sync_sub_and_fetch(&sched_sleep_queue->sleep_millis, 1)))
 		{
-			while(sched_sleep_queue )
+			__sync_synchronize();
+			while(sched_sleep_queue  && (!sched_sleep_queue->sleep_millis))
 			{
 				thread_t *tmp = sched_sleep_queue;
 				sched_sleep_queue->flags &= !THREAD_FLAG_STOPPED;
@@ -47,6 +48,8 @@ void pit_handler(void)
 		}
 	}
 	releaseLock(&sleep_lock);
+	__sync_synchronize();
+
 }
 
 uint8_t apic_check(void)
@@ -56,12 +59,12 @@ uint8_t apic_check(void)
 	return edx & CPUID_FLAG_APIC;
 }
 
-uint32_t lapic_read(uint32_t r)
+inline uint32_t lapic_read(uint32_t r)
 {
 	return ((uint32_t)(system_info->lapic_address[r / 4]));
 }
 
-void lapic_write(uint32_t r, uint32_t val)
+inline void lapic_write(uint32_t r, uint32_t val)
 {
 	system_info->lapic_address[r / 4] = (uint32_t)val;
 }
@@ -105,8 +108,8 @@ void setup_apic(void)
 	lapic_write(apic_reg_eoi, 0x00);				// Make sure no interrupts are left
 
 	/* Set up IO APIC for the PIT (POC) */
-	uint32_t * volatile ioapic_reg 	= (uint32_t *)system_info->io_apic->address;
- 	uint32_t * volatile ioapic_io 	= (uint32_t *)(system_info->io_apic->address+0x4);
+	volatile uint32_t * volatile ioapic_reg 	= (uint32_t *)system_info->io_apic->address;
+ 	volatile uint32_t * volatile ioapic_io 	= (uint32_t *)(system_info->io_apic->address+0x4);
 
 	vmm_map_frame((uint64_t)ioapic_reg, (uint64_t)ioapic_reg, 0x3); 			// Identity map io apic address
  	*(uint32_t*)ioapic_reg 	= (uint32_t)0x14;
@@ -147,7 +150,7 @@ void apic_ap_setup(void)
 	lapic_write(apic_lvt_lint1_reg, 0x00400);			// Enable normal NMI processing
 	lapic_write(apic_lvt_error_reg, 0x10000);			// Disable error interrupts
         lapic_write(apic_reg_dest_format, 0xFF000000);               	// Flatmode
-        lapic_write(apic_reg_logical_dest, 0xF0000000);			// Destination bits for this apic
+        lapic_write(apic_reg_logical_dest, 0xFF000000);			// Destination bits for this apic
 	lapic_write(apic_reg_spur_int_vect, 0x0013F);			// Enable the APIC and set spurious vector to 0x3F
 	lapic_write(apic_lvt_lint0_reg, 0x08700);			// Enable normal external interrupts
 	lapic_write(apic_lvt_lint1_reg, 0x00400);			// Enable normal NMI processing

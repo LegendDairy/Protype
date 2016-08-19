@@ -28,16 +28,15 @@ uint8_t inb(uint16_t port)
     asm volatile("inb %1, %0":"=a"(byte): "dN" (port));
     return byte;
 }
+
 extern uint32_t sleep_lock;
 void pit_handler(void)
 {
-	acquireLock(&sleep_lock);
-	__sync_synchronize();
 	if((volatile thread_t*volatile)sched_sleep_queue)
 	{
 		if((!__sync_sub_and_fetch(&sched_sleep_queue->sleep_millis, 1)))
 		{
-			__sync_synchronize();
+			acquireLock(&sleep_lock);
 			while(sched_sleep_queue  && (!sched_sleep_queue->sleep_millis))
 			{
 				thread_t *tmp = sched_sleep_queue;
@@ -45,11 +44,9 @@ void pit_handler(void)
 				sched_sleep_queue = sched_sleep_queue->next;
 				tm_sched_add_to_queue_synced(tmp);
 			}
+			releaseLock(&sleep_lock);
 		}
 	}
-	releaseLock(&sleep_lock);
-	__sync_synchronize();
-
 }
 
 uint8_t apic_check(void)

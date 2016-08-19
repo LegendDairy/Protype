@@ -29,21 +29,10 @@ void tm_schedule_sleep(uint64_t);
 extern topology_t *system_info;
 int thread(uint64_t argn, char **argv)
 {
-	asm volatile("cli");
-	lapic_write(0x80, 0xFF);
-	acquireLock(&locker);
-	__sync_synchronize();
-	register processor_t *curr asm("r12") = system_info->cpu_list;
-	while(curr && (!((uint32_t)curr->apic_id == lapic_read(apic_reg_id) >> 24)))
-	{
-		curr = curr->next;
-	}
+	register processor_t *curr asm("r12") = system_info_get_current_cpu();
 
 	printf("Hello from %s running on logical cpu %x. Argn: %x, Argv: %x\n", curr->current_thread->name, curr->apic_id, argn, (uint64_t)argv);
-	releaseLock(&locker);
-	__sync_synchronize();
-	lapic_write(0x80, 0x00);
-	asm volatile("sti");
+
 	tm_schedule_sleep(1000);
 	return 0xDEADBEEF;
 }

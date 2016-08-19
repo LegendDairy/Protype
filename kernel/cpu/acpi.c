@@ -149,7 +149,7 @@ void parse_madt(void)
 				/* Create and initialise an entry thread structure. */
 				thread_t *idle 	= (thread_t*)malloc(sizeof(thread_t));
 				idle->next		= 0;
-				idle->thid		= atomic_fetch_add(&tm_current_thid, 1);
+				idle->thid		= __sync_add_and_fetch(&tm_current_thid, 1);
 				idle->name		= "Idle";
 				idle->flags		= 0x0;
 				idle->quantum		= 10;

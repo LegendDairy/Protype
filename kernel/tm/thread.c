@@ -4,7 +4,7 @@
 
 #include <thread.h>
 
-uint64_t tm_current_thid 	= 1;
+uint64_t tm_current_thid 	= 0;
 extern topology_t *system_info;
 void tm_sched_add_to_queue_synced(thread_t *thread);
 void thread_exit(void);
@@ -47,7 +47,7 @@ uint64_t tm_thread_create(fn_t fn, uint64_t argn, char *argv[], uint64_t PLM4T, 
 	/* Create and initialise an entry thread structure. */
 	thread_t *entry 	= (thread_t*)malloc(sizeof(thread_t));
 	entry->next		= 0;
-	entry->thid		= atomic_fetch_add(&tm_current_thid, 1);
+	entry->thid		= __sync_add_and_fetch(&tm_current_thid, 1);
 	entry->name		= name;
 	entry->flags		= flags;
 	entry->quantum		= quantum;
@@ -90,17 +90,10 @@ void tm_sched_kill_current_thread(void);
 volatile uint32_t exit_lock = 0;
 void thread_exit(void)
 {
-	asm volatile("cli");
-	lapic_write(0x80, 0xFF);
-	acquireLock(&exit_lock);
-	__sync_synchronize();
 	uint64_t val;
 	asm volatile ("movq %%rax, %0;":"=r"(val));
 	processor_t *curr =  system_info_get_current_cpu();
 	printf("%s with thid %d running on cpu %d existed with value: %x.\n",curr->current_thread->name, curr->current_thread->thid, curr->apic_id, val);
-	releaseLock(&exit_lock);
-	__sync_synchronize();
-	lapic_write(0x80, 0x00);
-	asm volatile ("sti");
+
 	tm_sched_kill_current_thread();
 }

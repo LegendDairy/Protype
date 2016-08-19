@@ -6,6 +6,8 @@
 #include<vmm.h>
 #include<heap.h>
 #include<mutex.h>
+#include<thread.h>
+
 
 topology_t *system_info;
 
@@ -90,11 +92,6 @@ ACPISDTHeader_t *find_acpi_header(RSDT_t *root, const char *signature)
 	return (ACPISDTHeader_t *)NULL;
 }
 
-void idle_fn(void)
-{
-	while(1);
-}
-
 void parse_madt(void)
 {
 	/* Parse ACPI information for the MADT header. */
@@ -143,43 +140,7 @@ void parse_madt(void)
 				cpu_entry->current_thread			= 0;
 				cpu_entry->next 				= 0;
 				cpu_entry->timer_current_tick			= 0;
-
-				extern uint64_t tm_current_thid;
-
-				/* Create and initialise an entry thread structure. */
-				thread_t *idle 	= (thread_t*)malloc(sizeof(thread_t));
-				idle->next		= 0;
-				idle->thid		= __sync_add_and_fetch(&tm_current_thid, 1);
-				idle->name		= "Idle";
-				idle->flags		= 0x0;
-				idle->quantum		= 10;
-				idle->priority		= 0x3;
-				idle->parent_thid	= 0;
-
-				uint64_t *stack = (uint64_t*)((uint64_t)malloc(0x8000)+0x1000);
-
-				extern void thread_exit(void);
-
-				/* Prepare the thread stack. Set the intial register values. */
-				*--stack		= (uint64_t)&thread_exit;
-				*--stack 		= (uint64_t)0x10;					// Stack segment selector
-				uint64_t usrrsp 	= (uint64_t)stack + 8;
-				*--stack 		= (uint64_t)((uint64_t)usrrsp);			// Pointer to stack
-				*--stack 		= (uint64_t)0x200; 				// Interrupts enabled
-				*--stack 		= (uint64_t)0x08; 				// Code segment selector
-				*--stack 		= (uint64_t)&idle_fn; 				// RIP
-
-				//memsetq(stack, 0, 12);						// Set gprs to 0
-				stack 			-= 12;						// Make room for the GPR on the stack.
-				*--stack 		= 0;						// rbp
-				*--stack 		= (uint64_t)0;				// rdi
-				*--stack 		= (uint64_t)0;				// rsi
-
-				*--stack 		= (uint64_t)0x10;					// Setup data segment
-				*--stack 		= (uint64_t)0x10000;				// Setup PLM4T for this thread
-				idle->rsp		= (uint64_t)stack;				// pointer to the stack
-
-				cpu_entry->idle_thread = idle;
+				cpu_entry->idle_thread 				= tm_thread_create_idle_thread();
 
 
 

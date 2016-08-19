@@ -1,5 +1,5 @@
 /* Pro-Type Kernel v1.3		*/
-/* Dynamic Memory Manager 1.1b	*/
+/* Dynamic Memory Manager 0.1b	*/
 /* By LegendMythe		*/
 
 #include <heap.h>

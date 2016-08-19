@@ -1,20 +1,14 @@
 /* Pro-Type Kernel v1.3		*/
-/* Scheduler v0.3		*/
+/* Scheduler v0.2		*/
 /* By LegendMythe		*/
 
 #include <scheduler.h>
-#include <apic.h>
-#include <acpi.h>
-
-#define THREAD_FLAG_STOPPED 0xf00
-
-uint64_t timer_current_tick = 0;
 
 thread_t *sched_ready_queue_high	= 0;
-thread_t *sched_ready_queue_med	= 0;
-thread_t *sched_ready_queue_low	= 0;
+thread_t *sched_ready_queue_med		= 0;
+thread_t *sched_ready_queue_low		= 0;
 sched_spinlock_t sched_lock;
-thread_t *sched_sleep_queue = 0;
+thread_t *sched_sleep_queue 		= 0;
 extern topology_t *system_info;
 
 
@@ -46,7 +40,7 @@ void setup_tm(void)
 	sched_lock.sched_notready_queue			= SPINLOCK_UNLOCKED;
 
 }
-volatile uint32_t lock = 0;
+
 /** Gets called by the timer routine to swap the current running thread with a new one from the queue. **/
 uint64_t tm_schedule(uint64_t rsp)
 {
@@ -90,61 +84,58 @@ uint64_t tm_schedule(uint64_t rsp)
 
 	/* Attempt to unlock the spinlock on the list. */
 	acquireLock(&sched_lock.sched_ready_queue_high);
-	acquireLock(&sched_lock.sched_ready_queue_med);
-	acquireLock(&sched_lock.sched_ready_queue_low);
 	if(sched_ready_queue_high)
 	{
-		/* Add the current thread to the end of the correct list. */
-		tm_sched_add_to_queue(current_cpu->current_thread);
 
 		/* Change current thread and change the begining of the appropriate list. */
+		thread_t *tmp 				= current_cpu->current_thread;
 		current_cpu->current_thread 		= sched_ready_queue_high;
 		sched_ready_queue_high 			= sched_ready_queue_high->next;
 
 		/* Unlock the spinlock. */
 		releaseLock(&sched_lock.sched_ready_queue_high);
-		releaseLock(&sched_lock.sched_ready_queue_med);
-		releaseLock(&sched_lock.sched_ready_queue_low);
-		releaseLock(&lock);
 
+		/* Add the current thread to the end of the correct list. */
+		tm_sched_add_to_queue(tmp);
 		return current_cpu->current_thread->rsp;
 	}
+	else
+	releaseLock(&sched_lock.sched_ready_queue_high);
+	acquireLock(&sched_lock.sched_ready_queue_med);
 	if(sched_ready_queue_low  && current_cpu->timer_current_tick%6)
 	{
-			/* Add the current thread to the end of the correct list. */
-		tm_sched_add_to_queue(current_cpu->current_thread);
-
 		/* Change current thread and change the begining of the appropriate list. */
+		thread_t *tmp 				= current_cpu->current_thread;
 		current_cpu->current_thread 		= sched_ready_queue_low;
 		sched_ready_queue_low 			= sched_ready_queue_low->next;
 
-		releaseLock(&sched_lock.sched_ready_queue_high);
+		/* Unlock the spinlock. */
 		releaseLock(&sched_lock.sched_ready_queue_med);
-		releaseLock(&sched_lock.sched_ready_queue_low);
-		releaseLock(&lock);
-		return current_cpu->current_thread->rsp;
 
+		/* Add the current thread to the end of the correct list. */
+		tm_sched_add_to_queue(tmp);
+		return current_cpu->current_thread->rsp;
 	}
+	else
+	releaseLock(&sched_lock.sched_ready_queue_med);
+	acquireLock(&sched_lock.sched_ready_queue_low);
 	if(sched_ready_queue_med)
 	{
-		/* Add the current thread to the end of the correct list. */
-		tm_sched_add_to_queue(current_cpu->current_thread);
 
 		/* Change current thread and change the begining of the appropriate list. */
+		thread_t *tmp 				= current_cpu->current_thread;
 		current_cpu->current_thread 		= sched_ready_queue_med;
 		sched_ready_queue_med 			= sched_ready_queue_med->next;
 
-		releaseLock(&sched_lock.sched_ready_queue_high);
-		releaseLock(&sched_lock.sched_ready_queue_med);
+		/* Unlock the spinlock. */
 		releaseLock(&sched_lock.sched_ready_queue_low);
-		releaseLock(&lock);
 
+		/* Add the current thread to the end of the correct list. */
+		tm_sched_add_to_queue(tmp);
 		return current_cpu->current_thread->rsp;
 	}
-	releaseLock(&sched_lock.sched_ready_queue_high);
-	releaseLock(&sched_lock.sched_ready_queue_med);
-	releaseLock(&sched_lock.sched_ready_queue_low);
 
+	releaseLock(&sched_lock.sched_ready_queue_low);
 
 	if(current_cpu->current_thread)
 	{
@@ -170,88 +161,6 @@ void tm_sched_kill_current_thread(void)
 
 /** Adds the current running thread to the end of the appropriate list. **/
 void tm_sched_add_to_queue(thread_t *thread)
-{
-	if(thread)
-	{
-		/* If the current thread has a high priority add it to the end of the high priority thread. */
-		if(thread->priority == THREAD_PRIORITY_HIGHEST)
-		{
-			/* Attempt to unlock the spinlock on the list. */
-
-			/* Check wether the appropriate list exists. */
-			if(sched_ready_queue_high)
-			{
-				/* Itterate through the list till the end. */
-				thread_t *itterator = sched_ready_queue_high;
-				while(itterator->next)
-				{
-					itterator=itterator->next;
-				}
-				itterator->next = thread;
-				thread->next =0;
-
-			}
-			else
-			{
-				/* Else: create a list! */
-				sched_ready_queue_high = thread;
-				thread->next =0;
-			}
-
-			/* Unlock the spinlock. */
-		}
-		else if(thread->priority == THREAD_PRIORITY_NORMAL)
-		{
-			/* Attempt to unlock the spinlock on the list. */
-
-			/* Check wether the appropriate list exists. */
-			if(sched_ready_queue_med)
-			{
-				/* Itterate through the list till the end. */
-				thread_t *itterator = sched_ready_queue_med;
-				while(itterator->next)
-				{
-					itterator=itterator->next;
-				}
-				itterator->next = thread;
-				thread->next =0;
-			}
-			else
-			{
-				/* Else: create a list! */
-				sched_ready_queue_med = thread;
-				thread->next =0;
-			}
-
-			/* Unlock the spinlock. */
-		}
-		else
-		{
-			/* Attempt to unlock the spinlock on the list. */
-
-			/* Check wether the appropriate list exists. */
-			if(sched_ready_queue_low)
-			{
-				/* Itterate through the list till the end. */
-				thread_t *itterator = sched_ready_queue_low;
-				while(itterator->next)
-				{
-					itterator=itterator->next;
-				}
-				itterator->next = (thread_t *)thread;
-				thread->next =0;
-			}
-			else
-			{
-				/* Else: create a list! */
-				sched_ready_queue_low = thread;
-				thread->next =0;
-			}
-			/* Unlock the spinlock. */
-		}
-	}
-}
-void tm_sched_add_to_queue_synced(thread_t *thread)
 {
 	if(thread)
 	{
@@ -335,8 +244,8 @@ void tm_sched_add_to_queue_synced(thread_t *thread)
 	}
 }
 
-
 uint32_t sleep_lock = 0;
+/* Puts the current running thread to sleep for a given amount of milli seconds. */
 void tm_schedule_sleep(uint64_t millis)
 {
 	asm volatile("cli");
@@ -352,9 +261,9 @@ void tm_schedule_sleep(uint64_t millis)
 
 		while(iterator->next)
 		{
-			if(millis < iterator->sleep_millis)
+			if(millis < iterator->delta_time)
 			{
-				cpu->current_thread->sleep_millis 	= millis;
+				cpu->current_thread->delta_time 	= millis;
 				if(prev)
 				{
 					prev->next 			= cpu->current_thread;
@@ -367,7 +276,7 @@ void tm_schedule_sleep(uint64_t millis)
 
 				while(iterator)
 				{
-					iterator->sleep_millis 		-= millis;
+					iterator->delta_time 		-= millis;
 					iterator 			= iterator->next;
 				}
 				cpu->current_thread->flags		|= THREAD_FLAG_STOPPED;
@@ -379,14 +288,14 @@ void tm_schedule_sleep(uint64_t millis)
 				return;
 			}
 
-			millis 						-= iterator->sleep_millis;
+			millis 						-= iterator->delta_time;
 			prev 						= iterator;
 			iterator 					= iterator->next;
 		}
 
-		if(millis < iterator->sleep_millis)
+		if(millis < iterator->delta_time)
 		{
-			cpu->current_thread->sleep_millis 		= millis;
+			cpu->current_thread->delta_time 		= millis;
 			if(prev)
 			{
 				prev->next 				= cpu->current_thread;
@@ -396,7 +305,7 @@ void tm_schedule_sleep(uint64_t millis)
 				sched_sleep_queue 			= cpu->current_thread;
 			}
 			cpu->current_thread->next 			= iterator;
-			iterator->sleep_millis 				-= millis;
+			iterator->delta_time 				-= millis;
 			cpu->current_thread->flags			|= THREAD_FLAG_STOPPED;
 
 			releaseLock(&sleep_lock);
@@ -405,9 +314,9 @@ void tm_schedule_sleep(uint64_t millis)
 			asm volatile("int $33");
 			return;
 		}
-		if(millis >= iterator->sleep_millis)
+		if(millis >= iterator->delta_time)
 		{
-		cpu->current_thread->sleep_millis 			= millis - iterator->sleep_millis;
+		cpu->current_thread->delta_time 			= millis - iterator->delta_time;
 		iterator->next 						= cpu->current_thread;
 		cpu->current_thread->next = 0;
 		cpu->current_thread->flags				|= THREAD_FLAG_STOPPED;
@@ -422,7 +331,7 @@ void tm_schedule_sleep(uint64_t millis)
 	else
 	{
 		sched_sleep_queue 					= (thread_t *)cpu->current_thread;
-		cpu->current_thread->sleep_millis 			= millis;
+		cpu->current_thread->delta_time 			= millis;
 		cpu->current_thread->next 				= 0;
 		cpu->current_thread->flags				|= THREAD_FLAG_STOPPED;
 

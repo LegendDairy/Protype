@@ -2,9 +2,11 @@
 /* Advanced PIC	   v0.2	*/
 /* By LegendMythe	*/
 
-#include<apic.h>
-#include<acpi.h>
-#include<idt.h>
+#include <apic.h>
+#include <acpi.h>
+#include <idt.h>
+#include <thread.h>
+#include <scheduler.h>
 
 #define APB_BASE 0x50000
 #define THREAD_FLAG_STOPPED 0xf00
@@ -19,7 +21,6 @@ uint64_t pit_lock = 0;
 extern "C" void pit_handler(void);
 #endif
 
-void tm_sched_add_to_queue_synced(thread_t*);
 extern thread_t*sched_sleep_queue;
 
 uint8_t inb(uint16_t port)
@@ -34,15 +35,15 @@ void pit_handler(void)
 {
 	if((volatile thread_t*volatile)sched_sleep_queue)
 	{
-		if((!__sync_sub_and_fetch(&sched_sleep_queue->sleep_millis, 1)))
+		if((!__sync_sub_and_fetch(&sched_sleep_queue->delta_time, 1)))
 		{
 			acquireLock(&sleep_lock);
-			while(sched_sleep_queue  && (!sched_sleep_queue->sleep_millis))
+			while(sched_sleep_queue  && (!sched_sleep_queue->delta_time))
 			{
 				thread_t *tmp = sched_sleep_queue;
 				sched_sleep_queue->flags &= !THREAD_FLAG_STOPPED;
 				sched_sleep_queue = sched_sleep_queue->next;
-				tm_sched_add_to_queue_synced(tmp);
+				tm_sched_add_to_queue(tmp);
 			}
 			releaseLock(&sleep_lock);
 		}

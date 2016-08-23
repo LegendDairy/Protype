@@ -11,8 +11,8 @@
 void acquireLock(volatile uint32_t *l);
 void releaseLock(volatile uint32_t *l);
 
-#define SPINLOCK_LOCKED 1
-#define SPINLOCK_UNLOCKED 0
+#define SPINLOCK_LOCKED 	1
+#define SPINLOCK_UNLOCKED 	0
 
 typedef volatile uint32_t spinlock_t;
 

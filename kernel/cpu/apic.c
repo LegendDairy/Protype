@@ -6,7 +6,7 @@
 #include <acpi.h>
 #include <idt.h>
 #include <thread.h>
-#include <scheduler.h>
+#include <scheduler.hpp>
 #include <vmm.h>
 #include <pmm.h>
 
@@ -15,7 +15,6 @@
 volatile uint64_t tick;
 uint32_t apic_base;
 extern idt_ptr_t idt_ptr;
-extern topology_t *system_info;
 
 #ifdef __cplusplus
 extern "C" void pit_handler(void);
@@ -61,19 +60,22 @@ uint8_t apic_check(void)
 
 uint32_t lapic_read(uint32_t r)
 {
-	return ((uint32_t)(system_info->lapic_address[r / 4]));
+	system_c *system = system_c::get_instance();
+	return ((uint32_t)(system->lapic[r / 4]));
 }
 
 void lapic_write(uint32_t r, uint32_t val)
 {
-	system_info->lapic_address[r / 4] = (uint32_t)val;
+	system_c *system = system_c::get_instance();
+	system->lapic[r / 4] = (uint32_t)val;
 }
 
 void setup_apic(void)
 {
 	/* Parse the multiprocessor table. */
 	/* Address label for the asm code. */
-	apic_base = (uint32_t)((uint64_t) system_info->lapic_address);
+	system_c *system = system_c::get_instance();
+	apic_base = (uint32_t)((uint64_t) system->lapic);
 	/* Map the local apic to a virtual address. */
 	vmm_map_frame((uint64_t) apic_base,(uint64_t) apic_base, 0x3);
 
@@ -108,8 +110,9 @@ void setup_apic(void)
 	lapic_write(apic_reg_eoi, 0x00);				// Make sure no interrupts are left
 
 	/* Set up IO APIC for the PIT (POC) */
-	volatile uint32_t * volatile ioapic_reg 	= (uint32_t *)system_info->io_apic->address;
- 	volatile uint32_t * volatile ioapic_io 	= (uint32_t *)(system_info->io_apic->address+0x4);
+	system_c *system = system_c::get_instance();
+	volatile uint32_t * volatile ioapic_reg 	= (uint32_t *)system->get_ioapic_list()->address;
+ 	volatile uint32_t * volatile ioapic_io 		= (uint32_t *)(system->get_ioapic_list()->address+0x4);
 
 	vmm_map_frame((uint64_t)ioapic_reg, (uint64_t)ioapic_reg, 0x3); 			// Identity map io apic address
  	*(uint32_t*)ioapic_reg 	= (uint32_t)0x14;
@@ -158,8 +161,8 @@ void apic_ap_setup(void)
 	uint32_t id = lapic_read(apic_reg_id);
 	id = id >> 24;
 	printf("[SMP]: CPU %x is booting...\n", id);
-
-	lapic_write(apic_init_count, system_info->bus_freq/4*1000*10);       	// Fire every micro second
+	system_c *system = system_c::get_instance();
+	lapic_write(apic_init_count, system->get_bus_freq()/4*1000*10);       	// Fire every micro second
 	lapic_write(apic_lvt_timer_reg, (uint32_t)(0x20 | apic_timer_period)); 	//int 48, periodic
 }
 void setup_lapic_timer(void)
@@ -191,74 +194,10 @@ void setup_lapic_timer(void)
 
 	/* Give information to the user */
 	printf("[APIC]: Bus frequency:  %dMHz\n", freq);
-	system_info->bus_freq = freq;
+	system_c *system = system_c::get_instance();
+	system->set_bus_freq(freq);
+
 	/* Setup intial count */
 	lapic_write(apic_init_count, (freq)/4 * 1000*10);                                    // Fire every micro second
 	lapic_write(apic_lvt_timer_reg, (uint32_t)(0x20 | apic_timer_period)); //int 48, periodic
-}
-
-/* Proof of concept: */
-void boot_ap(uint8_t id)
-{
-	asm volatile("cli");
-	uint32_t tpr = lapic_read(0x80);
-	lapic_write(0x80, 0xFF);
-
-	id &= 0xF;
-        uint64_t *apb_idt_ptr = (uint64_t *)(APB_BASE + 0x8);
-        *apb_idt_ptr = (uint64_t)&idt_ptr;
-
-	uint64_t *apb_apic_setup = (uint64_t*)(APB_BASE + 0x10);
-	*apb_apic_setup = (uint64_t)&apic_ap_setup;
-
-	volatile uint32_t *ap_count_ptr = (uint32_t *)(APB_BASE + 0x4);
-	*ap_count_ptr = system_info->active_cpus;
-
-	lapic_write(apic_ICR_32_63, id << 24);
-	lapic_write(apic_ICR_0_31, 0x00004500);
-
-	outb(0x61, (inb(0x61) & 0xFD) | 1);
-	outb(0x43,0xB2);
-	//1193180/100 Hz = 11931 = 2e9bh
-	outb(0x42,0x9B);	//LSB
-	inb(0x60);		//short delay
-	outb(0x42,0x2E);	//MSB
-
-	//reset PIT one-shot counter (start counting)
-	uint8_t tmp = inb(0x61)&0xFE;
-	outb(0x61,(uint8_t)tmp);		//gate low
-	outb(0x61,(uint8_t)tmp|1);	//gate high
-
-	while(!(inb(0x61)&0x20));
-
-	lapic_write(apic_ICR_0_31, 0x00004600 | (APB_BASE/0x1000));
-	lapic_write(apic_ICR_32_63, id << 24);
-
-	outb(0x42,0x9B);	//LSB
-	inb(0x60);		//short delay
-	outb(0x42,0x2E);	//MSB
-
-	//reset PIT one-shot counter (start counting)
-	tmp = inb(0x61)&0xFE;
-	outb(0x61,(uint8_t)tmp);		//gate low
-	outb(0x61,(uint8_t)tmp|1);	//gate high
-
-	while(!(inb(0x61)&0x20));
-	outb(0x42,0x9B);	//LSB
-	inb(0x60);		//short delay
-	outb(0x42,0x2E);	//MSB
-
-	//reset PIT one-shot counter (start counting)
-	tmp = inb(0x61)&0xFE;
-	outb(0x61,(uint8_t)tmp);		//gate low
-	outb(0x61,(uint8_t)tmp|1);	//gate high
-
-	while(!(inb(0x61)&0x20));
-	while(*ap_count_ptr == system_info->active_cpus);
-
-
-	system_info->active_cpus++;
-	printf("[SMP]: AP %d booted! Currently %d active processors running.\n", id, *ap_count_ptr);
-	lapic_write(apic_reg_task_priority, tpr);			// Accept all interrupts
-
 }

@@ -214,3 +214,23 @@ void heap_debug_view(void)
 
 	printf("\nHeap_end at %x", heap_end);
 }
+
+void *operator new(size_t size)
+{
+    return malloc(size);
+}
+
+void *operator new[](size_t size)
+{
+    return malloc(size);
+}
+
+void operator delete(void *p)
+{
+    free(p);
+}
+
+void operator delete[](void *p)
+{
+    free(p);
+}

@@ -35,4 +35,12 @@ void *malloc(uint64_t sz);
 /** Arg1: Virtual address of a block.	**/
 void free (void *p);
 
+void *operator new(size_t size);
+
+void *operator new[](size_t size);
+
+void operator delete(void *p);
+
+void operator delete[](void *p);
+
 #endif

@@ -11,9 +11,6 @@
 uint64_t tm_current_thid 	= 0;
 thread_t *not_ready_queue 	= 0;
 
-extern topology_t *system_info;
-extern sched_spinlock_t sched_lock;
-
 static void thread_exit(void);
 static void tm_idle_thread_fn(void);
 
@@ -110,20 +107,13 @@ uint64_t tm_thread_start(uint64_t thid)
 /** Returns the thread structure of the current running thread. 			**/
 thread_t *tm_thread_get_current_thread(void)
 {
-	register processor_t *curr asm("r12") = system_info_get_current_cpu();
-
-	if(!curr)
-	{
-		return 0;
-	}
-
-	return curr->current_thread;
+	return system_c::get_current_thread();;
 }
 
 /** Returns the thread-id of the current running thread. 				**/
 uint64_t tm_thread_get_current_thread_thid(void)
 {
-	register thread_t *curr asm("r12") = tm_thread_get_current_thread();
+	register thread_t *curr asm("r12") = system_c::get_current_thread();;
 
 	if(!curr)
 	{
@@ -138,13 +128,13 @@ void thread_exit(void)
 {
 	uint64_t val;
 	asm volatile ("movq %%rax, %0;":"=r"(val));
-	processor_t *curr =  system_info_get_current_cpu();
-	printf("%s with thid %d running on cpu %d existed with value: %x.\n",curr->current_thread->name, curr->current_thread->thid, curr->apic_id, val);
-
+	register cpu_c *cpu =  system_c::get_current_cpu();
+	register thread_t *thread = system_c::get_current_thread();
+	printf("%s with thid %d running on cpu %d existed with value: %x.\n",thread->name, thread->thid, cpu->get_id(), val);
 	tm_sched_kill_current_thread();
 }
 
-/* Creates an idle thread, one idle thread is required per logical cpu (system_info). */
+/* Creates an idle thread, one idle thread is required per logical cpu. */
 thread_t *tm_thread_create_idle_thread(void)
 {
 	/* Create and initialise an entry thread structure. */

@@ -35,7 +35,7 @@ typedef struct thread_t
 
 /** Creates a new thread and adds it to the not-ready queue. Returns Thread id. 	**/
 uint64_t tm_thread_create(fn_t fn, uint64_t argn, char *argv[], uint64_t PLM4T, uint8_t priority, uint64_t quantum, const char *name, uint32_t flags, uint64_t *stack, uint8_t ds, uint8_t cs, uint8_t ss);
-/** Creates an idle thread, one idle thread is required per logical cpu (system_info). 	**/
+/** Creates an idle thread, one idle thread is required per logical cpu. 		**/
 thread_t *tm_thread_create_idle_thread(void);
 /** Returns current thread structure. 							**/
 thread_t *tm_thread_get_current_thread(void);

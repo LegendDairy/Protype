@@ -60,7 +60,7 @@ int main(ipl_info_t *info)
 {
 	DebugClearScreen();
 	DebugSetTextColour(0x2, 0);
-	printf("Protype v1.3\n");
+	printf("Protype v0.2\n");
 	DebugSetTextColour(0xF, 0);
 
 	init_idt();

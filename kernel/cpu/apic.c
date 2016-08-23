@@ -58,9 +58,9 @@ void pit_handler(void)
 
 uint8_t apic_check(void)
 {
-	uint32_t eax, edx;
+	uint32_t eax = 1, edx;
 	asm volatile("cpuid":"=a"(eax),"=d"(edx):"a"(1):"ecx","ebx");
-	return edx & CPUID_FLAG_APIC;
+	return edx;
 }
 
 uint32_t lapic_read(uint32_t r)
@@ -77,6 +77,7 @@ void lapic_write(uint32_t r, uint32_t val)
 
 void setup_apic(void)
 {
+	printf("Apic check returened: %d\n", apic_check());
 	/* Parse the multiprocessor table. */
 	/* Address label for the asm code. */
 	system_c *system = system_c::get_instance();

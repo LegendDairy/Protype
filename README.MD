@@ -53,9 +53,9 @@ Source map:
 Kernel source code map:
 * /cpu : Contains cpu-specific code (apic)
 * /hardware: Random crap goes here?
-* /memory: Contains all memory managment code.
+* /mm: Contains all memory managment code.
 * /tm: Contains all the code for tasking support.
-* /video: Contains all vga/video related code.
+* /vga: Contains all vga/video related code.
 
 
 Build Instructions

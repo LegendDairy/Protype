@@ -8,6 +8,7 @@
 #include <stdint.h>
 #include <vmm.h>
 #include <pmm.h>
+ #include <stddef.h>
 
 /* TODO                 */
 /* -Data allignment.    */

@@ -3,7 +3,8 @@
 /* By LegendDairy		*/
 
 #include <thread.h>
-#include <scheduler.h>
+#include <scheduler.hpp>
+#include <system.hpp>
 #include <acpi.h>
 #include <apic.h>
 #include <heap.h>

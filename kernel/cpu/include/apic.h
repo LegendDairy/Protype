@@ -16,10 +16,13 @@ uint32_t lapic_read(uint32_t r);
 void lapic_write(uint32_t r, uint32_t val);
 /** Initialises the Local and IO APIC. 			**/
 void setup_apic(void);
+void apic_ap_setup(void);
 /** Initialises local apic timer.			**/
 void setup_lapic_timer(void);
 /** Boots a given aplication processor. 		**/
 void boot_ap(uint8_t id);
+uint8_t inb(uint16_t port);
+uint32_t apic_get_id();
 
 
 /* Model Specific Register Flags */

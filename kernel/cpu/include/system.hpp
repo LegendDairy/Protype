@@ -7,21 +7,24 @@
 
 #include <scheduler.hpp>
 #include <cpu.hpp>
+#include <acpi.h>
+
 
 class system_c
 {
 private:
 	/* System Information data */
 	static cpu_c *cpu_list;
-	static active_cpus;
+	static bool instance_flag;
+	static uint32_t active_cpus;
 	static uint32_t bootstrap;
 	static uint64_t bus_freq;
 	static io_apic_t *io_apic;					// Linked list for available IO APICs.
-	static uint32_t irq_map[16];					// ISA Overide f.e. pit = irq_map[0]
+	static uint8_t irq_map[16];					// ISA Overide f.e. pit = irq_map[0]
 	static uint32_t flags;						// Flags (not yet used.)
 
 	/* Class singleton data & constructor*/
-	system_c *system;
+	static system_c *system;
 	system_c(void);
 
 public:
@@ -38,14 +41,14 @@ public:
 	static uint32_t get_active_cpus(void);
 	static cpu_c *get_current_cpu(void);
 	static scheduler_c *get_current_scheduler(void);
-	static boot_ap(uint8_t id);
+	static void boot_ap(uint8_t id);
 	static thread_t *get_current_thread(void);
 	static cpu_c *get_cpu_list(void);
 	static io_apic_t *get_ioapic_list()
 	{
 		return io_apic;
 	}
-	static uint64_t get_bus_freq(void);
+	static uint64_t get_bus_freq(void)
 	{
 		return bus_freq;
 	}
@@ -53,6 +56,6 @@ public:
 	{
 		bus_freq = freq;
 	}
-}
+};
 
 #endif

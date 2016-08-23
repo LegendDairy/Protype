@@ -40,14 +40,7 @@ typedef struct
 	uint32_t lock;
 } topology_t;
 
-/** Parses the MADT-table end fills the system info structure. 	**/
-void parse_madt(void);
-/** Returns current cpu structure. 				**/
-processor_t *system_info_get_current_cpu(void);
-/** Returns current local apic address. 			**/
-uint32_t volatile *system_info_get_lapic_base(void);
-/** Returns io apic address.					**/
-uint32_t volatile *system_info_get_ioapic_base(uint8_t id);
+
 
 #define ACPI_MADT_PROC						0
 #define ACPI_MADT_IOAP						1
@@ -158,5 +151,9 @@ typedef struct
 	uint32_t interrupt;
 	uint16_t flags;
 }  __attribute__((packed)) madt_overide_t;
+
+RSDT_t *find_rsdt(void);
+ACPISDTHeader_t *find_acpi_header(RSDT_t *root, const char *signature);
+
 
 #endif

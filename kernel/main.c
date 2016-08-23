@@ -13,7 +13,9 @@
 #include <apic.h>
 #include <acpi.h>
 #include <idt.h>
-#include <scheduler.h>
+#include <scheduler.hpp>
+#include <system.hpp>
+
 
 /* TODO */
 /* -Setup a proper kernel stack. 				*/
@@ -64,25 +66,36 @@ int main(ipl_info_t *info)
 	init_idt();
 	setup_pmm(info);
 	setup_vmm();
-	parse_madt();
-	setup_apic();
-	setup_tm();
-
-	/* Proof of concept: preemptive SMP support: */
-	boot_ap(1);
-	boot_ap(2);
-	boot_ap(3);
+	system_c *system = system_c::get_instance();
 
 	vmm_map_frame(0x90000000, pmm_alloc_page(), 0x3);
 	vmm_map_frame(0x90001000, pmm_alloc_page(), 0x3);
 	vmm_map_frame(0x90002000, pmm_alloc_page(), 0x3);
+	vmm_map_frame(0x90003000, pmm_alloc_page(), 0x3);
+	vmm_map_frame(0x90004000, pmm_alloc_page(), 0x3);
+	vmm_map_frame(0x90005000, pmm_alloc_page(), 0x3);
+	vmm_map_frame(0x90006000, pmm_alloc_page(), 0x3);
+	vmm_map_frame(0x90007000, pmm_alloc_page(), 0x3);
+	vmm_map_frame(0x90008000, pmm_alloc_page(), 0x3);
+	vmm_map_frame(0x90009000, pmm_alloc_page(), 0x3);
+	vmm_map_frame(0x9000A000, pmm_alloc_page(), 0x3);
+	vmm_map_frame(0x9000B000, pmm_alloc_page(), 0x3);
 
 	tm_thread_create(&thread1, 0, 0, 0x10000, 1, 30, "Thread 1", 1, (uint64_t *)0x90000F00, 0x10, 0x8, 0x10);
 	tm_thread_create(&thread2, 0, 0, 0x10000, 2, 30, "Thread 2", 1, (uint64_t *)0x90001F00, 0x10, 0x8, 0x10);
 	tm_thread_create(&thread3, 0, 0, 0x10000, 3, 30, "Thread 3", 1, (uint64_t *)0x90002F00, 0x10, 0x8, 0x10);
+	tm_thread_create(&thread1, 0, 0, 0x10000, 1, 30, "Thread 1", 1, (uint64_t *)0x90003F00, 0x10, 0x8, 0x10);
+	tm_thread_create(&thread2, 0, 0, 0x10000, 2, 30, "Thread 2", 1, (uint64_t *)0x90004F00, 0x10, 0x8, 0x10);
+	tm_thread_create(&thread3, 0, 0, 0x10000, 3, 30, "Thread 3", 1, (uint64_t *)0x90005F00, 0x10, 0x8, 0x10);
+	tm_thread_create(&thread1, 0, 0, 0x10000, 1, 30, "Thread 1", 1, (uint64_t *)0x90006F00, 0x10, 0x8, 0x10);
+	tm_thread_create(&thread2, 0, 0, 0x10000, 2, 30, "Thread 2", 1, (uint64_t *)0x90007F00, 0x10, 0x8, 0x10);
+	tm_thread_create(&thread3, 0, 0, 0x10000, 3, 30, "Thread 3", 1, (uint64_t *)0x90008F00, 0x10, 0x8, 0x10);
+	tm_thread_create(&thread1, 0, 0, 0x10000, 1, 30, "Thread 1", 1, (uint64_t *)0x90009F00, 0x10, 0x8, 0x10);
+	tm_thread_create(&thread2, 0, 0, 0x10000, 2, 30, "Thread 2", 1, (uint64_t *)0x9000AF00, 0x10, 0x8, 0x10);
+	tm_thread_create(&thread3, 0, 0, 0x10000, 3, 30, "Thread 3", 1, (uint64_t *)0x9000BF00, 0x10, 0x8, 0x10);
 
 	asm volatile("sti");
-	tm_sched_kill_current_thread();
+	//tm_sched_kill_current_thread();
 	while(1);
 
 	return 0;

@@ -3,7 +3,7 @@
 /* By LegendDairy		*/
 
 #include <mutex.h>
-#include<scheduler.hpp>
+#include <scheduler.hpp>
 
 /* TODO: Locked Arthmetic and test functions. */
 /* -ie inc, dec, add, or, not, */

@@ -2,17 +2,32 @@
 /* System Functions v0.2	*/
 /* By LegendDairy		*/
 
-#include <scheduler.h>
-#include <heap.h>
 #include <system.hpp>
+#include <scheduler.hpp>
+#include <heap.h>
+#include <cpu.hpp>
 #include <acpi.h>
+#include <idt.h>
 
+#define APB_BASE 0x50000
+extern idt_ptr_t idt_ptr;
+
+uint32_t *system_c::lapic;
+bool system_c::instance_flag = 0;
+cpu_c *system_c::cpu_list;
+uint32_t system_c::active_cpus = 1;
+uint32_t system_c::bootstrap;
+uint64_t system_c::bus_freq;
+io_apic_t *system_c::io_apic;					// Linked list for available IO APICs.
+uint8_t system_c::irq_map[16];					// ISA Overide f.e. pit = irq_map[0]
+uint32_t system_c::flags;
 system_c* system_c::system = NULL;
 
 system_c* system_c::get_instance()
 {
-    if(!system)
+    if(!instance_flag)
     {
+	instance_flag = 1;
         system = new system_c();
         return system;
     }
@@ -27,7 +42,7 @@ cpu_c *system_c::get_current_cpu(void)
 	cpu_c *iterator = cpu_list;
 	uint32_t id = apic_get_id();
 
-	while (iterator && iterator->id != id)
+	while (iterator && iterator->get_id() != id)
 		iterator = iterator->next;
 
 	return iterator;
@@ -45,9 +60,9 @@ scheduler_c *system_c::get_current_scheduler(void)
 
 thread_t * system_c::get_current_thread(void)
 {
-	cpu_c current_cpu = get_current_cpu();
+	cpu_c *current_cpu = get_current_cpu();
 
-	if(current_cpu)
+	if((uint64_t)current_cpu)
 	{
 		return current_cpu->scheduler->get_current_thread();
 	}
@@ -55,12 +70,12 @@ thread_t * system_c::get_current_thread(void)
 	return 0;
 }
 
-uint32_t get_active_cpus(void)
+uint32_t system_c::get_active_cpus(void)
 {
 	return active_cpus;
 }
 
-system_c::boot_ap(uint8_t id)
+void system_c::boot_ap(uint8_t id)
 {
 	id &= 0xF;
         uint64_t *apb_idt_ptr = (uint64_t *)(APB_BASE + 0x8);
@@ -138,7 +153,8 @@ system_c::system_c(void)
 	cpu_list 		= 0;
 	flags			= madt->flags;
 	lapic			= (uint32_t *)((uint64_t)madt->lapic_address);
-	bootstrap		= (uint32_t) lapic[0x20/4];
+	vmm_map_frame((uint64_t)lapic, (uint64_t)lapic, 0x03);
+	bootstrap		= (uint32_t)(lapic[0x20/4] >> 24);
 
 	/* If PCAT flag is set, a PICs are present and must be dissabled to use ioapic. */
 	if(flags & ACPI_MADT_FLAG_PCAT_COMPAT)
@@ -158,10 +174,10 @@ system_c::system_c(void)
 			if(tmp->flags)
 			{
 				/* Initialise a new entry for the cpu structure in system_info. */
-				cpu_c *cpu_entry = new cpu_c(tmp->apic_id, tmp->proc_id, tmp->flags, bootstrap)
+				cpu_c *cpu_entry = new cpu_c(tmp->apic_id, tmp->proc_id, tmp->flags, bootstrap);
 
 				/* Iterate through the cpu list to find the last entry. */
-				if(cpu_list)
+				if((uint64_t)cpu_list)
 				{
 					cpu_c *iterator = cpu_list;
 					while(iterator->next)
@@ -212,4 +228,17 @@ system_c::system_c(void)
 		i    += curr->length;
 		curr  = (madt_entry_t *)((uint64_t)curr + (uint32_t)curr->length);
 	}
+
+	setup_apic();
+
+	cpu_c *iterator = cpu_list;
+	int e = 0;
+	while(iterator)
+	{
+		if(iterator->get_id() != bootstrap)
+			boot_ap(iterator->get_id());
+		iterator = iterator->next;
+		e++;
+	}
+	printf("Found %d bootable processors.\n", e);
 }

@@ -7,6 +7,7 @@
 #include <idt.h>
 #include <thread.h>
 #include <scheduler.hpp>
+#include <system.hpp>
 #include <vmm.h>
 #include <pmm.h>
 
@@ -30,10 +31,14 @@ uint8_t inb(uint16_t port)
     return byte;
 }
 
+uint32_t apic_get_id()
+{
+	return (lapic_read(apic_reg_id) >> 24);
+}
+
 extern uint32_t sleep_lock;
 void pit_handler(void)
 {
-
 	if((volatile thread_t*volatile)sched_sleep_queue)
 	{
 		if(!(__sync_sub_and_fetch(&sched_sleep_queue->delta_time, 1)))
@@ -77,7 +82,6 @@ void setup_apic(void)
 	system_c *system = system_c::get_instance();
 	apic_base = (uint32_t)((uint64_t) system->lapic);
 	/* Map the local apic to a virtual address. */
-	vmm_map_frame((uint64_t) apic_base,(uint64_t) apic_base, 0x3);
 
         /* TODO: */
         /* -Map lapic and ioapic address here instead of in the ipl.    */
@@ -110,7 +114,6 @@ void setup_apic(void)
 	lapic_write(apic_reg_eoi, 0x00);				// Make sure no interrupts are left
 
 	/* Set up IO APIC for the PIT (POC) */
-	system_c *system = system_c::get_instance();
 	volatile uint32_t * volatile ioapic_reg 	= (uint32_t *)system->get_ioapic_list()->address;
  	volatile uint32_t * volatile ioapic_io 		= (uint32_t *)(system->get_ioapic_list()->address+0x4);
 
@@ -118,7 +121,7 @@ void setup_apic(void)
  	*(uint32_t*)ioapic_reg 	= (uint32_t)0x14;
  	*ioapic_io 		= (uint32_t)0x930 ;
  	*(uint32_t*)ioapic_reg 	= (uint32_t)0x15;
- 	*ioapic_io 		= (uint32_t)0x03000000;
+ 	*ioapic_io 		= (uint32_t)0xFF000000;
 
 	/* Set up LAPIC Timer. */
 	setup_lapic_timer();
@@ -158,8 +161,10 @@ void apic_ap_setup(void)
 	lapic_write(apic_lvt_lint0_reg, 0x08700);			// Enable normal external interrupts
 	lapic_write(apic_lvt_lint1_reg, 0x00400);			// Enable normal NMI processing
 	lapic_write(apic_reg_eoi, 0x00);				// Make sure no interrupts are left
+
 	uint32_t id = lapic_read(apic_reg_id);
 	id = id >> 24;
+
 	printf("[SMP]: CPU %x is booting...\n", id);
 	system_c *system = system_c::get_instance();
 	lapic_write(apic_init_count, system->get_bus_freq()/4*1000*10);       	// Fire every micro second
@@ -194,6 +199,8 @@ void setup_lapic_timer(void)
 
 	/* Give information to the user */
 	printf("[APIC]: Bus frequency:  %dMHz\n", freq);
+	if(!freq)
+		freq = 10;
 	system_c *system = system_c::get_instance();
 	system->set_bus_freq(freq);
 

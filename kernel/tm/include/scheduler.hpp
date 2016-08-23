@@ -27,7 +27,7 @@ private:
 
 public:
 	/** Constructor for the scheduler. 							**/
-	scheduler_c(uint32_t id, bool bootstrap);
+	scheduler_c(uint32_t apic_id, uint32_t bootstrap);
 	/** Saves rsp of current running thread, and returns rsp of new thread. 		**/
 	uint64_t schedule(uint64_t rsp);
 	/** Returns current load on this scheduler, necessary for load balancing. 		**/
@@ -42,7 +42,8 @@ public:
 	void stop_current_thread(void);
 	/** Returns current running thread. 							**/
 	thread_t *get_current_thread(void);
-}
+	void set_current_thread(thread_t *thread);
+};
 
 /** Intialises multithreading. Creates a current thread structure for the BSP. 			**/
 void setup_tm(void);

@@ -3,12 +3,12 @@
 # by LegendMythe	#
 
 SOURCES=\
-main.o video/text.o video/printf.o cpu/apic.o  cpu/acpi.o cpu/mutex.o hardware/idt.o hardware/interrupts.o memory/string.o memory/pmm.o memory/vmm.o memory/heap.o tm/thread.o tm/scheduler.o\
+main.o vga/text.o vga/printf.o cpu/apic.o cpu/acpi.o tm/mutex.o hardware/idt.o hardware/interrupts.o mm/string.o mm/pmm.o mm/vmm.o mm/heap.o tm/thread.o tm/scheduler.o\
 
 CC = x86_64-elf-g++
 CFLAGS=\
 -nostdlib -lgcc -ffreestanding -fno-exceptions -fno-rtti -mno-red-zone -fno-exceptions -std=c++11 -O2 -Wall -Wextra   -mcmodel=large\
--I./memory/include -I./cpu/include -I./video/include -I./include/stdinc -I./include -I./hardware/include -I./tm/include\
+-I./mm/include -I./cpu/include -I./vga/include -I./include/stdinc -I./include -I./hardware/include -I./tm/include\
 #mcmodel=kernel also possible
 AS = nasm
 

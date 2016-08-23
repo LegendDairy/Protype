@@ -41,18 +41,16 @@ void pit_handler(void)
 {
 	if((volatile thread_t*volatile)sched_sleep_queue)
 	{
-		if(!(__sync_sub_and_fetch(&sched_sleep_queue->delta_time, 1)))
+		acquireLock(&sleep_lock);
+		sched_sleep_queue->delta_time--;
+		while(sched_sleep_queue && !sched_sleep_queue->delta_time)
 		{
-			acquireLock(&sleep_lock);
-			while(sched_sleep_queue  && !(sched_sleep_queue->delta_time))
-			{
-				thread_t *tmp = sched_sleep_queue;
-				sched_sleep_queue->flags &= !THREAD_FLAG_STOPPED;
-				sched_sleep_queue = sched_sleep_queue->next;
-				tm_sched_add_to_queue(tmp);
-			}
-			releaseLock(&sleep_lock);
+			thread_t *tmp = sched_sleep_queue;
+			sched_sleep_queue = sched_sleep_queue->next;
+			tmp->flags &= !THREAD_FLAG_STOPPED;
+			tm_sched_add_to_queue(tmp);
 		}
+		releaseLock(&sleep_lock);
 	}
 }
 
@@ -108,7 +106,7 @@ void setup_apic(void)
 	lapic_write(apic_lvt_lint1_reg, 0x00400);			// Enable normal NMI processing
 	lapic_write(apic_lvt_error_reg, 0x10000);			// Disable error interrupts
         lapic_write(apic_reg_dest_format, 0xFF000000);               	// Flatmode
-        lapic_write(apic_reg_logical_dest, 0x01000000);			// Destination bits for this apic
+        lapic_write(apic_reg_logical_dest, 0xFF000000);			// Destination bits for this apic
 	lapic_write(apic_reg_spur_int_vect, 0x0013F);			// Enable the APIC and set spurious vector to 0x3F
 	lapic_write(apic_lvt_lint0_reg, 0x08700);			// Enable normal external interrupts
 	lapic_write(apic_lvt_lint1_reg, 0x00400);			// Enable normal NMI processing
@@ -149,8 +147,7 @@ void setup_apic(void)
 void apic_ap_setup(void)
 {
 	lapic_write(apic_reg_task_priority, 0x00);			// Accept all interrupts
-	lapic_write(apic_lvt_timer_reg, 0x10000);
-			// Disable timer interrupts
+	lapic_write(apic_lvt_timer_reg, 0x10000);			// Disable timer interrupts
 	lapic_write(apic_lvt_thermal_reg, 0x10000);			// Dissable Thermal monitor
 	lapic_write(apic_lvt_perf_reg, 0x10000);			// Disable performance counter interrupts
 	lapic_write(apic_lvt_lint0_reg, 0x08700);			// Enable normal external interrupts

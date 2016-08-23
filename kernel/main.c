@@ -28,7 +28,7 @@ int thread1(uint64_t argn, char **argv)
 	while(1)
 	{
 		printf("a");
-		tm_schedule_sleep(10);
+		tm_schedule_sleep(100);
 	}
 
 	return 0xDEADBEEF;
@@ -39,7 +39,7 @@ int thread2(uint64_t argn, char **argv)
 	while(1)
 	{
 		printf("b");
-		tm_schedule_sleep(10);
+		tm_schedule_sleep(100);
 	}
 
 	return 0xDEADBEEF;
@@ -50,7 +50,7 @@ int thread3(uint64_t argn, char **argv)
 	while(1)
 	{
 		printf("c");
-		tm_schedule_sleep(10);
+		tm_schedule_sleep(100);
 	}
 
 	return 0xDEADBEEF;
@@ -66,7 +66,7 @@ int main(ipl_info_t *info)
 	init_idt();
 	setup_pmm(info);
 	setup_vmm();
-	system_c *system = system_c::get_instance();
+	system_c::get_instance();
 
 	vmm_map_frame(0x90000000, pmm_alloc_page(), 0x3);
 	vmm_map_frame(0x90001000, pmm_alloc_page(), 0x3);

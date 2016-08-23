@@ -232,13 +232,10 @@ system_c::system_c(void)
 	setup_apic();
 
 	cpu_c *iterator = cpu_list;
-	int e = 0;
 	while(iterator)
 	{
 		if(iterator->get_id() != bootstrap)
 			boot_ap(iterator->get_id());
 		iterator = iterator->next;
-		e++;
 	}
-	printf("Found %d bootable processors.\n", e);
 }

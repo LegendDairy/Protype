@@ -49,14 +49,13 @@ scheduler_c::scheduler_c(uint32_t apic_id, uint32_t bootstrap)
 
 uint64_t scheduler_c::schedule(uint64_t rsp)
 {
-	/* Increase schedule-counter. */
-	current_tick++;
 	/* Test if a thread is running on this logical cpu. If so we must save it's progress. */
 	if(current_thread)
 	{
 		/* Save current possition in the stack of the thread. */
 		current_thread->rsp = rsp;
 
+		/* Test if this thread needs to be stopped. */
 		if(current_thread->flags & THREAD_FLAG_STOPPED)
 		{
 			load--;
@@ -68,6 +67,9 @@ uint64_t scheduler_c::schedule(uint64_t rsp)
 	{
 		idle_thread->rsp = rsp;
 	}
+
+	/* Increase schedule-counter. */
+	current_tick++;
 
 	/* Attempt to unlock the spinlock on the list. */
 	acquireLock(&highest_priority_lock);
@@ -235,11 +237,6 @@ thread_t *scheduler_c::get_current_thread(void)
 	return current_thread;
 }
 
-void scheduler_c::set_current_thread(thread_t *thread)
-{
-	current_thread = thread;
-}
-
 void scheduler_c::remove_from_queue(thread_t *thread)
 {
 
@@ -258,16 +255,14 @@ uint32_t scheduler_c::get_id(void)
 /** Stops excecution of current running thread. **/
 void tm_sched_kill_current_thread(void)
 {
-	system_c *system = system_c::get_instance();
-	register scheduler_c *scheduler = system->get_current_scheduler();
+	register scheduler_c *scheduler = system_c::get_current_scheduler();
 	scheduler->stop_current_thread();
 }
 
 /** Gets called by the timer routine to swap the current running thread with a new one from the queue. **/
 uint64_t tm_schedule(uint64_t rsp)
 {
-	register system_c *system = system_c::get_instance();
-	register scheduler_c *scheduler = system->get_current_scheduler();
+	register scheduler_c *scheduler = system_c::get_current_scheduler();
 	return scheduler->schedule(rsp);
 }
 

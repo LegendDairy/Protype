@@ -1,6 +1,6 @@
-/* Pro-Type Kernel v1.3	*/
-/* Advanced PIC	   v0.2	*/
-/* By LegendMythe		*/
+/* Pro-Type Kernel v0.2		*/
+/* Advanced PIC	   v0.2		*/
+/* By LegendDairy		*/
 
 #ifndef APIC_H
 #define APIC_H

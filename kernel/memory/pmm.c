@@ -1,6 +1,6 @@
-/* Pro-Type Kernel v1.3		*/
+/* Pro-Type Kernel v0.2		*/
 /* Physical Memory v0.3		*/
-/* By LegendMythe		*/
+/* By LegendDairy		*/
 
 #include <pmm.h>
 #include <mutex.h>

@@ -1,13 +1,12 @@
-/* Pro-Type Kernel v1.3		*/
+/* Pro-Type Kernel v0.2		*/
 /* Scheduler v0.2		*/
-/* By LegendMythe		*/
+/* By LegendDairy		*/
 
 #include <scheduler.h>
 #include <heap.h>
 #include <mutex.h>
 #include <apic.h>
 #include <acpi.h>
-
 
 thread_t *sched_ready_queue_high	= 0;
 thread_t *sched_ready_queue_med		= 0;
@@ -31,10 +30,10 @@ void setup_tm(void)
 	/* Initialise the current thread structure with the kernel thread info. */
 	current_cpu->current_thread 			= (thread_t*)malloc(sizeof(thread_t));
 	current_cpu->current_thread->thid 		= 0x00;
-	current_cpu->current_thread->flags 		= THREAD_FLAG_READY |  THREAD_FLAG_KERNEL | THREAD_FLAG_PROCESS;
+	current_cpu->current_thread->flags 		= THREAD_FLAG_READY |  THREAD_FLAG_KERNEL;
 	current_cpu->current_thread->name		= "Kernel Setup";
 	current_cpu->current_thread->priority		= THREAD_PRIORITY_HIGHEST;
-	current_cpu->current_thread->quantum  		= 1000;
+	current_cpu->current_thread->quantum  		= 10;
 	current_cpu->current_thread->parent_thid	= 0;
 	current_cpu->current_thread->next		= 0;
 
@@ -89,7 +88,7 @@ uint64_t tm_schedule(uint64_t rsp)
 
 	/* Attempt to unlock the spinlock on the list. */
 	acquireLock(&sched_lock.sched_ready_queue_high);
-	if(sched_ready_queue_high)
+	if(sched_ready_queue_high && current_cpu->timer_current_tick%2)
 	{
 
 		/* Change current thread and change the begining of the appropriate list. */
@@ -170,8 +169,8 @@ void tm_sched_add_to_queue(thread_t *thread)
 {
 	if(thread)
 	{
-		lapic_write(0x80, 0xFF);
-		/* If the current thread has a high priority add it to the end of the high priority thread. */
+		uint32_t tpr = lapic_read(0x80);
+		lapic_write(0x80, 0xFF);		/* If the current thread has a high priority add it to the end of the high priority thread. */
 		if(thread->priority == THREAD_PRIORITY_HIGHEST)
 		{
 			acquireLock(&sched_lock.sched_ready_queue_high);
@@ -246,7 +245,7 @@ void tm_sched_add_to_queue(thread_t *thread)
 			}
 			releaseLock(&sched_lock.sched_ready_queue_low);
 		}
-		lapic_write(0x80, 0x00);
+		lapic_write(0x80, tpr);
 	}
 }
 
@@ -255,6 +254,7 @@ uint32_t sleep_lock = 0;
 void tm_schedule_sleep(uint64_t millis)
 {
 	asm volatile("cli");
+	uint32_t tpr = lapic_read(0x80);
 	lapic_write(0x80, 0xFF);
 	acquireLock(&sleep_lock);
 
@@ -288,7 +288,7 @@ void tm_schedule_sleep(uint64_t millis)
 				cpu->current_thread->flags		|= THREAD_FLAG_STOPPED;
 
 				releaseLock(&sleep_lock);
-				lapic_write(0x80, 0x00);
+				lapic_write(0x80, tpr);
 				asm volatile("sti");
 				asm volatile("int $33");
 				return;
@@ -315,7 +315,7 @@ void tm_schedule_sleep(uint64_t millis)
 			cpu->current_thread->flags			|= THREAD_FLAG_STOPPED;
 
 			releaseLock(&sleep_lock);
-			lapic_write(0x80, 0x00);
+			lapic_write(0x80, tpr);
 			asm volatile("sti");
 			asm volatile("int $33");
 			return;
@@ -329,7 +329,7 @@ void tm_schedule_sleep(uint64_t millis)
 
 		releaseLock(&sleep_lock);
 		asm volatile("sti");
-		lapic_write(0x80, 0x00);
+		lapic_write(0x80, tpr);
 		asm volatile("int $33");
 		return;
 		}
@@ -343,7 +343,7 @@ void tm_schedule_sleep(uint64_t millis)
 
 		releaseLock(&sleep_lock);
 		asm volatile("sti");
-		lapic_write(0x80, 0x00);
+		lapic_write(0x80, tpr);
 		asm volatile("int $33");
 		return;
 	}

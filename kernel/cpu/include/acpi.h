@@ -1,6 +1,6 @@
-/* Pro-Type Kernel v1.3	*/
-/* ACPI Table	   v0.1	*/
-/* By LegendMythe	*/
+/* Pro-Type Kernel v0.2		*/
+/* ACPI Table	   v0.1		*/
+/* By LegendDairy		*/
 
 
 #ifndef ACPI_H

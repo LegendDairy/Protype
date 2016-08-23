@@ -1,6 +1,6 @@
-/* Pro-Type Kernel	v1.3	*/
-/* Virtual Memory	v0.2	*/
-/* By LegendMythe		*/
+/* Pro-Type Kernel v0.2		*/
+/* Virtual Memory v0.2		*/
+/* By LegendDairy		*/
 
 #include <vmm.h>
 #include <mutex.h>

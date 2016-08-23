@@ -1,6 +1,6 @@
-/* Pro-Type Kernel v1.3	*/
-/* Advanced PIC	   v0.2	*/
-/* By LegendMythe	*/
+/* Pro-Type Kernel v0.2		*/
+/* Advanced PIC	   v0.2		*/
+/* By LegendDairy		*/
 
 #include <apic.h>
 #include <acpi.h>
@@ -21,6 +21,7 @@ extern topology_t *system_info;
 extern "C" void pit_handler(void);
 #endif
 
+
 extern thread_t*sched_sleep_queue;
 
 uint8_t inb(uint16_t port)
@@ -33,12 +34,13 @@ uint8_t inb(uint16_t port)
 extern uint32_t sleep_lock;
 void pit_handler(void)
 {
+
 	if((volatile thread_t*volatile)sched_sleep_queue)
 	{
-		if((!__sync_sub_and_fetch(&sched_sleep_queue->delta_time, 1)))
+		if(!(__sync_sub_and_fetch(&sched_sleep_queue->delta_time, 1)))
 		{
 			acquireLock(&sleep_lock);
-			while(sched_sleep_queue  && (!sched_sleep_queue->delta_time))
+			while(sched_sleep_queue  && !(sched_sleep_queue->delta_time))
 			{
 				thread_t *tmp = sched_sleep_queue;
 				sched_sleep_queue->flags &= !THREAD_FLAG_STOPPED;
@@ -57,12 +59,12 @@ uint8_t apic_check(void)
 	return edx & CPUID_FLAG_APIC;
 }
 
-inline uint32_t lapic_read(uint32_t r)
+uint32_t lapic_read(uint32_t r)
 {
 	return ((uint32_t)(system_info->lapic_address[r / 4]));
 }
 
-inline void lapic_write(uint32_t r, uint32_t val)
+void lapic_write(uint32_t r, uint32_t val)
 {
 	system_info->lapic_address[r / 4] = (uint32_t)val;
 }
@@ -99,7 +101,7 @@ void setup_apic(void)
 	lapic_write(apic_lvt_lint1_reg, 0x00400);			// Enable normal NMI processing
 	lapic_write(apic_lvt_error_reg, 0x10000);			// Disable error interrupts
         lapic_write(apic_reg_dest_format, 0xFF000000);               	// Flatmode
-        lapic_write(apic_reg_logical_dest, 0xFF000000);			// Destination bits for this apic
+        lapic_write(apic_reg_logical_dest, 0x01000000);			// Destination bits for this apic
 	lapic_write(apic_reg_spur_int_vect, 0x0013F);			// Enable the APIC and set spurious vector to 0x3F
 	lapic_write(apic_lvt_lint0_reg, 0x08700);			// Enable normal external interrupts
 	lapic_write(apic_lvt_lint1_reg, 0x00400);			// Enable normal NMI processing
@@ -111,9 +113,9 @@ void setup_apic(void)
 
 	vmm_map_frame((uint64_t)ioapic_reg, (uint64_t)ioapic_reg, 0x3); 			// Identity map io apic address
  	*(uint32_t*)ioapic_reg 	= (uint32_t)0x14;
- 	*ioapic_io 		= (uint32_t)0x30 ;
+ 	*ioapic_io 		= (uint32_t)0x930 ;
  	*(uint32_t*)ioapic_reg 	= (uint32_t)0x15;
- 	*ioapic_io 		= (uint32_t)0xFF000000;
+ 	*ioapic_io 		= (uint32_t)0x03000000;
 
 	/* Set up LAPIC Timer. */
 	setup_lapic_timer();
@@ -157,8 +159,8 @@ void apic_ap_setup(void)
 	id = id >> 24;
 	printf("[SMP]: CPU %x is booting...\n", id);
 
-	lapic_write(apic_init_count, system_info->bus_freq/4*1000*10);                                    // Fire every micro second
-	lapic_write(apic_lvt_timer_reg, (uint32_t)(0x20 | apic_timer_period)); //int 48, periodic
+	lapic_write(apic_init_count, system_info->bus_freq/4*1000*10);       	// Fire every micro second
+	lapic_write(apic_lvt_timer_reg, (uint32_t)(0x20 | apic_timer_period)); 	//int 48, periodic
 }
 void setup_lapic_timer(void)
 {
@@ -199,7 +201,8 @@ void setup_lapic_timer(void)
 void boot_ap(uint8_t id)
 {
 	asm volatile("cli");
-	//lapic_write(apic_reg_task_priority, 0xFF);
+	uint32_t tpr = lapic_read(0x80);
+	lapic_write(0x80, 0xFF);
 
 	id &= 0xF;
         uint64_t *apb_idt_ptr = (uint64_t *)(APB_BASE + 0x8);
@@ -256,6 +259,6 @@ void boot_ap(uint8_t id)
 
 	system_info->active_cpus++;
 	printf("[SMP]: AP %d booted! Currently %d active processors running.\n", id, *ap_count_ptr);
-	lapic_write(apic_reg_task_priority, 0x00);			// Accept all interrupts
+	lapic_write(apic_reg_task_priority, tpr);			// Accept all interrupts
 
 }

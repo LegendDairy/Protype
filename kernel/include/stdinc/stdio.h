@@ -1,6 +1,6 @@
-/* Pro-Type Kernel v1.3	*/
+/* Pro-Type Kernel v0.2	*/
 /* Standard I/O	v0.1	*/
-/* By LegendDairy		*/
+/* By LegendDairy	*/
 
 #ifndef STDIO_H
 #define STDIO_H

@@ -1,6 +1,6 @@
-/* Pro-Type Kernel v1.3		*/
+/* Pro-Type Kernel v0.2		*/
 /* Spinlocks v0.1		*/
-/* By LegendMythe		*/
+/* By LegendDairy		*/
 
 #include <mutex.h>
 #include<scheduler.h>

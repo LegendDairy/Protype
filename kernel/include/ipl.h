@@ -1,6 +1,6 @@
-/* Pro-Type Kernel v1.3       */
-/* IPL Boot Info		      */
-/* By LegendMythe             */
+/* Pro-Type Kernel v0.2	*/
+/* IPL Boot Info	*/
+/* By LegendMythe	*/
 
 #ifndef IPL_H
 #define IPL_H

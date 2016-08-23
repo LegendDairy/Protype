@@ -1,6 +1,6 @@
-/* Pro-Type Kernel v1.3       */
-/* Standard library ports     */
-/* By LegendMythe             */
+/* Pro-Type Kernel v0.2	*/
+/* Standard library 	*/
+/* By LegendMythe	*/
 
 #ifndef ISO646_H
 #define ISO646_H

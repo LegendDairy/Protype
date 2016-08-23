@@ -1,6 +1,6 @@
-/* Pro-Type Kernel v1.3	*/
-/* ACPI Tables	   v0.1	*/
-/* By LegendMythe	*/
+/* Pro-Type Kernel v0.2		*/
+/* ACPI Tables	   v0.1		*/
+/* By LegendDairy		*/
 
 #include<acpi.h>
 #include<vmm.h>
@@ -208,7 +208,7 @@ void parse_madt(void)
 
 
 /* TODO: move to seperate file system_info.c */
-inline processor_t *system_info_get_current_cpu(void)
+processor_t *system_info_get_current_cpu(void)
 {
 	acquireLock(&system_info->lock);
 	__sync_synchronize();

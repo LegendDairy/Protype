@@ -1,6 +1,6 @@
-;Pro-Type Kernel v1.3   ;
+;Pro-Type Kernel v0.2   ;
 ;AP initialisation v0.1 ;
-;by LegendMythe         ;
+;By LegendDairy		;
 
 [BITS	16]
 [ORG 0x50000]

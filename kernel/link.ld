@@ -1,6 +1,6 @@
-/* Pro-Type Kernel v1.3       */
-/* Linkerscript               */
-/* From www.wiki.osdev.org    */
+/* Pro-Type Kernel v0.2		*/
+/* Linkerscript			*/
+/* From www.wiki.osdev.org	*/
 
 ENTRY(main)
 SECTIONS
@@ -30,4 +30,3 @@ SECTIONS
 	end = .;
 
 }
-

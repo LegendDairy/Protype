@@ -1,6 +1,6 @@
-/* Pro-Type Kernel v1.3		*/
-/* Kernel Module		*/
-/* By LegendMythe		*/
+/* Pro-Type Kernel v0.2		*/
+/* Main Entry of Kernel Module	*/
+/* By LegendDairy		*/
 
 #include <stdarg.h>
 #include <stdint.h>
@@ -21,17 +21,36 @@
 /* -Clean up debug-text code. 					*/
 /* -Graphics proof of concept.					*/
 
-
-void tm_sched_kill_current_thread(void);
-void tm_schedule_sleep(uint64_t);
-extern topology_t *system_info;
-int thread(uint64_t argn, char **argv)
+int thread1(uint64_t argn, char **argv)
 {
-	register processor_t *curr asm("r12") = system_info_get_current_cpu();
+	while(1)
+	{
+		printf("a");
+		tm_schedule_sleep(10);
+	}
 
-	printf("Hello from %s running on logical cpu %x. Argn: %x, Argv: %x\n", curr->current_thread->name, curr->apic_id, argn, (uint64_t)argv);
+	return 0xDEADBEEF;
+}
 
-	tm_schedule_sleep(1000);
+int thread2(uint64_t argn, char **argv)
+{
+	while(1)
+	{
+		printf("b");
+		tm_schedule_sleep(10);
+	}
+
+	return 0xDEADBEEF;
+}
+
+int thread3(uint64_t argn, char **argv)
+{
+	while(1)
+	{
+		printf("c");
+		tm_schedule_sleep(10);
+	}
+
 	return 0xDEADBEEF;
 }
 
@@ -53,29 +72,14 @@ int main(ipl_info_t *info)
 	boot_ap(1);
 	boot_ap(2);
 	boot_ap(3);
-	/*boot_ap(4);
-	boot_ap(5);
-	boot_ap(6);
-	boot_ap(7);*/
-
 
 	vmm_map_frame(0x90000000, pmm_alloc_page(), 0x3);
 	vmm_map_frame(0x90001000, pmm_alloc_page(), 0x3);
 	vmm_map_frame(0x90002000, pmm_alloc_page(), 0x3);
-	vmm_map_frame(0x90003000, pmm_alloc_page(), 0x3);
-	vmm_map_frame(0x90004000, pmm_alloc_page(), 0x3);
-	vmm_map_frame(0x90005000, pmm_alloc_page(), 0x3);
-	vmm_map_frame(0x90006000, pmm_alloc_page(), 0x3);
-	vmm_map_frame(0x90007000, pmm_alloc_page(), 0x3);
 
-	tm_thread_create(&thread, 0, 0, 0x10000, 1, 30, "Thread 1", 1, (uint64_t *)0x90000F00, 0x10, 0x8, 0x10);
-	tm_thread_create(&thread, 0, 0, 0x10000, 1, 30, "Thread 2", 1, (uint64_t *)0x90001F00, 0x10, 0x8, 0x10);
-	tm_thread_create(&thread, 0, 0, 0x10000, 1, 30, "Thread 3", 1, (uint64_t *)0x90002F00, 0x10, 0x8, 0x10);
-	tm_thread_create(&thread, 0, 0, 0x10000, 1, 30, "Thread 4", 1, (uint64_t *)0x90003F00, 0x10, 0x8, 0x10);
-	tm_thread_create(&thread, 0, 0, 0x10000, 1, 30, "Thread 5", 1, (uint64_t *)0x90004F00, 0x10, 0x8, 0x10);
-	tm_thread_create(&thread, 0, 0, 0x10000, 1, 30, "Thread 6", 1, (uint64_t *)0x90005F00, 0x10, 0x8, 0x10);
-	tm_thread_create(&thread, 0, 0, 0x10000, 1, 30, "Thread 7", 1, (uint64_t *)0x90006F00, 0x10, 0x8, 0x10);
-	tm_thread_create(&thread, 0, 0, 0x10000, 1, 30, "Thread 8", 1, (uint64_t *)0x90007F00, 0x10, 0x8, 0x10);
+	tm_thread_create(&thread1, 0, 0, 0x10000, 1, 30, "Thread 1", 1, (uint64_t *)0x90000F00, 0x10, 0x8, 0x10);
+	tm_thread_create(&thread2, 0, 0, 0x10000, 2, 30, "Thread 2", 1, (uint64_t *)0x90001F00, 0x10, 0x8, 0x10);
+	tm_thread_create(&thread3, 0, 0, 0x10000, 3, 30, "Thread 3", 1, (uint64_t *)0x90002F00, 0x10, 0x8, 0x10);
 
 	asm volatile("sti");
 	tm_sched_kill_current_thread();
@@ -83,43 +87,3 @@ int main(ipl_info_t *info)
 
 	return 0;
 }
-
-
-/*uint32_t *ptr1 = malloc(0x500);
-*ptr1 = 0xDEADBEE1;
-uint32_t *ptr2 = malloc(0x1100);
-*ptr2 = 0xDEADBEE2;
-uint32_t *ptr3 = malloc(0x400);
-*ptr3 = 0xDEADBEE3;
-uint32_t *ptr4 = malloc(0x3200);
-*ptr4 = 0xDEADBEE4;
-uint32_t *ptr5 = malloc(0x50);
-*ptr5 = 0xDEADBEE5;
-uint32_t *ptr6 = malloc(0x10);
-*ptr6 = 0xDEADBEE6;
-uint32_t *ptr7 = malloc(0x500);
-*ptr7 = 0xDEADBEE7;
-uint32_t *ptr8 = malloc(0x11100);
-*ptr8 = 0xDEADBEE8;
-uint32_t *ptr9 = malloc(0x414);
-*ptr9 = 0xDEADBEE9;
-uint32_t *ptrA = malloc(0xFF000);
-*ptrA = 0xDEADBEEA;
-uint32_t *ptrB = malloc(0x52);
-*ptrB = 0xDEADBEEB;
-uint32_t *ptrC = malloc(0x11);
-*ptrC = 0xDEADBEEC;
-
-printf("Malloc 1 returned: %x, for size 0x500, ptr returned: %x\n", 	ptr1, *ptr1);
-printf("Malloc 2 returned: %x, for size 0x1100, ptr returned: %x\n", 	ptr2, *ptr2);
-printf("Malloc 3 returned: %x, for size 0x400, ptr returned: %x\n",	ptr3, *ptr3);
-printf("Malloc 4 returned: %x, for size 0x3200, ptr returned: %x\n", 	ptr4, *ptr4);
-printf("Malloc 5 returned: %x, for size 0x50, ptr returned: %x\n", 	ptr5, *ptr5);
-printf("Malloc 6 returned: %x, for size 0x10, ptr returned: %x\n", 	ptr6, *ptr6);
-
-printf("Malloc 7 returned: %x, for size 0x500, ptr returned: %x\n", 	ptr7, *ptr7);
-printf("Malloc 8 returned: %x, for size 0x1100, ptr returned: %x\n", 	ptr8, *ptr8);
-printf("Malloc 9 returned: %x, for size 0x400, ptr returned: %x\n",	ptr9, *ptr9);
-printf("Malloc A returned: %x, for size 0x3200, ptr returned: %x\n", 	ptrA, *ptrA);
-printf("Malloc B returned: %x, for size 0x50, ptr returned: %x\n", 	ptrB, *ptrB);
-printf("Malloc C returned: %x, for size 0x10, ptr returned: %x\n", 	ptrC, *ptrC);*/

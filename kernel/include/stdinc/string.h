@@ -1,6 +1,6 @@
-/* Pro-Type Kernel v1.3       */
-/* String functions port	  */
-/* By LegendMythe             */
+/* Pro-Type Kernel v0.2	*/
+/* String manipulation	*/
+/* By LegendMythe	*/
 
 #ifndef STRING_H
 #define STRING_H

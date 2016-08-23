@@ -1,6 +1,6 @@
-/* Pro-Type Kernel v1.3       */
-/* Global Header              */
-/* By LegendMythe             */
+/* Pro-Type Kernel v0.2	*/
+/* Global Header 	*/
+/* By LegendMythe 	*/
 
 #ifndef COMMON_H
 #define COMMON_H
@@ -11,4 +11,3 @@
 
 
 #endif
-

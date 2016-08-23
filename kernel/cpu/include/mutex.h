@@ -1,6 +1,6 @@
-/* Pro-Type Kernel v1.3	*/
-/* Spinlocks v0.1	*/
-/* By LegendMythe	*/
+/* Pro-Type Kernel v0.2		*/
+/* Spinlocks v0.1		*/
+/* By LegendDairy		*/
 
 #ifndef MUTEX_H
 #define MUTEX_H

@@ -1,6 +1,6 @@
-/* Pro-Type Kernel v1.3       */
-/* String functions           */
-/* By LegendMythe             */
+/* Pro-Type Kernel v0.2		*/
+/* String manipulation		*/
+/* By LegendDairy		*/
 
 #include <string.h>
 

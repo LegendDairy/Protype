@@ -39,13 +39,23 @@ This breaks the tedious routine of research, implementation and testing+bugfixes
 
 Repository Overview
 -------------------
-Current realease number: r1,3 codenamed Hydrogen
+Current realease number: v0.2.
+Releases:
+* v0.1: Intial write (codenamed Hydrogen).
+* v0.2: Complete rewrite, added longmode and smp support.
 
-/bin  :   Contains the binaries, i.e. the Floppy image, modules...
-/boot :   Contains Pre-IPL code, i.e. stage 1 of the bootloader
-/ipl  :   Contains the IPL code, i.e. stage 2 of the bootloader
-/kernel:  Contains the actual kernel, mainly in C
+Source map:
+* /bin  :   Contains the binaries, i.e. the Floppy image, modules...
+* /boot :   Contains Pre-IPL code, i.e. stage 1 of the bootloader
+* /ipl  :   Contains the IPL code, i.e. stage 2 of the bootloader
+* /kernel:  Contains the actual kernel, mainly in C
 
+Kernel source code map:
+* /cpu : Contains cpu-specific code (apic)
+* /hardware: Random crap goes here?
+* /memory: Contains all memory managment code.
+* /tm: Contains all the code for tasking support.
+* /video: Contains all vga/video related code.
 
 
 Build Instructions

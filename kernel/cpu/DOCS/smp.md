@@ -48,7 +48,7 @@ sleep(10);
 /* Did the AP boot? */
 if(cpu_count > i)
   return 0;
-  
+
 /* Try again. */
 apic_send_sipi(id, startup);
 sleep(10);

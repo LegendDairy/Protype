@@ -1,6 +1,6 @@
 /* Pro-Type Kernel v1.3		*/
 /* Dynamic Memory Manager 0.1b	*/
-/* By LegendMythe		*/
+/* By LegendDairy		*/
 
 #include <heap.h>
 
@@ -21,7 +21,7 @@ void *malloc(uint64_t sz)
 {
 	//mutex_lock(&heap_lock);
 	header_t *cur_header = (header_t *)heap_start, *prev_header = 0;
-
+	mutex_lock(&heap_lock);
 	while(cur_header)
 	{
 		if(cur_header->allocated == 0 && cur_header->size >= sz)
@@ -31,6 +31,7 @@ void *malloc(uint64_t sz)
 			//mutex_unlock(&heap_lock);
 			void *tmp = cur_header;
 			tmp = (void*)((uint64_t)tmp + (uint64_t)sizeof(header_t));
+			mutex_unlock(&heap_lock);
 			return (void*)tmp;
 		}
 
@@ -60,6 +61,7 @@ void *malloc(uint64_t sz)
 	//mutex_unlock(&heap_lock);
 	void *tmp = cur_header;
 	tmp = (void*)((uint64_t)tmp + (uint64_t)sizeof(header_t));
+	mutex_unlock(&heap_lock);
 	return tmp;
 }
 
@@ -70,7 +72,7 @@ void free(void *p)
 	header_t *header 	= (header_t*)((uint64_t)p - (uint64_t)sizeof(header_t));	// Find the header.
 	header->allocated 	= 0;													// Deallocate the chunk.
 	glue_chunk(header);
-	mutex_unlock(&heap_lock);												// Glue chunks and possibly contract
+	mutex_unlock(&heap_lock);
 }
 
 void expand_heap(uint64_t start, uint64_t len)

@@ -1,6 +1,6 @@
-/* Pro-Type Kernel	v1.3	*/
-/* Virtual Memory	v0.1	*/
-/* By LegendMythe		*/
+/* Pro-Type Kernel v0.2		*/
+/* Virtual Memory v0.1		*/
+/* By LegendDairy		*/
 
 #ifndef VMM_H
 #define VMM_H

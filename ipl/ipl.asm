@@ -1,6 +1,6 @@
 ;Pro-Type Kernel v1.3 ;
 ;IPL v0.25            ;
-;by LegendMythe       ;
+;by LegendDairy        ;
 
 [BITS	16]
 [ORG 0x500]

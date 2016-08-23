@@ -1,6 +1,6 @@
-/* Pro-Type Kernel v1.3	*/
-/* Debug Text Driver	*/
-/* From the Internet	*/
+/* Pro-Type Kernel v0.2		*/
+/* Debug Text Driver		*/
+/* From the Internet		*/
 
 #ifndef TEXT_H
 #define TEXT_H

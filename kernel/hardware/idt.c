@@ -1,6 +1,6 @@
-/* Pro-Type Kernel v1.3		*/
+/* Pro-Type Kernel v0.2		*/
 /* IDT v1.0			*/
-/* By LegendMythe		*/
+/* By LegendDairy		*/
 
 #include <idt.h>
 #include <text.h>

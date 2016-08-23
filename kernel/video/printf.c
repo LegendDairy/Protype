@@ -1,6 +1,6 @@
-/* Pro-Type Kernel v1.3	*/
-/* Print Formatted v0.1	*/
-/* By LegendDairy	*/
+/* Pro-Type Kernel v0.2		*/
+/* Print Formatted v0.1		*/
+/* By LegendDairy		*/
 
 #include <stdio.h>
 #include <mutex.h>

@@ -1,6 +1,6 @@
-/* Pro-Type Kernel v1.3         */
+/* Pro-Type Kernel v0.2		*/
 /* Dynamic Memory Manager 0.1b  */
-/* By LegendMythe               */
+/* By LegendDairy		*/
 
 #ifndef KHEAP_H
 #define KHEAP_H

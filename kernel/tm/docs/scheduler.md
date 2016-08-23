@@ -2,14 +2,16 @@ Scheduler
 =========
 Algorithm
 ---------
-The scheduling algorithm is a simplistic priority based Round Robin. There are multiple 'ready' queues with different priorities. Queues with higher priority are used more often than lower ones by RR scheduler tot select a new thread. For example imagine 3 threads A,B and C where A had the highest priority,  B has a normal priority and C the lowest. Then these threads will be executed in the following order:
+The scheduling algorithm is a multilevel queue and each queue uses Round Robin to select the next thread. There are multiple 'ready' queues with different priorities. Queues with higher priority are used more often than lower ones by RR scheduler to select a new thread. For example imagine 3 threads A,B and C where A has the highest priority,  B has a normal priority and C the lowest. Then these threads will be executed in the following order:
       `A-B-A-B-A-C`
-So every odd quantum a highest priority thread will be executed and every second and 6th quantum a medium priority and finally every 4th tick a lowest priority
+So every odd quantum a highest priority thread will be executed and every second and 4th quantum a medium priority and finally every 6th quantum a lowest priority thread.
 
-* current_thread:				`A-C-A-B-A-B- A-C-A-B-A-B- A-C-A-B-A-B`
+* current_thread:				`A-C-A-B-A-B-A-C-A-B-A-B-A-C-A-B-A-B`
 * current_tick	:				`1-2-3-4-5-6...`
 
-In order to prevent race-conditions on SMP systems we must lock to queues before accessing them. This however can cause a big overhead inside the scheduler if only one spinlock is used. In a system with a large number of cpus this will create a very large overhead. I however haven't found a better method. Something that we could do is to have queues per logical cpu, and one low-priority process that inspects these queues to evenly distribute all the current running threads over the available cores.
+This is what I have implemented right now, however it scales horribly on smp because there are only 3 locks (so a high chance of lock contention on big systems), and there is no 'pinning' of threads to a specific cpu. In order to optimize this for SMP systems, I was thinking about using the 1 scheduler per logical cpu method, with each scheduler having its own set of queues and locks. There would then be one thread in charge of load balancing the threads across the different schedulers.The schedulers can only have lock contention when a thread is being added to or removed from one of its queues that he is trying to access, because of load balancing or because a thread was started, blocked... When a thread is blocked for some reason, it would be put on the blocked list of the scheduler it was using. When it's time to start the thread again, it will be awoken on the same cpu. The load balancing thread might later try to reappoint it to an other scheduler.
+
+I could take it a step further and remove locks completely. When a thread is to be added or removed from a scheduler, an IPI is send to the logical cpu that holds that thread. It then disables interrupts to make sure its queues wont be accessed and then adds or removes the threads. However IPIs have quiet a big overhead (e.g. pipeline flush), but locking the bus every time the scheduler is called isn't great for performance either especially on large systems. Also note that if a thread that is being executed on a cpu x, tries to stop/start a thread that is also on cpu x, it wont have to send an IPI, just temporarily disable interrupts. So a thread blocking itself won't cause a performance hit.
 
 Context switch
 --------------
@@ -38,7 +40,7 @@ Pseudo Code
 
 ```asm
 timer_handler_asm:
-	(Push all regs)	
+	(Push all regs)
 	(Push data selectors)
 	mov eax, cr3
 	push eax

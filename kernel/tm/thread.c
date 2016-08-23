@@ -1,10 +1,11 @@
-/* Pro-Type Kernel v1.3		*/
-/* Threads v0.1			*/
-/* By LegendMythe		*/
+/* Pro-Type Kernel v0.2		*/
+/* Thread Manager v0.1		*/
+/* By LegendDairy		*/
 
 #include <thread.h>
 #include <scheduler.h>
 #include <acpi.h>
+#include <apic.h>
 #include <heap.h>
 
 uint64_t tm_current_thid 	= 0;
@@ -40,7 +41,10 @@ uint64_t tm_thread_create(fn_t fn, uint64_t argn, char *argv[], uint64_t PLM4T, 
 	*--stack 		= (uint64_t)fn; 				// RIP
 
 	//memsetq(stack, 0, 12);						// Set gprs to 0
-	stack 			-= 12;						// Make room for the GPR on the stack.
+	stack 			-= 2;
+	*--stack		= 0; // TSPR
+	stack 			-= 10;						// Make room for the GPR on the stack.
+						// Make room for the GPR on the stack.
 	*--stack 		= 0;						// rbp
 	*--stack 		= (uint64_t)argn;				// rdi
 	*--stack 		= (uint64_t)argv;				// rsi
@@ -165,7 +169,9 @@ thread_t *tm_thread_create_idle_thread(void)
 	*--stack 		= (uint64_t)&tm_idle_thread_fn; 				// RIP
 
 	//memsetq(stack, 0, 12);						// Set gprs to 0
-	stack 			-= 12;						// Make room for the GPR on the stack.
+	stack 			-= 2;
+	*--stack		= 0; // TSPR
+	stack 			-= 10;
 	*--stack 		= 0;						// rbp
 	*--stack 		= (uint64_t)0;				// rdi
 	*--stack 		= (uint64_t)0;				// rsi

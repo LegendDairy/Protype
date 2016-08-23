@@ -1,4 +1,4 @@
-;Pro-Type Kernel v1.3  ;
+;Pro-Type Kernel v0.2  ;
 ;Interrupts v1.2       ;
 ;by LegendMythe        ;
 
@@ -49,9 +49,12 @@ isr_common_stub:
     [GLOBAL yield]
     yield:
       cli
-      push rax                           	; Dissable interrupts
+      push rax
+      push rbx
       mov eax, [apic_base]              	; Apic Base in C-code
-      mov dword [eax + 0x80	], 0xFF		; Enable soft ints
+      xor rbx, rbx
+      mov ebx, dword [apic_base + 0x80]
+      mov dword [eax + 0x80	], 0xFF		; Dissable soft ints
       push rbx
       push rcx
       push rdx
@@ -106,7 +109,8 @@ isr_common_stub:
       pop rbx
       xor rax, rax
       mov eax, [apic_base]			; Apic Base in C-code
-      mov dword [eax + 0x80	], 0x00		; Enable soft ints
+      mov dword [eax + 0x80	], ebx		; Enable soft ints
+      pop rbx
       pop rax
       iretq
 
@@ -116,8 +120,11 @@ isr_common_stub:
 [EXTERN apic_base]
 apic_timer:
   cli
-  push rax                           	; Dissable interrupts
+  push rax
+  push rbx
   mov eax, [apic_base]              	; Apic Base in C-code
+  xor rbx, rbx
+  mov ebx, dword [apic_base + 0x80]
   mov dword [eax + 0x80	], 0xFF		; Dissable soft ints
   push rbx
   push rcx
@@ -141,7 +148,6 @@ apic_timer:
   mov rax, cr3
   push rax
 
-
   mov rdi, rsp
   cld
   call tm_schedule           ; Call C function
@@ -155,7 +161,6 @@ apic_timer:
   mov ds, ax
   mov es, ax
   mov fs, ax
-
 
   pop rsi
   pop rdi
@@ -174,7 +179,8 @@ apic_timer:
   xor rax, rax
   mov eax, [apic_base]			; Apic Base in C-code
   mov dword [eax + apic_eoi], 0x00		; Dissable software for this cpu
-  mov dword [eax + 0x80	], 0x00		; Enable soft ints
+  mov dword [eax + 0x80	], dword ebx		; Enable soft ints
+  pop rbx
   pop rax
   iretq                             	; Return to code
 
@@ -183,9 +189,12 @@ apic_timer:
 [EXTERN apic_base]
 pit_routine:
 cli
-push rax                           	; Dissable interrupts
+push rax
+push rbx
 mov eax, [apic_base]              	; Apic Base in C-code
-mov dword [eax + 0x80	], 0xFF		; Enable soft ints
+xor rbx, rbx
+mov ebx, dword [apic_base + 0x80]
+mov dword [eax + 0x80	], 0xFF		; Dissable soft ints
 push rbx
 push rcx
 push rdx
@@ -221,8 +230,9 @@ pop rbx
 
 
 mov eax, [apic_base]              	; Apic Base in C-code
-mov dword [eax + 0x80], 0x00		; Enable soft ints
+mov dword [eax + 0x80], ebx		; Enable soft ints
 mov dword [eax + apic_eoi],  0    ; Send EOI to LAPIC
+pop rbx
 pop rax
 
 iretq                             ; Return to code

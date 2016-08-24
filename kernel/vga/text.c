@@ -161,7 +161,6 @@ void DebugSetTextColour(uint8_t foreground, uint8_t background)
 }
 
 /** Prints a hexadecimal on the screen. **/
-/** TODO make it 64 bit capable... */
 void DebugPutHex(uint64_t n)
 {
 	int64_t tmp;
@@ -171,7 +170,7 @@ void DebugPutHex(uint64_t n)
 	char noZeroes = 1;
 
 	int i;
-	for (i = 28; i > 0; i -= 4)
+	for (i = 56; i > 0; i -= 4)
 	{
 		tmp = (n >> i) & 0xF;
 		if (tmp == 0 && noZeroes != 0)

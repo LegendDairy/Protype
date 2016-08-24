@@ -16,11 +16,6 @@ uint64_t pre_pmm_entries			= 0;
 /* Current TODO: 				*/
 /* -mcmodel=large, maybe alternatives?		*/
 /* Better testing maybe. 			*/
-/* Mutex the shit out of alloc/free 		*/
-
-/* Paging is enabled before the pmm, so we must make sure every address we access is mapped. 	*/
-/* The Ipl identity-maps the first 4MB of the memory for the kernel binary. 			*/
-/* The pre_pmm and pre_vmm map the memory for the heap and stack dynamically 			*/
 
 void setup_pmm(ipl_info_t *info)
 {
@@ -54,6 +49,7 @@ void setup_pmm(ipl_info_t *info)
 
 	i 	= 0;
 	tmp 	= info->mmap;
+	
 	for (i=0; i < info->mmap_entries; i++)
 	{
 		if (tmp->type == 1)
@@ -93,12 +89,14 @@ void setup_pmm(ipl_info_t *info)
 			{
 				if (tmp->size >= end)
 				{
-					tmp->size -= end;								// Split the chunk
+					/* Split the chunk */
+					tmp->size -= end;
 					tmp->base = end;
 				}
 				else
 				{
-					tmp->base = 0;									// Erase/Allocate entry
+					/* Erase/Allocate entry */
+					tmp->base = 0;
 					tmp->size = 0;
 				}
 			}
@@ -158,6 +156,7 @@ void setup_pmm(ipl_info_t *info)
 	/* Setup PMM Bitmap and stack */
 	i	= info->mmap_entries;
 	tmp	= info->mmap;
+	
 	while (i)
 	{
 		if (tmp->type == 1)

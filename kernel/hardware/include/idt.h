@@ -120,4 +120,6 @@ extern void apic_spurious();
 extern void flush_idt(uint32_t);
 #endif
 
+extern idt_ptr_t idt_ptr;
+
 #endif

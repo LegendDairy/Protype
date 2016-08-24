@@ -54,13 +54,19 @@ uint64_t scheduler_c::schedule(uint64_t rsp)
 	{
 		/* Save current possition in the stack of the thread. */
 		current_thread->rsp = rsp;
-
+		/*if(current_thread->next)
+		{
+			current_thread = current_thread->next;
+			return current_thread->rsp;
+		}*/
 		/* Test if this thread needs to be stopped. */
 		if(current_thread->flags & THREAD_FLAG_STOPPED)
 		{
 			load--;
 			current_thread = 0;
 		}
+
+
 
 	}
 	else
@@ -91,7 +97,7 @@ uint64_t scheduler_c::schedule(uint64_t rsp)
 	else
 	releaseLock(&highest_priority_lock);
 	acquireLock(&lowest_priority_lock);
-	if(lowest_priority_queue  && current_tick%6)
+	if(lowest_priority_queue  && !(current_tick%6))
 	{
 		/* Change current thread and change the begining of the appropriate list. */
 		thread_t *tmp 				= current_thread;
@@ -255,23 +261,20 @@ uint32_t scheduler_c::get_id(void)
 /** Stops excecution of current running thread. **/
 void tm_sched_kill_current_thread(void)
 {
-	register scheduler_c *scheduler = system_c::get_current_scheduler();
-	scheduler->stop_current_thread();
+	system_c::get_current_scheduler()->stop_current_thread();
 }
 
 /** Gets called by the timer routine to swap the current running thread with a new one from the queue. **/
 uint64_t tm_schedule(uint64_t rsp)
 {
-	register scheduler_c *scheduler = system_c::get_current_scheduler();
-	return scheduler->schedule(rsp);
+	return system_c::get_current_scheduler()->schedule(rsp);
 }
 
 /* Adds a thread to the cpu with the lowest load. */
 uint32_t tm_sched_add_to_queue(thread_t *thread)
 {
-	system_c *system = system_c::get_instance();
-	cpu_c *iterator = system->get_cpu_list();
-	cpu_c *lowest = iterator;
+	register cpu_c *iterator = system_c::get_cpu_list();
+	register cpu_c *lowest = iterator;
 
 	while(iterator)
 	{
@@ -282,6 +285,7 @@ uint32_t tm_sched_add_to_queue(thread_t *thread)
 	}
 
 	lowest->scheduler->add_to_queue(thread);
+
 	return lowest->get_id();
 }
 
@@ -293,8 +297,7 @@ void tm_schedule_sleep(uint64_t millis)
 	lapic_write(0x80, 0xFF);
 	acquireLock(&sleep_lock);
 
-	system_c *system = system_c::get_instance();
-	register scheduler_c *sched = system->get_current_scheduler();
+	register scheduler_c *sched = system_c::get_current_scheduler();
 
 	if(sched_sleep_queue)
 	{

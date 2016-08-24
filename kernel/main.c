@@ -28,7 +28,7 @@ int thread1(uint64_t argn, char **argv)
 	while(1)
 	{
 		printf("a");
-		tm_schedule_sleep(100);
+		tm_schedule_sleep(10);
 	}
 
 	return 0xDEADBEEF;
@@ -39,7 +39,7 @@ int thread2(uint64_t argn, char **argv)
 	while(1)
 	{
 		printf("b");
-		tm_schedule_sleep(100);
+		tm_schedule_sleep(10);
 	}
 
 	return 0xDEADBEEF;
@@ -50,7 +50,7 @@ int thread3(uint64_t argn, char **argv)
 	while(1)
 	{
 		printf("c");
-		tm_schedule_sleep(100);
+		tm_schedule_sleep(10);
 	}
 
 	return 0xDEADBEEF;
@@ -66,7 +66,7 @@ int main(ipl_info_t *info)
 	init_idt();
 	setup_pmm(info);
 	setup_vmm();
-	system_c::get_instance();
+	system_c::setup();
 
 	vmm_map_frame(0x90000000, pmm_alloc_page(), 0x3);
 	vmm_map_frame(0x90001000, pmm_alloc_page(), 0x3);
@@ -82,20 +82,11 @@ int main(ipl_info_t *info)
 	vmm_map_frame(0x9000B000, pmm_alloc_page(), 0x3);
 
 	tm_thread_create(&thread1, 0, 0, 0x10000, 1, 30, "Thread 1", 1, (uint64_t *)0x90000F00, 0x10, 0x8, 0x10);
-	tm_thread_create(&thread2, 0, 0, 0x10000, 2, 30, "Thread 2", 1, (uint64_t *)0x90001F00, 0x10, 0x8, 0x10);
-	tm_thread_create(&thread3, 0, 0, 0x10000, 3, 30, "Thread 3", 1, (uint64_t *)0x90002F00, 0x10, 0x8, 0x10);
-	tm_thread_create(&thread1, 0, 0, 0x10000, 1, 30, "Thread 1", 1, (uint64_t *)0x90003F00, 0x10, 0x8, 0x10);
-	tm_thread_create(&thread2, 0, 0, 0x10000, 2, 30, "Thread 2", 1, (uint64_t *)0x90004F00, 0x10, 0x8, 0x10);
-	tm_thread_create(&thread3, 0, 0, 0x10000, 3, 30, "Thread 3", 1, (uint64_t *)0x90005F00, 0x10, 0x8, 0x10);
-	tm_thread_create(&thread1, 0, 0, 0x10000, 1, 30, "Thread 1", 1, (uint64_t *)0x90006F00, 0x10, 0x8, 0x10);
-	tm_thread_create(&thread2, 0, 0, 0x10000, 2, 30, "Thread 2", 1, (uint64_t *)0x90007F00, 0x10, 0x8, 0x10);
-	tm_thread_create(&thread3, 0, 0, 0x10000, 3, 30, "Thread 3", 1, (uint64_t *)0x90008F00, 0x10, 0x8, 0x10);
-	tm_thread_create(&thread1, 0, 0, 0x10000, 1, 30, "Thread 1", 1, (uint64_t *)0x90009F00, 0x10, 0x8, 0x10);
-	tm_thread_create(&thread2, 0, 0, 0x10000, 2, 30, "Thread 2", 1, (uint64_t *)0x9000AF00, 0x10, 0x8, 0x10);
-	tm_thread_create(&thread3, 0, 0, 0x10000, 3, 30, "Thread 3", 1, (uint64_t *)0x9000BF00, 0x10, 0x8, 0x10);
+	tm_thread_create(&thread2, 0, 0, 0x10000, 1, 30, "Thread 2", 1, (uint64_t *)0x90001F00, 0x10, 0x8, 0x10);
+	tm_thread_create(&thread3, 0, 0, 0x10000, 2, 30, "Thread 3", 1, (uint64_t *)0x90002F00, 0x10, 0x8, 0x10);
 
 	asm volatile("sti");
-	//tm_sched_kill_current_thread();
+	tm_sched_kill_current_thread();
 	while(1);
 
 	return 0;

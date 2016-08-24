@@ -9,6 +9,7 @@
 #include <cpu.hpp>
 #include <acpi.h>
 
+#define APB_BASE 0x50000
 
 class system_c
 {
@@ -37,7 +38,7 @@ public:
 	{
 		lapic[r / 4] = (uint32_t)val;
 	}
-	static system_c *get_instance(void);
+	static system_c *setup(void);
 	static uint32_t get_active_cpus(void);
 	static cpu_c *get_current_cpu(void);
 	static scheduler_c *get_current_scheduler(void);

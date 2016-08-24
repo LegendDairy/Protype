@@ -9,21 +9,18 @@
 #include <acpi.h>
 #include <idt.h>
 
-#define APB_BASE 0x50000
-extern idt_ptr_t idt_ptr;
+uint32_t *system_c::lapic	= 0;
+bool system_c::instance_flag 	= 0;
+cpu_c *system_c::cpu_list	= 0;
+uint32_t system_c::active_cpus 	= 1;
+uint32_t system_c::bootstrap	= 0;
+uint64_t system_c::bus_freq	= 0;
+io_apic_t *system_c::io_apic	= 0;
+uint32_t system_c::flags	= 0;
+system_c* system_c::system 	= NULL;
+uint8_t system_c::irq_map[16];
 
-uint32_t *system_c::lapic;
-bool system_c::instance_flag = 0;
-cpu_c *system_c::cpu_list;
-uint32_t system_c::active_cpus = 1;
-uint32_t system_c::bootstrap;
-uint64_t system_c::bus_freq;
-io_apic_t *system_c::io_apic;					// Linked list for available IO APICs.
-uint8_t system_c::irq_map[16];					// ISA Overide f.e. pit = irq_map[0]
-uint32_t system_c::flags;
-system_c* system_c::system = NULL;
-
-system_c* system_c::get_instance()
+system_c* system_c::setup()
 {
     if(!instance_flag)
     {

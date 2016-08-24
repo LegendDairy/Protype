@@ -146,8 +146,7 @@ void isr_handler(regs_t * regs)
 		DebugPuts(exception_messages[regs->int_no]);
 		DebugPuts(": Errorcode: ");
 		DebugPutHex(regs->err_code);
-		DebugPuts(" ,rip: ");
-		DebugPutHex(regs->rip);
+		printf(" ,rip: %x", regs->rip);
 		DebugPuts(" Rax: ");
 		DebugPutHex(regs->rax);
 		DebugPuts(" RSP: ");

@@ -34,6 +34,9 @@ ebrFileSystem:          db "FAT12   "   ;
 %include "fat12.inc"
 %include "print.inc"
 
+%define IPL_CODE_SEG	0x50
+%define IPL_CODE_BASE	0x500
+
 loader:           		; Loads stage2.
 cli				; Disable interrupts.
 mov ax, 0x07C0			; Set up segments.
@@ -41,19 +44,19 @@ mov ds, ax        		;
 mov es, ax        		;
 mov fs, ax        		;
 mov gs, ax        		;
-mov ax, 0x0000			; Set the stack 0xF000-0xFFFF.
-mov ss, ax        		;
-mov sp, 0xFFFF    		;
+xor ax, ax			; ax = 0
+mov ss, ax        		; Set Stack segment
+mov sp, 0xFFFF    		; Set stack 0x00:0xFFFF
 sti               		; Restore interrupts.
 
-xor ah, ah
-mov al, 0x3
-int 0x10
+xor ah, ah			; Clear Screen
+mov al, 0x3			; Function 0x3
+int 0x10			; Call BIOS
 
 mov si, MsgBoot                 ; Print a boot message.
 call Print                      ;
 
-mov ax, 0x0050                  ; Load stage 2 at 0x50:00
+mov ax, IPL_CODE_SEG                  ; Load stage 2 at 0x50:0000
 xor bx, bx                      ; Erase bx
 mov si, Stage2                  ; Argument: Filename
 call LoadFile                   ; Load KRNLDR.SYS
@@ -61,9 +64,9 @@ or ax, ax                       ; Test return value
 jnz failure                     ; If ax=!0: Fail
 
 .DONE:
-push WORD 0x0050
-push WORD 0x0000
-retf
+push WORD IPL_CODE_SEG		; IPL location
+push WORD 0x0000		; Prepare far jump
+retf				; Load IPL
 
 failure:
 mov si, MsgError

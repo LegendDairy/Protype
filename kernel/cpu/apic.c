@@ -63,23 +63,19 @@ uint8_t apic_check(void)
 
 uint32_t lapic_read(uint32_t r)
 {
-	system_c *system = system_c::get_instance();
-	return ((uint32_t)(system->lapic[r / 4]));
+	return ((uint32_t)(system_c::lapic[r / 4]));
 }
 
 void lapic_write(uint32_t r, uint32_t val)
 {
-	system_c *system = system_c::get_instance();
-	system->lapic[r / 4] = (uint32_t)val;
+	system_c::lapic[r / 4] = (uint32_t)val;
 }
 
 void setup_apic(void)
 {
-	printf("Apic check returened: %d\n", apic_check());
 	/* Parse the multiprocessor table. */
 	/* Address label for the asm code. */
-	system_c *system = system_c::get_instance();
-	apic_base = (uint32_t)((uint64_t) system->lapic);
+	apic_base = (uint32_t)((uint64_t)system_c::lapic);
 	/* Map the local apic to a virtual address. */
 
         /* TODO: */
@@ -113,8 +109,8 @@ void setup_apic(void)
 	lapic_write(apic_reg_eoi, 0x00);				// Make sure no interrupts are left
 
 	/* Set up IO APIC for the PIT (POC) */
-	volatile uint32_t * volatile ioapic_reg 	= (uint32_t *)system->get_ioapic_list()->address;
- 	volatile uint32_t * volatile ioapic_io 		= (uint32_t *)(system->get_ioapic_list()->address+0x4);
+	volatile uint32_t * volatile ioapic_reg 	= (uint32_t *)system_c::get_ioapic_list()->address;
+ 	volatile uint32_t * volatile ioapic_io 		= (uint32_t *)(system_c::get_ioapic_list()->address+0x4);
 
 	vmm_map_frame((uint64_t)ioapic_reg, (uint64_t)ioapic_reg, 0x3); 			// Identity map io apic address
  	*(uint32_t*)ioapic_reg 	= (uint32_t)0x14;
@@ -164,8 +160,8 @@ void apic_ap_setup(void)
 	id = id >> 24;
 
 	printf("[SMP]: CPU %x is booting...\n", id);
-	system_c *system = system_c::get_instance();
-	lapic_write(apic_init_count, system->get_bus_freq()/4*1000*10);       	// Fire every micro second
+
+	lapic_write(apic_init_count, system_c::get_bus_freq()/4*1000*10);       	// Fire every micro second
 	lapic_write(apic_lvt_timer_reg, (uint32_t)(0x20 | apic_timer_period)); 	//int 48, periodic
 }
 void setup_lapic_timer(void)
@@ -199,8 +195,8 @@ void setup_lapic_timer(void)
 	printf("[APIC]: Bus frequency:  %dMHz\n", freq);
 	if(!freq)
 		freq = 10;
-	system_c *system = system_c::get_instance();
-	system->set_bus_freq(freq);
+
+	system_c::set_bus_freq(freq);
 
 	/* Setup intial count */
 	lapic_write(apic_init_count, (freq)/4 * 1000*10);                                    // Fire every micro second

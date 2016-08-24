@@ -14,15 +14,15 @@ jmp main
 %include "print.inc"
 %include "e820.inc"
 
-%define kernel_buffer      0x10000     	; Load kernel at 1mb
-%define PML4T              0x10000      ; Location of PML4 table
-%define image_buffer       0x10000      ; 256KB for file
-%define module_buffer      0x50000      ; 192KB for modules
-%define image_seg          0x1000       ; Segment (es)
-%define module_seg         0x5000       ; segment for module buffer
-%define BytesPerSector     512          ; Floppy=512
-%define memorymap          0x20000
-%define mmap_seg           0x2000
+%define PML4T              	0x10000      	; Location of PML4 table
+%define module_buffer      	0x50000      	; 192KB for modules
+%define module_seg         	0x5000       	; segment for module buffer
+%define image_buffer       	0x10000      	; 256KB for file
+%define image_seg          	0x1000       	; Segment (es)
+%define BytesPerSector     	512          	; Floppy=512
+%define memorymap          	0x7F000		; Memory map buffer
+%define mmap_seg           	0x7F00
+%define kstack			0xFFFF		; IPL and Kernel stack (top)
 
 main:
   xor ax, ax                  		; Erase ax
@@ -31,7 +31,7 @@ main:
   mov fs, ax
   mov gs, ax
   mov ss, ax
-  mov sp, 0xFFF0			; Stack from 0x7E00-0xFFF0
+  mov sp, kstack			; Stack from 0x7E00-0xFFF0
 
   mov si, MsgIPL              		; IPL Boot Message
   call Print                  		; Print Message
@@ -81,13 +81,13 @@ pm:
   mov gs, ax
   mov ss, ax                          	; Set up Stack descriptor
 
-  mov eax, DWORD [0x10000 + 0x20]     	; e_phoff
-  mov ebp, DWORD [0x10000 + 0x18]     	; e_entry
+  mov eax, DWORD [image_buffer + 0x20]     	; e_phoff
+  mov ebp, DWORD [image_buffer + 0x18]     	; e_entry
   xor ecx, ecx
-  mov cx, WORD [0x10000 + 0x38]       	; e_phnum
+  mov cx, WORD [image_buffer + 0x38]       	; e_phnum
   xor edx, edx
-  mov dx, WORD [0x10000 + 0x36]       	; e_phentsize
-  add eax, 0x10000                    	; Set base
+  mov dx, WORD [image_buffer + 0x36]       	; e_phentsize
+  add eax, image_buffer                    	; Set base
 
 load_kernel:
   .loop:                              	; Loop through headers
@@ -99,7 +99,7 @@ load_kernel:
     jne .skip                         	; Not loadable?=>Not interested!
 
     mov esi, [eax + 0x08]             	; p_offset
-    add esi, 0x10000                  	; address of section
+    add esi, image_buffer                  	; address of section
     mov edi, [eax + 0x10]             	; p_vaddr
     mov ecx, [eax + 0x20]             	; p_filesz
     cld

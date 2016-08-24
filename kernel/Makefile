@@ -23,7 +23,7 @@ all: $(SOURCES) link
 
 
 link:
-	x86_64-elf-g++ -T link.ld -o ~/Protype/bin/kernel.sys -ffreestanding -O2 -nostdlib  -mcmodel=large  -z max-page-size=0x1000 $(SOURCES)
+	x86_64-elf-g++ -T link.ld -o ~/Protype/bin/kernel.sys -ffreestanding -O2 -nostdlib  -mcmodel=large -z max-page-size=0x1000 $(SOURCES)
 
 clean:
 	-rm $(SOURCES)

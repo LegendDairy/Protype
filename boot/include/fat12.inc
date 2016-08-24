@@ -3,7 +3,9 @@
 
 [BITS 16]
 
-%include "floppy.inc"		
+%include "floppy.inc"
+
+%define FAT_SCRAP_MEM	0x4500
 
 ClusterLBA:                           ; Converts a clusternumber to a LBA
   sub ax, 0x0002                      ; Zero base cluster number.
@@ -33,7 +35,7 @@ LoadFile:
   call ReadFloppy                     ; Read Root Directory
   mov cx, WORD [bpbRootEntries]       ; Set up loop counter
   mov di, 0x0200                      ; Locate first root entry en ram
-  
+
 .loop:
   pop si                              ; Load Filename
   push cx                             ; Save counter for now
@@ -50,7 +52,7 @@ LoadFile:
   ret                                 ; return(1);
 
 LoadFAT:
-  add sp, 4			                      ; Fix the stack
+  add sp, 4			      ; Fix the stack
   mov dx, WORD [di + 0x001A]          ; First cluster
   mov WORD [cluster], dx              ; Save for later
   xor ax, ax                          ; Erase ax
@@ -67,7 +69,7 @@ LoadFAT:
   mov es, ax                          ; Set the right segment
 
 
-LOAD_IMAGE:                            
+LOAD_IMAGE:
   mov ax, WORD [cluster]              ; Load clusternumber
   call ClusterLBA                     ; Convert Cluster to address
   xor cx, cx                          ; Erase ax
@@ -89,11 +91,11 @@ LOAD_IMAGE:
   .EVEN_CLUSTER:                      ; If even only the low bits
     and dx, 0000111111111111b         ; Take low twelve bits (start at 0=even)
     jmp .DONE                         ; Jump over odd bit code
-         
+
   .ODD_CLUSTER:                       ; If odd only the high 12 bits
     shr dx, 0x0004                    ; Take high twelve bits
 
-.DONE:                                 
+.DONE:
   mov WORD [cluster], dx              ; Save real 12bit cluster
   cmp dx, 0x0FF0                      ; End of file?
   jb LOAD_IMAGE                       ; Nope, continue...

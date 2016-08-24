@@ -79,8 +79,8 @@ void setup_apic(void)
 	lapic_write(apic_reg_eoi, 0x00);				// Make sure no interrupts are left
 
 	/* Set up IO APIC for the PIT (POC) */
-	volatile uint32_t *ioapic_reg 	= (uint32_t *)system_c::get_ioapic_list()->address;
- 	volatile uint32_t *ioapic_io 	= (uint32_t *)(system_c::get_ioapic_list()->address+0x4);
+	volatile uint32_t * volatile ioapic_reg	= (uint32_t volatile *)system_c::get_ioapic_list()->address;
+ 	volatile uint32_t * volatile ioapic_io 	= (uint32_t volatile *)(system_c::get_ioapic_list()->address+0x4);
 
 	/* Identity map io apic address */
 	vmm_map_frame((uint64_t)ioapic_reg, (uint64_t)ioapic_reg, 0x3);

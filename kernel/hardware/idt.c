@@ -167,7 +167,8 @@ void isr_handler(regs_t * regs)
 		DebugPutHex(regs->rdi);
 		DebugPuts(" ,RSI: ");
 		DebugPutHex(regs->rsi);
-		if(regs-int_no == 0xe)
+		
+		if(regs->int_no == 0xe)
 		{
 			uint64_t faulting_address;
 			asm volatile("mov %%cr2, %0" : "=r" (faulting_address));

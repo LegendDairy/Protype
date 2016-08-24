@@ -11,15 +11,11 @@
 #include<apic.h>
 #include<thread.h>
 
-/* Typedefinitions of structures for the ACPI headers. */
-typedef struct RSDT_t RSDT_t;
-typedef struct ACPISDTHeader_t ACPISDTHeader_t;
-
 /** Finds the Root System Descriptor Table of the ACPI headers.			**/
-RSDT_t *find_rsdt(void);
+struct RSDT_t *find_rsdt(void);
 
 /** Finds a specific ACPI Table Header. Arg1: the rsdt, Arg2: signature.	**/
-ACPISDTHeader_t *find_acpi_header(RSDT_t *root, const char *signature);
+struct ACPISDTHeader_t *find_acpi_header(struct RSDT_t *root, const char *signature);
 
 /* MADT Types */
 #define ACPI_MADT_PROC						0
@@ -38,7 +34,7 @@ ACPISDTHeader_t *find_acpi_header(RSDT_t *root, const char *signature);
 #define ACPI_MADT_FLAG_PCAT_COMPAT				0x1
 
 /* Root System Descriptor table pointer */
-typedef struct
+typedef struct RSDP_t
 {
 	char Signature[8];
 	uint8_t Checksum;
@@ -48,7 +44,7 @@ typedef struct
 } __attribute__((packed)) RSDP_t;
 
 /* General ACPI Descriptor Table header */
-typedef struct
+typedef struct ACPISDTHeader_t
 {
 	char Signature[4];
 	uint32_t Length;
@@ -62,7 +58,7 @@ typedef struct
 }__attribute__((packed))  ACPISDTHeader_t;
 
 /* Root System Descriptor Table Header */
-typedef struct
+typedef struct RSDT_t
 {
 	char Signature[4];
 	uint32_t Length;

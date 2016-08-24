@@ -70,6 +70,7 @@ uint64_t tm_thread_create(fn_t fn, uint64_t argn, char *argv[], uint64_t PLM4T, 
 	return entry->thid;
 }
 
+/** Searches the not ready queue for a thread with the given thid. 			**/
 uint64_t tm_thread_start(uint64_t thid)
 {
 	thread_t *iterator 	= not_ready_queue;
@@ -124,7 +125,7 @@ uint64_t tm_thread_get_current_thread_thid(void)
 	return curr->thid;
 }
 
-/* Thread exist routine. */
+/** Thread exist routine. 								**/
 void thread_exit(void)
 {
 	uint64_t val;
@@ -135,7 +136,7 @@ void thread_exit(void)
 	tm_sched_kill_current_thread();
 }
 
-/* Creates an idle thread, one idle thread is required per logical cpu. */
+/** Creates an idle thread, one idle thread is required per logical cpu. 		**/
 thread_t *tm_thread_create_idle_thread(void)
 {
 	/* Create and initialise an entry thread structure. */
@@ -152,29 +153,28 @@ thread_t *tm_thread_create_idle_thread(void)
 
 	/* Prepare the thread stack. Set the intial register values. */
 	*--stack		= (uint64_t)&thread_exit;
-	*--stack 		= (uint64_t)0x10;					// Stack segment selector
+	*--stack 		= (uint64_t)0x10;			// Stack segment selector
 	uint64_t usrrsp 	= (uint64_t)stack + 8;
-	*--stack 		= (uint64_t)((uint64_t)usrrsp);			// Pointer to stack
-	*--stack 		= (uint64_t)0x200; 				// Interrupts enabled
-	*--stack 		= (uint64_t)0x08; 				// Code segment selector
-	*--stack 		= (uint64_t)&tm_idle_thread_fn; 				// RIP
+	*--stack 		= (uint64_t)((uint64_t)usrrsp);		// Pointer to stack
+	*--stack 		= (uint64_t)0x200; 			// Interrupts enabled
+	*--stack 		= (uint64_t)0x08; 			// Code segment selector
+	*--stack 		= (uint64_t)&tm_idle_thread_fn; 	// RIP
 
-	//memsetq(stack, 0, 12);						// Set gprs to 0
 	stack 			-= 2;
-	*--stack		= 0; // TSPR
+	*--stack		= 0; 			// TSPR
 	stack 			-= 10;
-	*--stack 		= 0;						// rbp
-	*--stack 		= (uint64_t)0;				// rdi
-	*--stack 		= (uint64_t)0;				// rsi
+	*--stack 		= 0;			// rbp
+	*--stack 		= (uint64_t)0;		// rdi
+	*--stack 		= (uint64_t)0;		// rsi
 
-	*--stack 		= (uint64_t)0x10;					// Setup data segment
-	*--stack 		= (uint64_t)0x10000;				// Setup PLM4T for this thread
-	idle->rsp		= (uint64_t)stack;				// pointer to the stack
+	*--stack 		= (uint64_t)0x10;	// Setup data segment
+	*--stack 		= (uint64_t)0x10000;	// Setup PLM4T for this thread
+	idle->rsp		= (uint64_t)stack;	// pointer to the stack
 
 	return idle;
 }
 
-/* The function that will be executed if the current logical cpu is idling. */
+/** The function that will be executed if the current logical cpu is idling. 		**/
 void tm_idle_thread_fn(void)
 {
 	while(1)

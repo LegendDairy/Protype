@@ -1,5 +1,5 @@
 /* Pro-Type Kernel v0.2		*/
-/* System Functions v0.2	*/
+/* System Functions v0.1	*/
 /* By LegendDairy		*/
 
 #include <system.hpp>
@@ -20,6 +20,7 @@ uint32_t system_c::flags	= 0;
 system_c* system_c::system 	= NULL;
 uint8_t system_c::irq_map[16];
 
+/** Initialises the system: Browse MADT and boot APs and setup schedulers. 	**/
 system_c* system_c::setup()
 {
     if(!instance_flag)
@@ -34,27 +35,32 @@ system_c* system_c::setup()
     }
 }
 
+/** Get current working CPU.							**/
 cpu_c *system_c::get_current_cpu(void)
 {
 	cpu_c *iterator = cpu_list;
-	uint32_t id = apic_get_id();
+	uint32_t id = (uint32_t)(lapic[0x20/4] >> 24);
 
 	while (iterator && iterator->get_id() != id)
 		iterator = iterator->next;
 
 	return iterator;
 }
+
+/** Get the first entry of the CPU linked List	.				**/
 cpu_c *system_c::get_cpu_list(void)
 {
 	return cpu_list;
 }
 
+/** Get current scheduler.							**/
 scheduler_c *system_c::get_current_scheduler(void)
 {
 	cpu_c *curr = get_current_cpu();
 	return curr->scheduler;
 }
 
+/** Get current thread structure from the active scheduler.			**/
 thread_t * system_c::get_current_thread(void)
 {
 	cpu_c *current_cpu = get_current_cpu();
@@ -67,6 +73,7 @@ thread_t * system_c::get_current_thread(void)
 	return 0;
 }
 
+/** Get the number of active CPUs.						**/
 uint32_t system_c::get_active_cpus(void)
 {
 	return active_cpus;
@@ -132,7 +139,7 @@ void system_c::boot_ap(uint8_t id)
 	lapic_write(apic_reg_task_priority, 0x00);			// Accept all interrupts
 }
 
-
+/** Parses the MADT, initialises the BSP APIC, IO APIC and boots APs. 		**/
 system_c::system_c(void)
 {
 	/* Parse ACPI information for the MADT header. */
@@ -156,8 +163,8 @@ system_c::system_c(void)
 	/* If PCAT flag is set, a PICs are present and must be dissabled to use ioapic. */
 	if(flags & ACPI_MADT_FLAG_PCAT_COMPAT)
 	{
-		outb(0x22, 0x70);   	// Select IMCR
-		outb(0x23, 1);		// Dissable
+		//outb(0x22, 0x70);   	// Select IMCR
+		//outb(0x23, 1);	// Dissable
 	}
 
 	/* Parse the MADT table and store the information in system_info structure. */

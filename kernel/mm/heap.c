@@ -15,7 +15,7 @@ static void split_chunk(header_t *chunk, uint64_t sz);										// Splits a chun
 static void free_chunk (header_t *chunk);											// Frees a chunk (must be the last chunk of the heap).
 static void glue_chunk (header_t *chunk);											// Glues the chunk to surounding chunks if possible.
 
-/** Simple dynamic allocater for the kernel. **/
+/** Simple dynamic allocater for the kernel. 					**/
 void *malloc(uint64_t sz)
 {
 	mutex_lock(&heap_lock);
@@ -61,7 +61,7 @@ void *malloc(uint64_t sz)
 	return tmp;
 }
 
-/** Frees an allocated address. **/
+/** Frees an allocated address. 						**/
 void free(void *p)
 {
 	mutex_lock(&heap_lock);
@@ -71,6 +71,7 @@ void free(void *p)
 	mutex_unlock(&heap_lock);
 }
 
+/** Expands the heap.								**/
 void expand_heap(uint64_t start, uint64_t len)
 {
 	while (start + len > heap_end)
@@ -83,7 +84,7 @@ void expand_heap(uint64_t start, uint64_t len)
 	}
 }
 
-/** Splits a chunk and addapts headers. **/
+/** Splits a chunk and addapts headers. 					**/
 void split_chunk(header_t *chunk, uint64_t sz)
 {
 	/* Should we split the chunk? */
@@ -108,7 +109,7 @@ void split_chunk(header_t *chunk, uint64_t sz)
 	}
 }
 
-/* Contracts the end of the heap. */
+/** Contracts the end of the heap. 						**/
 void free_chunk(header_t *chunk)
 {
 	/* Adapt previous header. */
@@ -121,7 +122,8 @@ void free_chunk(header_t *chunk)
 		heap_start = 0;
 	}
 
-	/* While the heap max can contract by a page and still be greater than the chunk address. */
+	/* While the heap max can contract by a page	*/
+	/* and still be greater than the chunk address. */
 	while ( (heap_end-0x1000) >= (uint64_t)chunk )
 	{
 	  heap_end -= 0x1000;
@@ -130,7 +132,7 @@ void free_chunk(header_t *chunk)
 	}
 }
 
-/* Glues two chunk and contracts the heap. */
+/** Glues two chunk and contracts the heap. 					**/
 void glue_chunk (header_t *chunk)
 {
 	/** There's a chunk after this one, glue them. **/
@@ -152,7 +154,7 @@ void glue_chunk (header_t *chunk)
 		if (chunk->next)
 		{
 			chunk->next->prev = chunk->prev;			// Change pointer of the next chunk to this one.
-		}	  							
+		}
 		chunk = chunk->prev;						// Change starting address.
 	}
 
@@ -164,7 +166,7 @@ void glue_chunk (header_t *chunk)
 	}
 }
 
-/* Routine to check for heap corruption. */
+/** Routine to check for heap corruption. 					**/
 uint64_t heap_check(void)
 
 {
@@ -188,6 +190,7 @@ uint64_t heap_check(void)
 	return 0;
 }
 
+/** Debugger function that iterates and displays the heap. 			**/
 void heap_debug_view(void)
 {
 

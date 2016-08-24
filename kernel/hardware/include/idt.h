@@ -8,7 +8,7 @@
 #include <common.h>
 #include <stdio.h>
 
-// Structure for an idt entry
+/* Structure for an idt entry */
 typedef struct
 {
 	uint16_t baselow;
@@ -20,14 +20,14 @@ typedef struct
 	uint32_t zero;
 }__attribute__((packed)) idt_entry_t;
 
-// Pointer structure for lidt
+/* Pointer structure for lidt */
 typedef struct
 {
 	uint16_t limit;
 	uint64_t base;
 } __attribute__ ((packed)) idt_ptr_t;
 
-// Structure containing register values when the CPU was interrupted.
+/* Structure containing register values when the CPU was interrupted. */
 typedef struct
 {
 	uint64_t rsp, rbp, rsi, rdi, rdx, rcx, rbx, rax;
@@ -35,9 +35,12 @@ typedef struct
 	uint64_t rip, cs, rflags, userrsp, ss;				// Pushed by the processor automatically.
 } regs_t;
 
+/*Typedefinition for a pointer to a function. */
 typedef void (*idt_handler_t)(regs_t *);
 
+/* Intialises a Long Mode IDT for all the logical CPUs. */
 void init_idt(void);
+/** Installs a custom ISR handler (not yet implemented) */
 void isr_install_handler(idt_handler_t fn, int no);
 
 /* Reference to interrupt.s */

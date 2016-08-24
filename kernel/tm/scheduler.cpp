@@ -17,6 +17,7 @@
 thread_t *sched_sleep_queue 			= 0;
 uint32_t sleep_lock				= 0;
 
+/** Constructor for the scheduler. 							**/
 scheduler_c::scheduler_c(uint32_t apic_id, uint32_t bootstrap)
 {
 	id 					= apic_id;
@@ -47,6 +48,7 @@ scheduler_c::scheduler_c(uint32_t apic_id, uint32_t bootstrap)
 	}
 }
 
+/** Saves rsp of current running thread, and returns rsp of new thread. 		**/
 uint64_t scheduler_c::schedule(uint64_t rsp)
 {
 	/* Test if a thread is running on this logical cpu. If so we must save it's progress. */
@@ -142,6 +144,7 @@ uint64_t scheduler_c::schedule(uint64_t rsp)
 	}
 }
 
+/** Adds a give thread to the right queue.	 					**/
 void scheduler_c::add_to_queue(thread_t *thread)
 {
 	if(thread)
@@ -227,6 +230,7 @@ void scheduler_c::add_to_queue(thread_t *thread)
 	}
 }
 
+/** Stops the excution of the current running thread and removes it from the queue.	**/
 void scheduler_c::stop_current_thread(void)
 {
 	asm volatile ("cli");
@@ -238,21 +242,25 @@ void scheduler_c::stop_current_thread(void)
 	while(1);
 }
 
+/** Returns current running thread. 							**/
 thread_t *scheduler_c::get_current_thread(void)
 {
 	return current_thread;
 }
 
+/** Removes a given thread from the queue.						**/
 void scheduler_c::remove_from_queue(thread_t *thread)
 {
 
 }
 
+/** Returns current load on this scheduler, necessary for load balancing. 		**/
 uint32_t scheduler_c::get_load(void)
 {
 	return load;
 }
 
+/** Returns the id of this scheduler.		 					**/
 uint32_t scheduler_c::get_id(void)
 {
 	return id;

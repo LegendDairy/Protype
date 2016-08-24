@@ -9,21 +9,23 @@
 #include <mutex.h>
 #include <stdio.h>
 
-
 /** Reads a specified register from the LAPIC 		**/
 uint32_t lapic_read(uint32_t r);
 /** Writes val to a specified register of the LAPIC 	**/
 void lapic_write(uint32_t r, uint32_t val);
 /** Initialises the Local and IO APIC. 			**/
 void setup_apic(void);
+/** Setup code for AP APIC: TODO: move to trampoline.	**/
 void apic_ap_setup(void);
 /** Initialises local apic timer.			**/
 void setup_lapic_timer(void);
-/** Boots a given aplication processor. 		**/
-void boot_ap(uint8_t id);
-uint8_t inb(uint16_t port);
-uint32_t apic_get_id();
 
+/** TODO: move this.			 		**/
+uint8_t inb(uint16_t port);
+#ifdef __cplusplus
+/** Handler for the PIT. TODO: move this. 		**/
+extern "C" void pit_handler(void);
+#endif
 
 /* Model Specific Register Flags */
 #define CPUID_FLAG_MSR 						0x20

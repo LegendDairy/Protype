@@ -7,10 +7,12 @@
 
 #include <common.h>
 
+/** Typedefinition for the thread structure.						**/
 typedef struct thread_t thread_t;
+/** Type definition for a pointer to a function.					**/
 typedef int(*fn_t)(uint64_t argn, char **argv);
 
-/* Structure with all the spinlocks for the scheduler. */
+/* Structure with all the spinlocks for the scheduler. 					**/
 typedef struct
 {
 	uint32_t sched_ready_queue_high;
@@ -21,15 +23,15 @@ typedef struct
 
 typedef struct thread_t
 {
-  thread_t *next;
-  uint64_t thid;					// Threads ID number
-  const char *name;					// Thread name (for debugging)
-  uint32_t flags;					// Thread flags
-  uint64_t rsp;						// Thread stack pointer
-  uint64_t quantum;					// Thread's quantum (=alive time)
-  uint32_t delta_time;
-  uint8_t priority;					// Thread's priority level (1, 2 or 3)
-  uint64_t parent_thid;					// ID of the thread that created this one
+  thread_t *next;		// Pointer to the next thread (linked list)
+  uint64_t thid;		// Threads ID number
+  const char *name;		// Thread name (for debugging)
+  uint32_t flags;		// Thread flags
+  uint64_t rsp;			// Thread stack pointer
+  uint64_t quantum;		// Thread's quantum (=alive time)
+  uint32_t delta_time;		// Sleep time (delta-linked-list)
+  uint8_t priority;		// Thread's priority level (1, 2 or 3)
+  uint64_t parent_thid;		// ID of the thread that created this one
 } thread_t;
 
 

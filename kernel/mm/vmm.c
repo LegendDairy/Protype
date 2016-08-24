@@ -18,13 +18,14 @@ extern mutex_t heap_lock;
 /* -Test mutual exclusion (mutex) support.	*/
 /* -Mapping to a given PLM4T. 			*/
 
+/** Initalises the mutices for the heap and vmm.								**/
 void setup_vmm(void)
 {
 	mutex_setup(&vmm_lock);
 	mutex_setup(&heap_lock);
 }
 
-/* Maps a given frame (pa) to a given virtual address (va) to kernel PLM4T before pmm is setup. */
+/** Maps a given frame (pa) to a given virtual address (va) to kernel PLM4T before pmm is setup.		**/
 void pre_vmm_map_frame(uint64_t va, uint64_t pa, uint64_t flags)
 {
 	/* Needs More Testing! */
@@ -54,7 +55,7 @@ void pre_vmm_map_frame(uint64_t va, uint64_t pa, uint64_t flags)
 	}
 }
 
-/* Maps a given frame (pa) to a given virtual address (va) to kernel PLM4T once the pmm is setup. */
+/** Maps a given frame (pa) to a given virtual address (va) to kernel PLM4T once the pmm is setup.		**/
 void vmm_map_frame(uint64_t va, uint64_t pa, uint64_t flags)
 {
 	mutex_lock(&vmm_lock);
@@ -88,7 +89,7 @@ void vmm_map_frame(uint64_t va, uint64_t pa, uint64_t flags)
 	mutex_unlock(&vmm_lock);
 }
 
-/* Returns the physical address of a virtual address va and can store this in pa. */
+/* Returns the physical address of a virtual address and can store this in pa.					**/
 uint64_t vmm_get_mapping(uint64_t va, uint64_t *pa)
 {
 	if ((vmm_plm4t[PLM4T_INDEX(va)] & 0x1))
@@ -108,6 +109,7 @@ uint64_t vmm_get_mapping(uint64_t va, uint64_t *pa)
 	return 0xFFF; // Error: va is not mapped!
 }
 
+/** Tests if a certain virtual address (va) is mapped. 								**/
 uint64_t vmm_test_mapping(uint64_t va)
 {
 	if ((vmm_plm4t[PLM4T_INDEX(va)] & 0x1))
@@ -123,13 +125,13 @@ uint64_t vmm_test_mapping(uint64_t va)
 	return 0;
 }
 
-/* Flushes the cpu TLB casche */
+/** Flushes the cpu TLB casche											**/
 inline void vmm_flush_page(uint64_t vaddr)
 {
 	asm volatile("invlpg (%0)" ::"r" (vaddr) : "memory");
 }
 
-/* Unmaps a given virtual address va. */
+/** Unmaps a given virtual address va. 										**/
 void vmm_unmap_frame(uint64_t va)
 {
 	mutex_lock(&vmm_lock);

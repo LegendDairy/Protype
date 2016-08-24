@@ -5,12 +5,17 @@
 #include <idt.h>
 #include <text.h>
 
+/* The IDT */
 idt_entry_t 	idt_entry[256];
+/* Pointer structure for the CPU */
 idt_ptr_t	idt_ptr;
+/* Custom ISR handlers. */
 idt_handler_t 	interrupt_handlers[256];
 
+/* Sets a gate in the IDT, i.e. installs a handler. */
 void idt_set_gate(uint8_t num, uint64_t base, uint16_t sel, uint8_t flags);
 
+/* Intialises a Long Mode IDT for all the logical CPUs. */
 void init_idt(void)
 {
 	/* Zero all interrupt handlers initially. */
@@ -35,9 +40,7 @@ void init_idt(void)
 	outb(0x21, 0xff);	// Mask all interrupts, ie dissable master
 	outb(0xA1, 0xff);	// Mask all interrupts, ie dissable slave
 
-	//outb(0xa1, 0xFF);	// SMP Mode old hardware
-	//outb(0x21, 0xFF);	// We should read the ACPI
-
+	/* Set the gates for the ISRs and exceptions and IRQs */
 	idt_set_gate ( 0, (uint64_t)isr0 , 0x08, 0xEE);
 	idt_set_gate ( 1, (uint64_t)isr1 , 0x08, 0xEE);
 	idt_set_gate ( 2, (uint64_t)isr2 , 0x08, 0xEE);
@@ -75,9 +78,11 @@ void init_idt(void)
 	idt_set_gate (0x30, (uint64_t)pit_routine, 0x08, 0xEE);
 	idt_set_gate (0x3F, (uint64_t)apic_spurious, 0x08, 0xEE);
 
+	/* Flush the old Real mode IDT */
 	flush_idt((uint64_t) &idt_ptr);
 }
 
+/* Sets a gate in the IDT, i.e. installs a handler. */
 void idt_set_gate(uint8_t num, uint64_t base, uint16_t sel, uint8_t flags)
 {
 	idt_entry[num].baselow  = (uint16_t)(base & 0xFFFF);
@@ -91,6 +96,7 @@ void idt_set_gate(uint8_t num, uint64_t base, uint16_t sel, uint8_t flags)
 	idt_entry[num].flags   = flags;
 }
 
+/* The different Exception types. */
 const char *exception_messages[] =
 {
 	"Division By Zero",
@@ -130,6 +136,7 @@ const char *exception_messages[] =
 	"Reserved"
 };
 
+/* Common Exception handler. */
 void isr_handler(regs_t * regs)
 {
 	if ( interrupt_handlers[regs->int_no] != 0)
@@ -139,22 +146,34 @@ void isr_handler(regs_t * regs)
 	else
 	{
 		//DebugClearScreen();
-		uint64_t faulting_address;
-		asm volatile("mov %%cr2, %0" : "=r" (faulting_address));
-
 		putch('\n');
 		DebugPuts(exception_messages[regs->int_no]);
 		DebugPuts(": Errorcode: ");
 		DebugPutHex(regs->err_code);
 		printf(" ,rip: %x", regs->rip);
-		DebugPuts(" Rax: ");
+		DebugPuts(" RAX: ");
 		DebugPutHex(regs->rax);
+		DebugPuts(" RBX: ");
+		DebugPutHex(regs->rbx);
+		DebugPuts(" RCX: ");
+		DebugPutHex(regs->rcx);
+		DebugPuts(" RDX: ");
+		DebugPutHex(regs->rdx);
 		DebugPuts(" RSP: ");
 		DebugPutHex(regs->rsp);
+		DebugPuts(" RBP: ");
+		DebugPutHex(regs->rbp);
 		DebugPuts(" ,RDI: ");
 		DebugPutHex(regs->rdi);
-		DebugPuts(" ,Faulting address: ");
-		DebugPutHex(faulting_address);
+		DebugPuts(" ,RSI: ");
+		DebugPutHex(regs->rsi);
+		if(regs-int_no == 0xe)
+		{
+			uint64_t faulting_address;
+			asm volatile("mov %%cr2, %0" : "=r" (faulting_address));
+			DebugPuts(" ,Faulting address: ");
+			DebugPutHex(faulting_address);
+		}
 
 		for (;;);
 	}

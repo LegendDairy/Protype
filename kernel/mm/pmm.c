@@ -17,6 +17,7 @@ uint64_t pre_pmm_entries			= 0;
 /* -mcmodel=large, maybe alternatives?		*/
 /* Better testing maybe. 			*/
 
+/** Initialises the Physical Memory Manager.            	**/
 void setup_pmm(ipl_info_t *info)
 {
 	mutex_setup(&pmm_lock);
@@ -49,7 +50,7 @@ void setup_pmm(ipl_info_t *info)
 
 	i 	= 0;
 	tmp 	= info->mmap;
-	
+
 	for (i=0; i < info->mmap_entries; i++)
 	{
 		if (tmp->type == 1)
@@ -154,7 +155,7 @@ void setup_pmm(ipl_info_t *info)
 	/* Setup PMM Bitmap and stack */
 	i	= info->mmap_entries;
 	tmp	= info->mmap;
-	
+
 	while (i)
 	{
 		if (tmp->type == 1)
@@ -178,6 +179,7 @@ void setup_pmm(ipl_info_t *info)
 	}
 }
 
+/** Physical page allocator to be used before pmm is setup. 	**/
 uint64_t pre_pmm_allocate_frame(void)
 {
 	uint64_t i = 0;
@@ -207,6 +209,7 @@ uint64_t pre_pmm_allocate_frame(void)
 	return 0;
 }
 
+/** Pushes the page and clears the bit.                 	**/
 void pmm_free_page(uint64_t address)
 {
 	mutex_lock(&pmm_lock);
@@ -220,6 +223,7 @@ void pmm_free_page(uint64_t address)
 	mutex_unlock(&pmm_lock);
 }
 
+/** Pops a page from the stack and sets the bit.        	**/
 uint64_t pmm_alloc_page(void)
 {
 	mutex_lock(&pmm_lock);
@@ -236,6 +240,7 @@ uint64_t pmm_alloc_page(void)
 	return 0;
 }
 
+/** Test if a bit in the bitmap is set. 			**/
 uint64_t pmm_test_bmap(uint64_t address)
 {
 	address = address / 0x1000;
@@ -244,6 +249,7 @@ uint64_t pmm_test_bmap(uint64_t address)
 	return (pmm_bmap[ind] & (1 << off));
 }
 
+/** Sets a bit in the bitmap.		 			**/
 void pmm_bset(uint64_t address)
 {
 	address = address / 0x1000;
@@ -252,6 +258,7 @@ void pmm_bset(uint64_t address)
 	pmm_bmap[ind] |= (1 << off);
 }
 
+/** Clears a bit in the bitmap.		 			**/
 void pmm_bclear(uint64_t address)
 {
 	address = address / 0x1000;

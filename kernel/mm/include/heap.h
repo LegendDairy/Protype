@@ -32,8 +32,8 @@ typedef struct header
 /** Return:  pointer to a virtual address                                       **/
 void *malloc(uint64_t sz);
 
-/** Frees an allocated address.         **/
-/** Arg1: Virtual address of a block.	**/
+/** Frees an allocated address.         					**/
+/** Arg1: Virtual address of a block.						**/
 void free (void *p);
 
 #ifdef __cplusplus

@@ -16,7 +16,6 @@
 #include <scheduler.hpp>
 #include <system.hpp>
 
-
 /* TODO */
 /* -Setup a proper kernel stack. 				*/
 /* -Maybe at page-boundries to the stack for overrun detection? */

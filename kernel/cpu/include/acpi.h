@@ -2,7 +2,6 @@
 /* ACPI Table	   v0.1		*/
 /* By LegendDairy		*/
 
-
 #ifndef ACPI_H
 #define ACPI_H
 
@@ -12,36 +11,17 @@
 #include<apic.h>
 #include<thread.h>
 
-typedef struct io_apic_t io_apic_t;
-typedef struct thread_t thread_t;
+/* Typedefinitions of structures for the ACPI headers. */
+typedef struct RSDT_t RSDT_t;
+typedef struct ACPISDTHeader_t ACPISDTHeader_t;
 
-typedef struct processor_t
-{
-	struct processor_t *next;				// Pointer to the next structure (this is a list entry)
-	uint8_t proc_id;					// ID of the processor (package)
-	uint8_t apic_id;					// ID for the logical cpu, ie ID of the local apic
-	uint32_t flags;						// Flags from the MADT
-	thread_t *current_thread;				// Pointer to the current running thread on this logical cpu
-	thread_t *idle_thread;
-	uint64_t timer_current_tick;				// Curent tick of lapic timer.
-	uint64_t idle_rsp;
-} processor_t;
+/** Finds the Root System Descriptor Table of the ACPI headers.			**/
+RSDT_t *find_rsdt(void);
 
-typedef struct
-{
-	uint8_t bootstrap;
-	uint32_t active_cpus;					// Number of active logical cpus.
-	uint32_t volatile *lapic_address;				// Physical address for the APIC.
-	uint64_t bus_freq;
-	io_apic_t *io_apic;				// Linked list for available IO APICs.
-	uint32_t irq_map[16];					// ISA Overide f.e. pit = irq_map[0]
-	uint32_t flags;						// Flags (not yet used.)
-	processor_t *cpu_list;					// Linked list of Logical CPUs
-	uint32_t lock;
-} topology_t;
+/** Finds a specific ACPI Table Header. Arg1: the rsdt, Arg2: signature.	**/
+ACPISDTHeader_t *find_acpi_header(RSDT_t *root, const char *signature);
 
-
-
+/* MADT Types */
 #define ACPI_MADT_PROC						0
 #define ACPI_MADT_IOAP						1
 #define ACPI_MADT_OVERRIDE					2
@@ -57,14 +37,7 @@ typedef struct
 #define ACPI_MADT_GICD						0xC
 #define ACPI_MADT_FLAG_PCAT_COMPAT				0x1
 
-typedef struct io_apic_t
-{
-	struct io_apic_t *next;					// Pointer to next entry in the list.
-	uint32_t volatile *address;					// Physical address of this ioapic
-	uint8_t id;						// ID of this IO APIC
-	uint32_t int_base;					// ?
-} io_apic_t;
-
+/* Root System Descriptor table pointer */
 typedef struct
 {
 	char Signature[8];
@@ -74,6 +47,7 @@ typedef struct
 	uint32_t RsdtAddress;
 } __attribute__((packed)) RSDP_t;
 
+/* General ACPI Descriptor Table header */
 typedef struct
 {
 	char Signature[4];
@@ -87,6 +61,22 @@ typedef struct
 	uint32_t CreatorRevision;
 }__attribute__((packed))  ACPISDTHeader_t;
 
+/* Root System Descriptor Table Header */
+typedef struct
+{
+	char Signature[4];
+	uint32_t Length;
+	uint8_t Revision;
+	uint8_t Checksum;
+	char OEMID[6];
+	char OEMTableID[8];
+	uint32_t OEMRevision;
+	uint32_t CreatorID;
+	uint32_t CreatorRevision;
+	uint32_t PointerToOtherSDT[];
+}  __attribute__((packed)) RSDT_t;
+
+/* Multiple APIC Description Table: root/first header*/
 typedef struct
 {
 	char Signature[4];
@@ -102,27 +92,14 @@ typedef struct
 	uint32_t flags;
 }__attribute__((packed))  madt_t;
 
-typedef struct
-{
-	char Signature[4];
-	uint32_t Length;
-	uint8_t Revision;
-	uint8_t Checksum;
-	char OEMID[6];
-	char OEMTableID[8];
-	uint32_t OEMRevision;
-	uint32_t CreatorID;
-	uint32_t CreatorRevision;
-	uint32_t PointerToOtherSDT[];
-}  __attribute__((packed)) RSDT_t;
-
+/* Multiple APIC Description Table: Common header */
 typedef struct
 {
 	uint8_t entry_type;
 	uint8_t length;
 } __attribute__((packed)) madt_entry_t;
 
-/* Multiple APIC Description Table */
+/* Multiple APIC Description Table: Processor entry */
 typedef struct
 {
 	uint8_t entry_type;
@@ -132,6 +109,7 @@ typedef struct
 	uint32_t flags;
 }  __attribute__((packed)) madt_proc_t;
 
+/* Multiple APIC Description Table: IO APIC entry */
 typedef struct
 {
 	uint8_t entry_type;
@@ -142,6 +120,7 @@ typedef struct
 	uint32_t int_base;
 }  __attribute__((packed)) madt_ioap_t;
 
+/* Multiple APIC Description Table: Source Override entry */
 typedef struct
 {
 	uint8_t entry_type;
@@ -151,9 +130,5 @@ typedef struct
 	uint32_t interrupt;
 	uint16_t flags;
 }  __attribute__((packed)) madt_overide_t;
-
-RSDT_t *find_rsdt(void);
-ACPISDTHeader_t *find_acpi_header(RSDT_t *root, const char *signature);
-
 
 #endif

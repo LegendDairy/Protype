@@ -46,18 +46,8 @@ void move_csr(void)
 {
     unsigned temp;
 
-    /* The equation for finding the index in a linear
-    *  chunk of memory can be represented by:
-    *  Index = [(y * width) + x] */
     temp = csr_y * 80 + csr_x;
 
-    /* This sends a command to indicies 14 and 15 in the
-    *  CRT Control Register of the VGA controller. These
-    *  are the high and low bytes of the index that show
-    *  where the hardware cursor is to be 'blinking'. To
-    *  learn more, you should look up some VGA specific
-    *  programming documents. A great start to graphics:
-    *  http://www.brackeen.com/home/vga */
     outb(0x3D4, 14);
     outb(0x3D5, temp >> 8);
     outb(0x3D4, 15);

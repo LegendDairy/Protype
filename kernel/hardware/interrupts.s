@@ -5,11 +5,11 @@
 [BITS 64]
 %define apic_eoi	0x00B0
 
-[GLOBAL flush_idt]                  ; Allows the C code to call idt_flush().
+[GLOBAL flush_idt]                  	; Allows the C code to call idt_flush().
 [EXTERN idt_ptr]
 flush_idt:
-    mov rax, idt_ptr                ; Get the pointer to the IDT, passed as a parameter.
-    lidt [rax]                      ; Load the IDT pointer.
+    mov rax, idt_ptr                	; Get the pointer to the IDT, passed as a parameter.
+    lidt [rax]                      	; Load the IDT pointer.
     ret
 
 
@@ -20,41 +20,41 @@ flush_idt:
 isr_common_stub:
     cli
 
-    push rax                        ; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
-    push rbx                        ; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
-    push rcx                        ; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
-    push rdx                        ; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
-    push rdi                        ; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
-    push rsi                        ; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
-    push rbp                        ; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
-    push rsp                        ; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
+    push rax                        	; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
+    push rbx                        	; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
+    push rcx                        	; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
+    push rdx                        	; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
+    push rdi                        	; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
+    push rsi                        	; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
+    push rbp                        	; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
+    push rsp                        	; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
 
     mov rdi, rsp
 
-    cld                             ; ABI neeeds cld
-    call isr_handler                ; Call into our C code.
+    cld                             	; ABI neeeds cld
+    call isr_handler                	; Call into our C code.
 
-    pop rsp                         ; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
-    pop rbp                         ; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
-    pop rsi                         ; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
-    pop rdi                         ; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
-    pop rdx                         ; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
-    pop rcx                         ; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
-    pop rbx                         ; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
-    pop rax                         ; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
+    pop rsp                         	; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
+    pop rbp                         	; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
+    pop rsi                         	; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
+    pop rdi                        	; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
+    pop rdx                         	; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
+    pop rcx                         	; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
+    pop rbx                         	; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
+    pop rax                         	; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
 
-    add rsp, 16                     ; Cleans up the pushed error code and pushed ISR number
-    iretq                           ; pops 5 things at once: CS, EIP, EFLAGS, SS, and ESP
+    add rsp, 16                     	; Cleans up the pushed error code and pushed ISR number
+    iretq                           	; pops 5 things at once: CS, EIP, EFLAGS, SS, and ESP
 
     [GLOBAL yield]
     yield:
       cli
       push rax
       push rbx
-      mov eax, [apic_base]              	; Apic Base in C-code
+      mov eax, [apic_base]              ; Apic Base in C-code
       xor rbx, rbx
       mov ebx, dword [apic_base + 0x80]
-      mov dword [eax + 0x80	], 0xFF		; Dissable soft ints
+      mov dword [eax + 0x80], 0xFF	; Dissable soft ints
       push rbx
       push rcx
       push rdx
@@ -80,7 +80,7 @@ isr_common_stub:
 
       mov rdi, rsp
       cld
-      call tm_schedule           ; Call C function
+      call tm_schedule           	; Call C function
       mov rsp, rax
 
       pop rax
@@ -108,8 +108,8 @@ isr_common_stub:
       pop rcx
       pop rbx
       xor rax, rax
-      mov eax, [apic_base]			; Apic Base in C-code
-      mov dword [eax + 0x80	], ebx		; Enable soft ints
+      mov eax, [apic_base]		; Apic Base in C-code
+      mov dword [eax + 0x80	], ebx	; Enable soft ints
       pop rbx
       pop rax
       iretq
@@ -150,7 +150,7 @@ apic_timer:
 
   mov rdi, rsp
   cld
-  call tm_schedule           ; Call C function
+  call tm_schedule           		; Call C function
   mov rsp, rax
 
   pop rax
@@ -178,8 +178,8 @@ apic_timer:
   pop rbx
   xor rax, rax
   mov eax, [apic_base]			; Apic Base in C-code
-  mov dword [eax + apic_eoi], 0x00		; Dissable software for this cpu
-  mov dword [eax + 0x80	], dword ebx		; Enable soft ints
+  mov dword [eax + apic_eoi], 0x00	; Dissable software for this cpu
+  mov dword [eax + 0x80	], dword ebx	; Enable soft ints
   pop rbx
   pop rax
   iretq                             	; Return to code
@@ -231,32 +231,32 @@ pop rbx
 
 mov eax, [apic_base]              	; Apic Base in C-code
 mov dword [eax + 0x80], ebx		; Enable soft ints
-mov dword [eax + apic_eoi],  0    ; Send EOI to LAPIC
+mov dword [eax + apic_eoi],  0    	; Send EOI to LAPIC
 pop rbx
 pop rax
 
-iretq                             ; Return to code
+iretq                             	; Return to code
 
 [GLOBAL apic_spurious]
-apic_spurious:                      ; Spurious Interrupt for IOAPIC
-iretq                               ; No EOI
+apic_spurious:                      	; Spurious Interrupt for IOAPIC
+iretq                              	; No EOI
 
 
 
-%macro ISR_NOERRCODE 1              ; NAM Macros are awesome
+%macro ISR_NOERRCODE 1             	 ; NAM Macros are awesome
 global isr%1
   isr%1:
-    cli                             ; Disable interrupts firstly
-    push 0                          ; Push a dummy error code.
-    push %1                         ; Push the interrupt number.
-    jmp isr_common_stub             ; Go to our common handler code.
+    cli                            	; Disable interrupts firstly
+    push 0                          	; Push a dummy error code.
+    push %1                         	; Push the interrupt number.
+    jmp isr_common_stub             	; Go to our common handler code.
 %endmacro
 
 %macro ISR_ERRCODE 1
 global isr%1
   isr%1:
-    cli                             ; Disable interrupts.
-    push %1                         ; Push the interrupt number
+    cli                             	; Disable interrupts.
+    push %1                         	; Push the interrupt number
     jmp isr_common_stub
 %endmacro
 

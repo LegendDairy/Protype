@@ -4,8 +4,7 @@
 
 #include <heap.h>
 
-/* BUG: Malloc shits the bed when trying to allocate < 0xFFF */
-
+mutex_t heap_lock;
 volatile header_t *heap_start	= 0;												// Start of the heap (virtual address)
 volatile uint64_t heap_end	= HEAP_START;											// End of the heap (virtual address)
 uint64_t vmm_test_mapping(uint64_t va);
@@ -15,20 +14,18 @@ static void expand_heap (uint64_t start, uint64_t len);
 static void split_chunk(header_t *chunk, uint64_t sz);										// Splits a chunk in two.
 static void free_chunk (header_t *chunk);											// Frees a chunk (must be the last chunk of the heap).
 static void glue_chunk (header_t *chunk);											// Glues the chunk to surounding chunks if possible.
-mutex_t heap_lock;
+
 /** Simple dynamic allocater for the kernel. **/
 void *malloc(uint64_t sz)
 {
-	//mutex_lock(&heap_lock);
-	header_t *cur_header = (header_t *)heap_start, *prev_header = 0;
 	mutex_lock(&heap_lock);
+	header_t *cur_header = (header_t *)heap_start, *prev_header = 0;
 	while(cur_header)
 	{
 		if(cur_header->allocated == 0 && cur_header->size >= sz)
 		{
 			split_chunk(cur_header, sz);
 		        cur_header->allocated = 1;
-			//mutex_unlock(&heap_lock);
 			void *tmp = cur_header;
 			tmp = (void*)((uint64_t)tmp + (uint64_t)sizeof(header_t));
 			mutex_unlock(&heap_lock);
@@ -58,7 +55,6 @@ void *malloc(uint64_t sz)
 	cur_header->prev 	= prev_header;
 	cur_header->prev->next 	= cur_header;
 	cur_header->magic 	= MAGIC;
-	//mutex_unlock(&heap_lock);
 	void *tmp = cur_header;
 	tmp = (void*)((uint64_t)tmp + (uint64_t)sizeof(header_t));
 	mutex_unlock(&heap_lock);
@@ -69,7 +65,7 @@ void *malloc(uint64_t sz)
 void free(void *p)
 {
 	mutex_lock(&heap_lock);
-	header_t *header 	= (header_t*)((uint64_t)p - (uint64_t)sizeof(header_t));	// Find the header.
+	header_t *header 	= (header_t*)((uint64_t)p - (uint64_t)sizeof(header_t));
 	header->allocated 	= 0;													// Deallocate the chunk.
 	glue_chunk(header);
 	mutex_unlock(&heap_lock);
@@ -94,10 +90,9 @@ void split_chunk(header_t *chunk, uint64_t sz)
 	if(chunk->size > ((uint64_t)sz+(uint64_t)sizeof(header_t) ))
 	{
 	/* Make new header. */
-	header_t *new_chunk		= (header_t*)((uint64_t)chunk + (uint64_t)sizeof(header_t) + (uint64_t)sz);
-		// Create new chunk*
+	header_t *new_chunk		= (header_t*)((uint64_t)chunk + (uint64_t)sizeof(header_t) + (uint64_t)sz);		// Create new chunk*
 	new_chunk->allocated		= 0;											// Not allocated
-	new_chunk->size			= (uint64_t)((uint64_t)chunk->size - (uint64_t)sz - (uint64_t)sizeof(header_t));
+	new_chunk->size			= (uint64_t)((uint64_t)chunk->size - (uint64_t)sz - (uint64_t)sizeof(header_t));	//
 	new_chunk->magic		= MAGIC;										// Fill in magic code.
 	new_chunk->next			= chunk->next;										// Pointer to next chunk.
 	new_chunk->prev			= chunk;										// Pointer to previous chunk.
@@ -108,8 +103,8 @@ void split_chunk(header_t *chunk, uint64_t sz)
 		}
 
 	/* Addapt previous header. */
-	chunk->next 	 	= new_chunk;												// Pointer to new chunk.
-	chunk->size		= sz;												// Change size.
+	chunk->next 	 	= new_chunk;	// Pointer to new chunk.
+	chunk->size		= sz;		// Change size.
 	}
 }
 
@@ -130,8 +125,8 @@ void free_chunk(header_t *chunk)
 	while ( (heap_end-0x1000) >= (uint64_t)chunk )
 	{
 	  heap_end -= 0x1000;
-	  pmm_free_page(vmm_get_mapping(heap_end, 0));										// Free the frame.
-	  vmm_unmap_frame(heap_end);												// Unmap the virtual address.
+	  pmm_free_page(vmm_get_mapping(heap_end, 0));	// Free the frame.
+	  vmm_unmap_frame(heap_end);			// Unmap the virtual address.
 	}
 }
 
@@ -141,8 +136,8 @@ void glue_chunk (header_t *chunk)
 	/** There's a chunk after this one, glue them. **/
 	if (chunk->next && chunk->next->allocated == 0)
 	{
-		chunk->size += (chunk->next->size + sizeof(header_t));						// Change size.
-		chunk->next = chunk->next->next;								// Change pointer to next chunk
+		chunk->size += (chunk->next->size + sizeof(header_t));		// Change size.
+		chunk->next = chunk->next->next;				// Change pointer to next chunk
 		if(chunk->next)
 		{
 			chunk->next->prev = chunk;
@@ -152,20 +147,20 @@ void glue_chunk (header_t *chunk)
 	/** There's a chunk before this one, glue them. **/
 	if (chunk->prev && chunk->prev->allocated == 0)
 	{
-		chunk->prev->size += (chunk->size + sizeof(header_t));								// Change size.
-		chunk->prev->next = chunk->next;										// Change pointer to next chunk.
+		chunk->prev->size += (chunk->size + sizeof(header_t));		// Change size.
+		chunk->prev->next = chunk->next;				// Change pointer to next chunk.
 		if (chunk->next)
 		{
-			chunk->next->prev = chunk->prev;
-		}	  							// Change pointer of the next chunk to this one.
-		chunk = chunk->prev;												// Change starting address.
+			chunk->next->prev = chunk->prev;			// Change pointer of the next chunk to this one.
+		}	  							
+		chunk = chunk->prev;						// Change starting address.
 	}
 
 	/** There's no chunk after this one, free it. **/
 	if (chunk->next == 0)
 	{
-
-		free_chunk(chunk);												// Contract.
+		/* Contract */
+		free_chunk(chunk);
 	}
 }
 

@@ -67,8 +67,6 @@ void setup_pmm(ipl_info_t *info)
 					uint64_t diff = (tmp->base % 0x1000);
 					tmp->size -= diff;
 					tmp->base += (0x1000 - diff);
-
-
 				}
 			}
 			/* Make sure all entries are an integer number of pages in size */

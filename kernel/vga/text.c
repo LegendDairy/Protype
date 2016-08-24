@@ -5,9 +5,6 @@
 #include <text.h>
 #include <mutex.h>
 
-
-/* TODO: mutex this bitch. */
-
 /* These define our textpointer, our background and foreground
 *  colors (attributes), and x and y cursor coordinates */
 uint16_t *textmemptr = (uint16_t *)0xB8000;
@@ -18,9 +15,6 @@ void outb(uint16_t port, uint8_t byte)
 {
     asm volatile("outb %1, %0":: "dN" (port), "a" (byte));
 }
-
-
-
 
 /* Scrolls the screen */
 void scroll(void)
@@ -208,6 +202,7 @@ void DebugPutHex(uint64_t n)
 	}
 
 }
+
 /** Prints a decimal number on the screen. **/
 void DebugPutDec(uint32_t n)
 {
@@ -239,6 +234,7 @@ void DebugPutDec(uint32_t n)
 	DebugPuts(c2);
 
 }
+
 /** Prints an integer as a binairy on the screen. **/
 void DebugPutBin(uint32_t n)
 {

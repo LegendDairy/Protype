@@ -1,5 +1,5 @@
 /* Pro-Type Kernel v0.2		*/
-/* Scheduler v0.3		*/
+/* Scheduler Class v0.3		*/
 /* By Legenddairy		*/
 
 /* Roadmap:					*/
@@ -14,25 +14,137 @@
 #include <apic.h>
 #include <acpi.h>
 
-thread_t *sched_sleep_queue 			= 0;
-uint32_t sleep_lock				= 0;
+/** Thread queue constructor 						**/
+queue_c::queue_c(void)
+{
+	first 	= 0;
+	last 	= 0;
+	lock 	= 0;
+}
+
+/** Get a thread from the queue. 					**/
+thread_t *queue_c::dequeue(void)
+{
+	/* Acquire the spinlock for this thread. */
+	acquireLock(&lock);
+
+	/* Is there a queue? */
+	if(first)
+	{
+		/* Take first entry and adjust pointer to the next entry. */
+		thread_t tmp = first;
+		first = first->next;
+
+		/* Is there a queue left? */
+		if(!first)
+			last = 0
+
+		/* Release lock and return pointer. */
+		releaseLock(&lock);
+		return tmp;
+	}
+	else
+	{
+		/* There's no queue! */
+		releaseLock(&lock);
+		return NULL;
+	}
+
+}
+
+/** Get a thread from the queue. 					**/
+void queue_c::enqueue(thread_t *thread)
+{
+	/* Acquire the spinlock for this thread. */
+	acquireLock(&lock);
+
+	/* Is there a queue? */
+	if(first)
+	{
+		/* Add the new entry to the end of the queue. */
+		tread->next = 0;
+		last->next = thread;
+		last = last->next;
+	}
+	else
+	{
+		/* No queue, make one. */
+		first = thread;
+		last = thread;
+	}
+
+	/* Release the spinlock. */
+	releaseLock(&lock);
+
+}
+
+/** Test if a queue is empty, returns TRUE if not empty. 		**/
+bool queue_c::not_empty(void)
+{
+	/* Acquire the spinlock for this thread. */
+	acquireLock(&lock);
+
+	/* Is there a queue? */
+	if(first)
+	{
+		releaseLock(&lock);
+		return TRUE;
+	}
+	else
+	{
+		releaseLock(&lock);
+		return FALSE;
+	}
+}
+
+/** Finds and removes a thread from the queue.				**/
+void queue::remove_thread(thread_t *thread)
+{
+	/* Temporary pointers to iterate. */
+	thread_t *iterator = first;
+	thread_t *prev	   = 0;
+
+	/* Iterate through the list till we find it */
+	while(iterator && iterator != thread)
+	{
+		prev = iterator;
+		iterator = iterator->next;
+	}
+
+	/* Did we find it? */
+	if(iterator)
+	{
+		/* Is it the first entry? */
+		if(prev)
+		{
+			prev->next = iterator->next;
+		}
+		else
+		{
+			first = iterator->next;
+		}
+
+		/* Was our thread the end of the queue? */
+		if(!iterator->next)
+			last = prev;
+	}
+}
 
 /** Constructor for the scheduler. 							**/
 scheduler_c::scheduler_c(uint32_t apic_id, uint32_t bootstrap)
 {
 	id 					= apic_id;
-	highest_priority_lock			= 0;
-	medium_priority_lock			= 0;
-	lowest_priority_lock			= 0;
 	load					= 0;
 	idle_thread				= tm_thread_create_idle_thread();
 	current_tick				= 0;
-	highest_priority_queue			= 0;
-	medium_priority_queue			= 0;
-	lowest_priority_queue			= 0;
+	highest_priority_queue			= new queue_c();
+	medium_priority_queue			= new queue_c();
+	lowest_priority_queue			= new queue_c();
 
+	/* Is this the bootstrap scheduler? */
 	if(apic_id == bootstrap)
 	{
+		/* Create an entry for the kernel thread. */
 		current_thread 			= (thread_t*)malloc(sizeof(thread_t));
 		current_thread->thid 		= 0x00;
 		current_thread->flags 		= THREAD_FLAG_READY |  THREAD_FLAG_KERNEL;
@@ -41,6 +153,7 @@ scheduler_c::scheduler_c(uint32_t apic_id, uint32_t bootstrap)
 		current_thread->quantum  	= 10;
 		current_thread->parent_thid	= 0;
 		current_thread->next		= 0;
+		load++;
 	}
 	else
 	{
@@ -64,80 +177,48 @@ uint64_t scheduler_c::schedule(uint64_t rsp)
 		/* Test if this thread needs to be stopped. */
 		if(current_thread->flags & THREAD_FLAG_STOPPED)
 		{
+			/** Load gets decreased. **/
 			load--;
+			//free(current_thread);
+			/** make sure this thread wont be added.	*/
 			current_thread = 0;
 		}
-
-
-
 	}
 	else
 	{
+		/* Save idle thread RSP */
 		idle_thread->rsp = rsp;
 	}
 
 	/* Increase schedule-counter. */
 	current_tick++;
 
-	/* Attempt to unlock the spinlock on the list. */
-	acquireLock(&highest_priority_lock);
-	if(highest_priority_queue && current_tick%2)
+	/* Every odd tick: a highest priority thread. 			*/
+	if(current_tick%2 && highest_priority_queue->not_empty())
 	{
-
-		/* Change current thread and change the begining of the appropriate list. */
-		thread_t *tmp 				= current_thread;
-		current_thread 				= highest_priority_queue;
-		highest_priority_queue 			= highest_priority_queue->next;
-
-		/* Unlock the spinlock. */
-		releaseLock(&highest_priority_lock);
-
-		/* Add the current thread to the end of the correct list. */
-		add_to_queue(tmp);
+		/* Add current thread to a queue, and pop a new thread. */
+		add_thread(current_thread);
+		current_thread 	= highest_priority_queue->dequeue();
 		return current_thread->rsp;
-	}
-	else
-	releaseLock(&highest_priority_lock);
-	acquireLock(&lowest_priority_lock);
-	if(lowest_priority_queue  && !(current_tick%6))
+	} /* Every 6th tick: a lowest priority thread. 			*/
+	else if(!(current_tick%6) && lowest_priority_queue->not_empty())
 	{
-		/* Change current thread and change the begining of the appropriate list. */
-		thread_t *tmp 				= current_thread;
-		current_thread 				= lowest_priority_queue;
-		lowest_priority_queue 			= lowest_priority_queue->next;
-
-		/* Unlock the spinlock. */
-		releaseLock(&lowest_priority_lock);
-
-		/* Add the current thread to the end of the correct list. */
-		add_to_queue(tmp);
+		/* Add current thread to a queue, and pop a new thread. */
+		add_thread(current_thread);
+		current_thread 	= lowest_priority_queue->dequeue();
 		return current_thread->rsp;
-	}
-	else
-	releaseLock(&lowest_priority_lock);
-	acquireLock(&medium_priority_lock);
-	if(medium_priority_queue)
+	} /* Every 2nd and 4th tick: a medium priority thread. 		*/
+	else if(medium_priority_queue->not_empty())
 	{
-		/* Change current thread and change the begining of the appropriate list. */
-		thread_t *tmp 				= current_thread;
-		current_thread 				= medium_priority_queue;
-		medium_priority_queue 			= medium_priority_queue->next;
-
-		/* Unlock the spinlock. */
-		releaseLock(&medium_priority_lock);
-
-		/* Add the current thread to the end of the correct list. */
-		add_to_queue(tmp);
+		/* Add current thread to a queue, and pop a new thread. */
+		add_thread(current_thread);
+		current_thread 	= medium_priority_queue->dequeue();
 		return current_thread->rsp;
-	}
-	else
-	releaseLock(&medium_priority_lock);
-
-	/* No new thread was found! Continue current thread or idle thread. */
-	if(current_thread)
+	}/* We didn't find a new thread to run, try to continu. 	*/
+	else if(current_thread)
 	{
 		return current_thread->rsp;
-	}
+	}/* We can't continu, we ran out of threads; run idle thread.	*/
 	else
 	{
 		return idle_thread->rsp;
@@ -145,87 +226,32 @@ uint64_t scheduler_c::schedule(uint64_t rsp)
 }
 
 /** Adds a give thread to the right queue.	 					**/
-void scheduler_c::add_to_queue(thread_t *thread)
+void scheduler_c::add_thread(thread_t *thread)
 {
 	if(thread)
 	{
+		/* Save interrupt state and dissable interrupts. */
 		uint32_t priority = lapic_read(0x80);
 		lapic_write(0x80, 0xFF);
-		load++;
-		/* If the current thread has a high priority add it to the end of the high priority thread. */
+
+
 		if(thread->priority == THREAD_PRIORITY_HIGHEST)
 		{
-			acquireLock(&highest_priority_lock);
-			/* Check wether the appropriate list exists. */
-			if(highest_priority_queue)
-			{
-				/* Itterate through the list till the end. */
-				thread_t *iterator = highest_priority_queue;
-				while(iterator->next)
-				{
-					iterator=iterator->next;
-				}
-				iterator->next = thread;
-				thread->next 	= 0;
-
-			}
-			else
-			{
-				/* Else: create a list! */
-				highest_priority_queue 	= thread;
-				thread->next 		= 0;
-			}
-			releaseLock(&highest_priority_lock);
+			/** Add to the highest priority aueue. */
+			highest_priority_queue->enqueue(thread);
 		}
 		else if(thread->priority == THREAD_PRIORITY_NORMAL)
 		{
-			acquireLock(&medium_priority_lock);
-			/* Check wether the appropriate list exists. */
-			if(medium_priority_queue)
-			{
-				/* Itterate through the list till the end. */
-				thread_t *iterator = medium_priority_queue;
-				while(iterator->next)
-				{
-					iterator=iterator->next;
-				}
-				iterator->next = thread;
-				thread->next 	= 0;
-
-			}
-			else
-			{
-				/* Else: create a list! */
-				medium_priority_queue 	= thread;
-				thread->next 		= 0;
-			}
-			releaseLock(&medium_priority_lock);
-
+			/** Add to the medium priority aueue. */
+			medium_priority_queue->enqueue(thread);
 		}
 		else
 		{
-			acquireLock(&lowest_priority_lock);
-			/* Check wether the appropriate list exists. */
-			if(lowest_priority_queue)
-			{
-				/* Itterate through the list till the end. */
-				thread_t *iterator = lowest_priority_queue;
-				while(iterator->next)
-				{
-					iterator=iterator->next;
-				}
-				iterator->next = thread;
-				thread->next 	= 0;
-
-			}
-			else
-			{
-				/* Else: create a list! */
-				lowest_priority_queue 	= thread;
-				thread->next 		= 0;
-			}
-			releaseLock(&lowest_priority_lock);
+			/** Add to the lowest priority aueue. */
+			lowest_priority_queue->enqueue(thread);
 		}
+
+		/* Restore interupt state */
 		lapic_write(0x80, priority);
 	}
 }
@@ -233,12 +259,20 @@ void scheduler_c::add_to_queue(thread_t *thread)
 /** Stops the excution of the current running thread and removes it from the queue.	**/
 void scheduler_c::stop_current_thread(void)
 {
-	asm volatile ("cli");
+	/* Save interrupt state and dissable interrupts. */
+	uint32_t priority = lapic_read(0x80);
+	lapic_write(0x80, 0xFF);
 
+	/* Mark the thread as 'stopped'. */
 	current_thread->flags |= THREAD_FLAG_STOPPED;
 
-	asm volatile ("sti");
+	/* Restore interrupt state */
+	lapic_write(0x80, priority);
+
+	/* Yield over controll */
 	asm volatile("int $33");
+
+	/* Safety loop. */
 	while(1);
 }
 
@@ -249,15 +283,52 @@ thread_t *scheduler_c::get_current_thread(void)
 }
 
 /** Removes a given thread from the queue.						**/
-void scheduler_c::remove_from_queue(thread_t *thread)
+void scheduler_c::remove_thread(thread_t *thread)
 {
+	if(thread)
+	{
+		/* Save interrupt state and dissable interrupts. */
+		uint32_t priority = lapic_read(0x80);
+		lapic_write(0x80, 0xFF);
 
+
+		if(thread->priority == THREAD_PRIORITY_HIGHEST)
+		{
+			/** Remove this thread from the highest priority aueue. */
+			highest_priority_queue->remove_from_queue(thread);
+		}
+		else if(thread->priority == THREAD_PRIORITY_NORMAL)
+		{
+			/** Remove this thread from the medium priority aueue. */
+			medium_priority_queue->remove_from_queue(thread);
+		}
+		else
+		{
+			/** Remove this thread from the lowest priority aueue. */
+			lowest_priority_queue->remove_from_queue(thread);
+		}
+
+		/* Restore interupt state */
+		lapic_write(0x80, priority);
+	}
 }
 
 /** Returns current load on this scheduler, necessary for load balancing. 		**/
 uint32_t scheduler_c::get_load(void)
 {
 	return load;
+}
+
+/** Increase load counter of the scheduler.						**/
+void scheduler_c::increase_load(void)
+{
+	load++;
+}
+
+/** Decrease the load of the scheduler.							**/
+void scheduler_c::decrease_load(void)
+{
+	load--;
 }
 
 /** Returns the id of this scheduler.		 					**/
@@ -270,128 +341,4 @@ uint32_t scheduler_c::get_id(void)
 void tm_sched_kill_current_thread(void)
 {
 	system_c::get_current_scheduler()->stop_current_thread();
-}
-
-/** Gets called by the timer routine to swap the current running thread with a new one from the queue. **/
-uint64_t tm_schedule(uint64_t rsp)
-{
-	return system_c::get_current_scheduler()->schedule(rsp);
-}
-
-/* Adds a thread to the cpu with the lowest load. */
-uint32_t tm_sched_add_to_queue(thread_t *thread)
-{
-	register cpu_c *iterator = system_c::get_cpu_list();
-	register cpu_c *lowest = iterator;
-
-	while(iterator)
-	{
-		if(iterator->scheduler->get_load() < lowest->scheduler->get_load())
-			lowest = iterator;
-
-		iterator = iterator->next;
-	}
-
-	lowest->scheduler->add_to_queue(thread);
-
-	return lowest->get_id();
-}
-
-/* Puts the current running thread to sleep for a given amount of milli seconds. */
-void tm_schedule_sleep(uint64_t millis)
-{
-	asm volatile("cli");
-	uint32_t tpr = lapic_read(0x80);
-	lapic_write(0x80, 0xFF);
-	acquireLock(&sleep_lock);
-
-	register scheduler_c *sched = system_c::get_current_scheduler();
-
-	if(sched_sleep_queue)
-	{
-		thread_t *iterator 	= (thread_t *)sched_sleep_queue;
-		thread_t *prev 		= 0;
-
-		while(iterator->next)
-		{
-			if(millis < iterator->delta_time)
-			{
-				sched->get_current_thread()->delta_time 	= millis;
-				if(prev)
-				{
-					prev->next 			= sched->get_current_thread();
-				}
-				else
-				{
-					sched_sleep_queue 		= sched->get_current_thread();
-				}
-				sched->get_current_thread()->next 		= iterator;
-
-				while(iterator)
-				{
-					iterator->delta_time 		-= millis;
-					iterator 			= iterator->next;
-				}
-				sched->get_current_thread()->flags		|= THREAD_FLAG_STOPPED;
-
-				releaseLock(&sleep_lock);
-				lapic_write(0x80, tpr);
-				asm volatile("sti");
-				asm volatile("int $33");
-				return;
-			}
-
-			millis 						-= iterator->delta_time;
-			prev 						= iterator;
-			iterator 					= iterator->next;
-		}
-
-		if(millis < iterator->delta_time)
-		{
-			sched->get_current_thread()->delta_time 		= millis;
-			if(prev)
-			{
-				prev->next 				= sched->get_current_thread();
-			}
-			else
-			{
-				sched_sleep_queue 			= sched->get_current_thread();
-			}
-			sched->get_current_thread()->next 			= iterator;
-			iterator->delta_time 				-= millis;
-			sched->get_current_thread()->flags			|= THREAD_FLAG_STOPPED;
-
-			releaseLock(&sleep_lock);
-			lapic_write(0x80, tpr);
-			asm volatile("sti");
-			asm volatile("int $33");
-			return;
-		}
-		if(millis >= iterator->delta_time)
-		{
-		sched->get_current_thread()->delta_time 			= millis - iterator->delta_time;
-		iterator->next 						= sched->get_current_thread();
-		sched->get_current_thread()->next = 0;
-		sched->get_current_thread()->flags				|= THREAD_FLAG_STOPPED;
-
-		releaseLock(&sleep_lock);
-		asm volatile("sti");
-		lapic_write(0x80, tpr);
-		asm volatile("int $33");
-		return;
-		}
-	}
-	else
-	{
-		sched_sleep_queue 					= (thread_t *)sched->get_current_thread();
-		sched->get_current_thread()->delta_time 			= millis;
-		sched->get_current_thread()->next 				= 0;
-		sched->get_current_thread()->flags				|= THREAD_FLAG_STOPPED;
-
-		releaseLock(&sleep_lock);
-		asm volatile("sti");
-		lapic_write(0x80, tpr);
-		asm volatile("int $33");
-		return;
-	}
 }

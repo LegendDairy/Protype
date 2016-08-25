@@ -27,7 +27,7 @@ int thread1(uint64_t argn, char **argv)
 	while(1)
 	{
 		printf("a");
-		tm_schedule_sleep(10);
+		tm_thread_sleep(10);
 	}
 
 	return 0xDEADBEEF;
@@ -38,7 +38,7 @@ int thread2(uint64_t argn, char **argv)
 	while(1)
 	{
 		printf("b");
-		tm_schedule_sleep(10);
+		tm_thread_sleep(10);
 	}
 
 	return 0xDEADBEEF;
@@ -49,7 +49,7 @@ int thread3(uint64_t argn, char **argv)
 	while(1)
 	{
 		printf("c");
-		tm_schedule_sleep(10);
+		tm_thread_sleep(10);
 	}
 
 	return 0xDEADBEEF;
@@ -85,7 +85,7 @@ int main(ipl_info_t *info)
 	tm_thread_create(&thread3, 0, 0, 0x10000, 2, 30, "Thread 3", 1, (uint64_t *)0x90002F00, 0x10, 0x8, 0x10);
 
 	asm volatile("sti");
-	tm_sched_kill_current_thread();
+	tm_kill_current_thread();
 	while(1);
 
 	return 0;

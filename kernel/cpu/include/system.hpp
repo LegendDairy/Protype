@@ -66,6 +66,9 @@ public:
 	/** Get the first entry of the CPU linked List	.				**/
 	static cpu_c *get_cpu_list(void);
 
+	/** Returns pointer to CPU class witha given ID. 				**/
+	static cpu_c *get_cpu_by_id(uint32_t id);
+
 	/** Get the first entry of the ioapic linked list.				**/
 	static io_apic_t *get_ioapic_list()
 	{

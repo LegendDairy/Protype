@@ -15,15 +15,12 @@ private:
 	/* Pointers to threads and threadlists. */
 	thread_t *idle_thread;
 	thread_t *current_thread;
-	thread_t *highest_priority_queue;
-	thread_t *medium_priority_queue;
-	thread_t *lowest_priority_queue;
+	queue_c *highest_priority_queue;
+	queue_c *medium_priority_queue;
+	queue_c *lowest_priority_queue;
 
 	/* Integers: locks and current load */
 	uint32_t id;
-	uint32_t highest_priority_lock;
-	uint32_t medium_priority_lock;
-	uint32_t lowest_priority_lock;
 	uint32_t load;
 	uint32_t current_tick;
 
@@ -37,26 +34,41 @@ public:
 	/** Returns the id of this scheduler.		 					**/
 	uint32_t get_id(void);
 	/** Adds a give thread to the right queue.	 					**/
-	void add_to_queue(thread_t *thread);
+	void add_thread(thread_t *thread);
 	/** Removes a given thread from the queue.						**/
-	void remove_from_queue(thread_t *thread);
+	void remove_thread(thread_t *thread);
 	/** Stops the excution of the current running thread and removes it from the queue.	**/
 	void stop_current_thread(void);
 	/** Returns current running thread. 							**/
 	thread_t *get_current_thread(void);
+	/** Decrease the load of the scheduler.							**/
+	void decrease_load(void);
+	/** Increase load counter of the scheduler.						**/
+	void increase_load(void);
+};
+
+class queue_c
+{
+private:
+	thread_t *first, *last;
+	uint32_t lock;
+
+public:
+	/** Thread queue constructor.						**/
+	queue_c(void);
+	/** Add a thread to the queue. 						**/
+	void enqueue(thread_t *);
+	/** Get a thread from the queue. 					**/
+	thread_t *dequeue(void);
+	/** Test if a queue is empty, returns TRUE if not empty. 		**/
+	bool not_empty(void);
+	/** Finds and removes a thread from the queue.				**/
+	void remove_from_queue(thread_t *thread);
+
 };
 
 /** Gets called by the timer routine to swap the current running thread with a new one. 	**/
 extern "C" uint64_t tm_schedule(uint64_t);
 #endif
-
-/** Intialises multithreading. Creates a current thread structure for the BSP. 			**/
-void setup_tm(void);
-/** Adds the current running thread to the end of the appropriate list. Return CPU id.		**/
-uint32_t tm_sched_add_to_queue(thread_t *thread);
-/** Stops excecution of current running thread. 						**/
-void tm_sched_kill_current_thread(void);
-/** Puts the current running thread to sleep for a given amount of milli seconds. 		**/
-void tm_schedule_sleep(uint64_t millis);
 
 #endif

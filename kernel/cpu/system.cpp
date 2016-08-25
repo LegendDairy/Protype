@@ -1,5 +1,5 @@
 /* Pro-Type Kernel v0.2		*/
-/* System Functions v0.1	*/
+/* System Info v0.1		*/
 /* By LegendDairy		*/
 
 #include <system.hpp>
@@ -79,6 +79,7 @@ uint32_t system_c::get_active_cpus(void)
 	return active_cpus;
 }
 
+/** Boots an Aplication Processor.						**/
 void system_c::boot_ap(uint8_t id)
 {
 	id &= 0xF;
@@ -139,6 +140,17 @@ void system_c::boot_ap(uint8_t id)
 	lapic_write(apic_reg_task_priority, 0x00);			// Accept all interrupts
 }
 
+/** Returns pointer to CPU class witha given ID. 				**/
+cpu_c *system::get_cpu_by_id(uint32_t id)
+{
+	cpu_c *iterator = cpu_list;
+
+	while (iterator && iterator->get_id() != id)
+		iterator = iterator->next;
+
+	return iterator;
+}
+
 /** Parses the MADT, initialises the BSP APIC, IO APIC and boots APs. 		**/
 system_c::system_c(void)
 {
@@ -178,7 +190,7 @@ system_c::system_c(void)
 			if(tmp->flags)
 			{
 				/* Initialise a new entry for the cpu structure in system_info. */
-				cpu_c *cpu_entry = new cpu_c(tmp->apic_id, tmp->proc_id, tmp->flags, bootstrap);
+				cpu_c *cpu_entry = new cpu_c(tmp->apic_id, tmp->proc_id, tmp->flags, bootstrap, lapic);
 
 				/* Iterate through the cpu list to find the last entry. */
 				if((uint64_t)cpu_list)

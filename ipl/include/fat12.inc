@@ -16,7 +16,6 @@ ClusterLBA:                           	; Converts a clusternumber to a LBA
 ; Load file at ax:bx ;
 ; 11 byte Filename: [si]
 LoadFile:
-
   push ax                             	; Save buffer segment
   push bx                             	; Save buffer offset
   push si                             	; Save Filename
@@ -96,6 +95,14 @@ LOAD_IMAGE:
   add bx, di
   mov dx, WORD [bx]			; Read two bytes from FAT
   pop bx
+  cmp bx, 00				; If file>64Kb, bx will overflow
+  jnz .notzero
+  push ax				; Save ax state
+  mov ax, es				; Change buffer segment so we won't overwrite
+  add ax, 0x1000			; Increase buffer with 64kb
+  mov es, ax				; Now we can continu
+  pop ax				; Restore ax
+  .notzero:
   test ax, 0x0001                     	; This word = 16bits
   jnz .ODD_CLUSTER                    	; We only need 12 bits
 

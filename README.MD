@@ -2,40 +2,26 @@ Protype x86_64 Microkernel
 ==========================
 Overview
 --------
-Protype is an x86_64-based microkernel mostly written in C.
-The microkernel has it's own two stage bootloader (i.e. the Pre-IPL and IPL).
-The kernel is written in C and x86-assembler.
-I will try to add documentation in the DOCS folders for every part of the microkernel to clarify the code and discuss algorithms.
+Protype is an x86_64-based microkernel mostly written in C++. The microkernel has it's own two stage bootloader (i.e. the Pre-IPL and IPL). The kernel is written almost entirely in C++. When i started programming I learned the C language, later on C++ and other OOP languages just seemed 'wrong'. Thats why most of the code is written in a procedural manner and looks more like plain old C. However later on I started to have issues with code readability and overal maintainability, so I started to experiment with C++. Thats why now you'll see some OOP here and there. It sorta looks like C with a bit of C++ mangled in there right now.
 
-The goal is to write a lightweight and fast kernel and use all the options that the x86_64 platform has to offer.
-The code is not meant to be portable at all because that would either overcomplicate things or make the code slow.
-The kernel will support Long Mode and SMP, in fact it demands support for Long Mode and features like an IOAPIC.
-The target cpu is a 2600k
-
-Future Ideas:
-* unmap pages arround the stack to detect stack overruns
-* Possibility to allign heap structures
-
-
+The goal is to write a lightweight and fast kernel and use all the options that the x86_64 platform has to offer. The code is not meant to be portable at all because that would either overcomplicate things or make the code slow. I *might* restructure the code later on to make it slightly more portabable, but I doubt that I would ever actually port it to an other platform. The kernel will support Long Mode and SMP, in fact it demands support for Long Mode and features like an IOAPIC. The target cpu is a 2600k, because it was the first CPU I bought myself. However my current testbed is a mobile quadcore i7 from the Sandy Bridge generation.
 
 Roadmap:
 --------
 I try to follow a basic roadmap to implement new features. However sometimes I jump a head and try to implement a proof of concept.
-This breaks the tedious routine of research, implementation and testing+bugfixes.
+This breaks the tedious routine of research, implementation and testing+bugfixes. I will also try to add documentation in the DOCS folders for every part of the microkernel to clarify the code and discuss algorithms i used. I will also try to include a doc-file per *.c file to quickly explain what one can expect in that file.
 
   * 2 stage bootloader                     Done (TODO FAT32 i.o FAT10)
   * Long mode jump                         Done (TODO higherhalf)
   * physical memory manager:               Done & tested
   * virtual memory manager                 Done and test (simple version)
   * Heap:                                  Done & tested
-  * Preemptive support                     WIP (work in progress)
-  * SMP support                            POC (Proof of concept) with premtive support
+  * Preemptive support                     Done
+  * SMP support                            WIP (improving scheduler)
   * VFS
   * IPC
   * Usermode Exec loading
   * grapics (module)
-
-
 
 Repository Overview
 -------------------
@@ -51,12 +37,11 @@ Source map:
 * /kernel:  Contains the actual kernel, mainly in C
 
 Kernel source code map:
-* /cpu : Contains cpu-specific code (apic)
+* /cpu : Contains cpu-specific code
 * /hardware: Random crap goes here?
 * /mm: Contains all memory managment code.
 * /tm: Contains all the code for tasking support.
 * /vga: Contains all vga/video related code.
-
 
 Build Instructions
 ------------------
@@ -71,7 +56,6 @@ Then you can run it, if you copy to Protype folder to your home directory
 
 To test:
 * `bochs -q -f bin/bochsrc.txt`
-
 
 Tools
 -----

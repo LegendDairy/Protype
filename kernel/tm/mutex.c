@@ -3,7 +3,7 @@
 /* By LegendDairy		*/
 
 #include <mutex.h>
-#include <scheduler.hpp>
+#include <thread.h>
 
 /* TODO: Locked Arthmetic and test functions. */
 /* -ie inc, dec, add, or, not, */
@@ -65,7 +65,7 @@ void mutex_lock(mutex_t *m)
 			m->waiting_queue = tm_thread_get_current_thread();
 		}
 		__sync_lock_release(&m->waiting_queue_lock, 1);
-		tm_sched_kill_current_thread();
+		tm_kill_current_thread();
 	}
 }
 
@@ -79,7 +79,7 @@ void mutex_unlock(mutex_t *m)
 	__sync_synchronize();
 	if(m->waiting_queue)
 	{
-		tm_sched_add_to_queue(m->waiting_queue);
+		tm_add_thread_to_queue(m->waiting_queue);
 		m->waiting_queue = m->waiting_queue->next;
 	}
 	__sync_lock_release(&m->waiting_queue_lock, 1);

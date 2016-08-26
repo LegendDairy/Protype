@@ -109,7 +109,7 @@ isr_common_stub:
       pop rbx
       xor rax, rax
       mov eax, [apic_base]		; Apic Base in C-code
-      mov dword [eax + 0x80	], ebx	; Enable soft ints
+      mov dword [eax + 0x80], 0	; Enable soft ints
       pop rbx
       pop rax
       iretq
@@ -179,7 +179,7 @@ apic_timer:
   xor rax, rax
   mov eax, [apic_base]			; Apic Base in C-code
   mov dword [eax + apic_eoi], 0x00	; Dissable software for this cpu
-  mov dword [eax + 0x80	], dword ebx	; Enable soft ints
+  mov dword [eax + 0x80	], 0	; Enable soft ints
   pop rbx
   pop rax
   iretq                             	; Return to code
@@ -230,7 +230,7 @@ pop rbx
 
 
 mov eax, [apic_base]              	; Apic Base in C-code
-mov dword [eax + 0x80], ebx		; Enable soft ints
+mov dword [eax + 0x80], 0		; Enable soft ints
 mov dword [eax + apic_eoi],  0    	; Send EOI to LAPIC
 pop rbx
 pop rax

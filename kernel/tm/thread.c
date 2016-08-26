@@ -161,6 +161,13 @@ void thread_exit(void)
 	tm_kill_current_thread();
 }
 
+void tm_kill_current_thread()
+{
+	register scheduler_c *scheduler = system_c::get_current_scheduler();
+	scheduler->stop_current_thread();
+}
+
+
 /** Creates an idle thread, one idle thread is required per logical cpu. See Scheduler Constructor.	**/
 thread_t *tm_thread_create_idle_thread(void)
 {
@@ -220,27 +227,19 @@ uint64_t tm_schedule(uint64_t rsp)
 /* Adds a thread to the cpu with the lowest load. Returns ID of the used scheduler.			**/
 uint32_t tm_add_thread_to_queue(thread_t *thread)
 {
+	register uint32_t priority = lapic_read(0x80);
+	lapic_write(0x80, 0xFF);
+
 	/* This code might be excecuted twice at the same time, so registers. */
-	register cpu_c *iterator = system_c::get_cpu_list();
-	register cpu_c *lowest = iterator;
+	register scheduler_c *iterator = system_c::get_current_scheduler();
 
-	/* Iterate through the list. */
-	while(iterator)
-	{
-		/* Check if this entry has a lower load. */
-		if(iterator->scheduler->get_load() < lowest->scheduler->get_load())
-			lowest = iterator;
+	iterator->add_thread(thread);
+	iterator->increase_load();
 
-		/* Iterate */
-		iterator = iterator->next;
-	}
-
-	/* We found the scheduler with the lowest load. */
-	lowest->scheduler->add_thread(thread);
-	lowest->scheduler->increase_load();
+	lapic_write(0x80, priority);
 
 	/* Return the ID of the scheduler we used. */
-	return lowest->get_id();
+	return 0;
 }
 
 /** Puts the current running thread to sleep for a given amount of milli seconds. 			**/
@@ -250,6 +249,8 @@ void tm_thread_sleep(uint64_t millis)
 	asm volatile("cli");
 	uint32_t tpr = lapic_read(0x80);
 	lapic_write(0x80, 0xFF);
+
+	system_c::get_current_scheduler()->remove_thread(system_c::get_current_thread());
 
 	/* Acquire the spinlock. */
 	acquireLock(&sleep_lock);

@@ -22,6 +22,7 @@
 #endif
 
 #define NULL ((void*)0)
-
+#define FALSE (1 != 1) // why not just define it as "false" or "0"?
+#define TRUE (!FALSE) 
 
 #endif

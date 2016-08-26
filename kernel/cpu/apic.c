@@ -34,10 +34,10 @@ void pit_handler(void)
 		sched_sleep_queue->delta_time--;
 		while(sched_sleep_queue && !sched_sleep_queue->delta_time)
 		{
-			thread_t *tmp = sched_sleep_queue;
+			register thread_t *tmp = sched_sleep_queue;
 			sched_sleep_queue = sched_sleep_queue->next;
 			tmp->flags &= !THREAD_FLAG_STOPPED;
-			tm_sched_add_to_queue(tmp);
+			tm_add_thread_to_queue(tmp);
 		}
 		releaseLock(&sleep_lock);
 	}
@@ -93,24 +93,6 @@ void setup_apic(void)
 
 	/* Set up LAPIC Timer. */
 	setup_lapic_timer();
-
-	#define PIT_CHAN0_REG_COUNT	0x40
-	#define PIT_CHAN1_REG_COUNT	0x41
-	#define PIT_CHAN2_REG_COUNT	0x42
-	#define PIT_CONTROL_REG		0x43
-
-	int32_t divisor = 1193180 / 100;
-
-        // Send the command byte.
-        outb(PIT_CONTROL_REG, 0x36);
-
-        // Divisor has to be sent byte-wise, so split here into upper/lower bytes.
-        int8_t l = (uint8_t)(divisor & 0xFF);
-    	int8_t h = (uint8_t)((divisor>>8) & 0xFF );
-
-        // Send the frequency divisor.
-        outb(PIT_CHAN0_REG_COUNT, l);
-	outb(PIT_CHAN0_REG_COUNT, h);
 }
 
 /** Setup code for APs, initialises APIC and APIC timer. TODO: move to trampoline code.	**/

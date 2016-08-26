@@ -9,6 +9,8 @@
 
 #ifdef __cplusplus
 
+class queue_c;
+
 class scheduler_c
 {
 private:

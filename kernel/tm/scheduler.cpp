@@ -17,8 +17,8 @@
 /** Thread queue constructor 						**/
 queue_c::queue_c(void)
 {
-	first 	= 0;
-	last 	= 0;
+	first 	= NULL;
+	last 	= NULL;
 	lock 	= 0;
 }
 
@@ -32,12 +32,14 @@ thread_t *queue_c::dequeue(void)
 	if(first)
 	{
 		/* Take first entry and adjust pointer to the next entry. */
-		thread_t tmp = first;
-		first = first->next;
+		thread_t *tmp = first;
+		//first = first->next;
 
 		/* Is there a queue left? */
 		if(!first)
-			last = 0
+		{
+			last = 0;
+		}
 
 		/* Release lock and return pointer. */
 		releaseLock(&lock);
@@ -58,17 +60,20 @@ void queue_c::enqueue(thread_t *thread)
 	/* Acquire the spinlock for this thread. */
 	acquireLock(&lock);
 
+	thread->next = 0;
+
 	/* Is there a queue? */
 	if(first)
 	{
 		/* Add the new entry to the end of the queue. */
-		tread->next = 0;
 		last->next = thread;
 		last = last->next;
+		thread->next =0;
 	}
 	else
 	{
 		/* No queue, make one. */
+		thread->next =0;
 		first = thread;
 		last = thread;
 	}
@@ -98,11 +103,11 @@ bool queue_c::not_empty(void)
 }
 
 /** Finds and removes a thread from the queue.				**/
-void queue::remove_thread(thread_t *thread)
+void queue_c::remove_from_queue(thread_t *thread)
 {
 	/* Temporary pointers to iterate. */
 	thread_t *iterator = first;
-	thread_t *prev	   = 0;
+	thread_t *prev	   = NULL;
 
 	/* Iterate through the list till we find it */
 	while(iterator && iterator != thread)
@@ -128,6 +133,8 @@ void queue::remove_thread(thread_t *thread)
 		if(!iterator->next)
 			last = prev;
 	}
+
+	thread->next = 0;
 }
 
 /** Constructor for the scheduler. 							**/
@@ -151,8 +158,8 @@ scheduler_c::scheduler_c(uint32_t apic_id, uint32_t bootstrap)
 		current_thread->name		= "Kernel Setup";
 		current_thread->priority	= THREAD_PRIORITY_HIGHEST;
 		current_thread->quantum  	= 10;
-		current_thread->parent_thid	= 0;
-		current_thread->next		= 0;
+		current_thread->parent	= 0;
+		current_thread->next		= NULL;
 		load++;
 	}
 	else
@@ -169,11 +176,7 @@ uint64_t scheduler_c::schedule(uint64_t rsp)
 	{
 		/* Save current possition in the stack of the thread. */
 		current_thread->rsp = rsp;
-		/*if(current_thread->next)
-		{
-			current_thread = current_thread->next;
-			return current_thread->rsp;
-		}*/
+
 		/* Test if this thread needs to be stopped. */
 		if(current_thread->flags & THREAD_FLAG_STOPPED)
 		{
@@ -181,6 +184,7 @@ uint64_t scheduler_c::schedule(uint64_t rsp)
 			load--;
 			//free(current_thread);
 			/** make sure this thread wont be added.	*/
+			remove_thread(current_thread);
 			current_thread = 0;
 		}
 	}
@@ -188,6 +192,12 @@ uint64_t scheduler_c::schedule(uint64_t rsp)
 	{
 		/* Save idle thread RSP */
 		idle_thread->rsp = rsp;
+	}
+
+	if(current_thread && current_thread->next)
+	{
+		current_thread = current_thread->next;
+		return current_thread->rsp;
 	}
 
 	/* Increase schedule-counter. */

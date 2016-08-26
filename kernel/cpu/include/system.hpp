@@ -42,7 +42,7 @@ private:
 	system_c(void);
 
 	/** Boots an AP processor.							**/
-	static void boot_ap(uint8_t id);
+	static uint64_t boot_ap(uint8_t id);
 
 public:
 	/** Physical address of memory mapped APIC registers. 				**/

@@ -33,14 +33,14 @@ public:
 	/** Returns pointer to cpu class of the one excecuting this function.		**/
 	static cpu_c *get_current_cpu(void);
 	/** Returns the apic ID of the CPU excecuting this function.			**/
-	static uint32_t cpu_c::get_current_lapic_id(void);
+	static uint32_t get_current_lapic_id(void);
 
 	/** Sends an IPI to a physical destination and waits till it is received.	**/
-	void send_ipi_physical_sync(uint32_t dest, uint64_t code, uint64_t data);
+	//void send_ipi_physical_sync(uint32_t dest, uint64_t code, uint64_t data);
 	/** Sends an IPI to a physical destination.					**/
-	void cpu_c::send_ipi_physical(uint32_t dest, uint64_t code, uint64_t data);
+	//void send_ipi_physical(uint32_t dest, uint64_t code, uint64_t data);
 	/** Sends an IPI to all logical CPUs. 						**/
-	void broadcast_ipi(uint8_t dest, uint64_t code, uint64_t data, bool inc_self);
+	//void broadcast_ipi(uint8_t dest, uint64_t code, uint64_t data, bool inc_self);
 
 	/** Pointer to the next logical CPU in this linked list.			**/
 	cpu_c *next;

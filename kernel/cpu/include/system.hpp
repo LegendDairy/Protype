@@ -98,4 +98,6 @@ public:
 	} */
 };
 
+void pit_sleep(uint32_t milis);
+
 #endif

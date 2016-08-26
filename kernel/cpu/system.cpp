@@ -80,64 +80,78 @@ uint32_t system_c::get_active_cpus(void)
 }
 
 /** Boots an Aplication Processor.						**/
-void system_c::boot_ap(uint8_t id)
+uint64_t system_c::boot_ap(uint8_t id)
 {
 	id &= 0xF;
         uint64_t *apb_idt_ptr = (uint64_t *)(APB_BASE + 0x8);
-        *apb_idt_ptr = (uint64_t)&idt_ptr;
-
 	uint64_t *apb_apic_setup = (uint64_t*)(APB_BASE + 0x10);
-	*apb_apic_setup = (uint64_t)&apic_ap_setup;
-
 	volatile uint32_t *ap_count_ptr = (uint32_t *)(APB_BASE + 0x4);
+
+        *apb_idt_ptr = (uint64_t)&idt_ptr;
+	*apb_apic_setup = (uint64_t)&apic_ap_setup;
 	*ap_count_ptr = active_cpus;
 
+	/* Send IPI */
 	lapic_write(apic_ICR_32_63, id << 24);
 	lapic_write(apic_ICR_0_31, 0x00004500);
 
-	outb(0x61, (inb(0x61) & 0xFD) | 1);
-	outb(0x43,0xB2);
-	//1193180/100 Hz = 11931 = 2e9bh
-	outb(0x42,0x9B);	//LSB
-	inb(0x60);		//short delay
-	outb(0x42,0x2E);	//MSB
+	/* Wait 10 ms */
+	pit_sleep(10);
 
-	//reset PIT one-shot counter (start counting)
-	uint8_t tmp = inb(0x61)&0xFE;
-	outb(0x61,(uint8_t)tmp);		//gate low
-	outb(0x61,(uint8_t)tmp|1);	//gate high
-
-	while(!(inb(0x61)&0x20));
-
+	/* Send SIPI */
 	lapic_write(apic_ICR_0_31, 0x00004600 | (APB_BASE/0x1000));
 	lapic_write(apic_ICR_32_63, id << 24);
 
-	outb(0x42,0x9B);	//LSB
-	inb(0x60);		//short delay
-	outb(0x42,0x2E);	//MSB
+	pit_sleep(10);
 
-	//reset PIT one-shot counter (start counting)
-	tmp = inb(0x61)&0xFE;
-	outb(0x61,(uint8_t)tmp);		//gate low
+	/* Test if AP is booted. */
+	if(*ap_count_ptr == active_cpus+1)
+	{
+		active_cpus++;
+		lapic_write(apic_reg_task_priority, 0x00);
+		return 0;
+	}
+
+	/* Send  another SIPI */
+	lapic_write(apic_ICR_0_31, 0x00004600 | (APB_BASE/0x1000));
+	lapic_write(apic_ICR_32_63, id << 24);
+
+	pit_sleep(30);
+	if(*ap_count_ptr == active_cpus+1)
+	{
+		active_cpus++;
+		lapic_write(apic_reg_task_priority, 0x00);
+		return 0;
+	}
+
+	/* Failed to boot the AP return error code. */
+	printf("[SMP]: Failed to boot AP %d! Currently %d active processors running.\n", id, active_cpus);
+	lapic_write(apic_reg_task_priority, 0x00);
+	return 1;
+}
+
+void pit_sleep(uint32_t milis)
+{
+	/* Enable channel 2 */
+	outb(0x61, (inb(0x61) & 0xFD) | 1);
+	/*  Mode/Command register: (rate generator) | Ch2 | low/high byte mode */
+	outb(0x43,0xB2);
+
+	/* Calculate Count */
+	uint16_t count = 1193*milis;
+
+	/* 0x42: Ch2 Data */
+	outb(0x42,count & 0xFF);//LSB
+	inb(0x60);		//short delay
+	outb(0x42,count >> 8);	//MSB
+
+	/* reset PIT one-shot counter (start counting) */
+	uint8_t tmp = inb(0x61)&0xFE;
+	outb(0x61,(uint8_t)tmp);	//gate low
 	outb(0x61,(uint8_t)tmp|1);	//gate high
 
-	while(!(inb(0x61)&0x20));
-	outb(0x42,0x9B);	//LSB
-	inb(0x60);		//short delay
-	outb(0x42,0x2E);	//MSB
-
-	//reset PIT one-shot counter (start counting)
-	tmp = inb(0x61)&0xFE;
-	outb(0x61,(uint8_t)tmp);		//gate low
-	outb(0x61,(uint8_t)tmp|1);	//gate high
-
-	while(!(inb(0x61)&0x20));
-	while(*ap_count_ptr == active_cpus);
-
-
-	active_cpus++;
-	printf("[SMP]: AP %d booted! Currently %d active processors running.\n", id, *ap_count_ptr);
-	lapic_write(apic_reg_task_priority, 0x00);			// Accept all interrupts
+	/* Wait and keep polling ch2 */
+	while(!(inb(0x61)&0x20));	// bit 5: ch2 output
 }
 
 /** Returns pointer to CPU class witha given ID. 				**/
@@ -245,8 +259,10 @@ system_c::system_c(void)
 		curr  = (madt_entry_t *)((uint64_t)curr + (uint32_t)curr->length);
 	}
 
+	/* Setup the Bootstrap APIC */
 	setup_apic();
 
+	/* Boot the APs one by one. */
 	cpu_c *iterator = cpu_list;
 	while(iterator)
 	{

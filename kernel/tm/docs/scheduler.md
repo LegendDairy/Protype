@@ -37,7 +37,7 @@ the old: `A-D-B-D-C-E-A-D-B-D-F-C-D-A-D-B-E`
 In the new algorithm it the time till a thread is executed again is: `(3*#highprioritythreads + 2*#medprioritythreads + #lowprioritythreads) / (1,2 or 3)`  
 Where '#'='number of'. We divide by 1 for low, by 2 for med and by 3 for high priority.  
   
-In the old algorithm it was: (3 + 2 + 1)*#threadsinhispriority. The old method is less fair because the time for a thread to be scheduled again is not uniform accross the priorities but instead depends on the amount of threads in one specific queue. In the new algorithm a higher priority thread is always scheduled more often than a lower priority one, independant of the distribution of threads across the priorities. 
+In the old algorithm it was: (3 + 2 + 1)*#threadsinhispriority. The old method is less fair because the time for a thread to be scheduled again is not uniform accross the priorities but instead depends on the amount of threads in one specific queue. In the new algorithm a higher priority thread is always scheduled more often than a lower priority one, independant of the distribution of threads across the priorities. The time depends now only on the distribution of all the threads multiplied by a factor that depends on the priority level.
 
 
 Context switch

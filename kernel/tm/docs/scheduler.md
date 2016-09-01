@@ -13,7 +13,32 @@ This is what I had implemented before SMP, however this scales horribly on smp b
 
 I could take it a step further and remove locks completely. When a thread is to be added or removed from a scheduler, an IPI is send to the logical cpu that holds that thread. It then disables interrupts to make sure its queues wont be accessed and then adds or removes the threads. However IPIs have quiet a big overhead (e.g. pipeline flush), but locking the bus every time the scheduler is called isn't great for performance either especially on large systems. Also note that if a thread that is being executed on a cpu x, tries to stop/start a thread that is also on cpu x, it wont have to send an IPI, just temporarily disable interrupts. So a thread blocking itself won't cause a performance hit.
 
-One thing to note is the following 'unfair behavior': If there is only 1 low priority thread and multiple high priority threads, the low priority thread will be scheduled more often and it will be more responsive, which is not what we want at all. I'm still working on a solution for this problem...
+One thing to note is the following 'unfair behavior': If there is only 1 low priority thread and multiple high priority threads, the low priority thread will be scheduled more often and it will be more responsive, which isn't 'fair'. We can adjust the algorithm slightly to correct for this problem and give a scheduler that is overal more fair:
+
+Before the scheduler just selected one thread from a specific queue every 'tick', now it runs an entire queue every tick.
+Note that the notion of 'tick' changes: before a 'tick' happened every time the scheduler was called, now it happens every time time an entire queue is executed:
+
+Instead of scheduling 1 thread every tick, it schedules an entire queue every tick. For example if we have 3 different priorities:
+* Every odd tick the entire high priority queue is scheduled.
+* Every sixth tick the entire lowest priority queue is scheduled
+* Every second and fourth the entire medium priority queue is scheduled
+
+So we get: High queue - Medium queue - High queue - Medium queue - High queue - Low queue
+
+**An example:**  
+Imagine 3 priority levels, and a couple of threads:
+* high priority: A, B, C
+* medium priority: D
+* low priority we have E and F
+
+The new algorithm will look like: `A-B-C-D-A-B-C-D-A-B-C-E-F`  
+the old: `A-D-B-D-C-E-A-D-B-D-F-C-D-A-D-B-E`  
+
+In the new algorithm it the time till a thread is executed again is: `(3*#highprioritythreads + 2*#medprioritythreads + #lowprioritythreads) / (1,2 or 3)`  
+Where '#'='number of'. We divide by 1 for low, by 2 for med and by 3 for high priority.  
+  
+In the old algorithm it was: (3 + 2 + 1)*#threadsinhispriority. The old method is less fair because the time for a thread to be scheduled again is not uniform accross the priorities but instead depends on the amount of threads in one specific queue. In the new algorithm a higher priority thread is always scheduled more often than a lower priority one, independant of the distribution of threads across the priorities. 
+
 
 Context switch
 --------------

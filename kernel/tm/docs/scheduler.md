@@ -2,14 +2,14 @@ Scheduler
 =========
 Algorithm
 ---------
-The scheduling algorithm is a multilevel queue and each queue uses Round Robin to select the next thread. There are multiple 'ready' queues with different priorities. Queues with higher priority are used more often than lower ones by RR scheduler to select a new thread. For example imagine 3 threads A,B and C where A has the highest priority,  B has a normal priority and C the lowest. Then these threads will be executed in the following order:
+The scheduling algorithm is type of multilevel feedback queue and each queue uses Round Robin to select the next thread. There are multiple 'ready' queues with different priorities. Queues with higher priority are used more often than lower ones by RR scheduler to select a new thread. For example imagine 3 threads A,B and C where A has the highest priority,  B has a normal priority and C the lowest. Then these threads will be executed in the following order:
       `A-B-A-B-A-C`
 So every odd quantum a highest priority thread will be executed and every second and 4th quantum a medium priority and finally every 6th quantum a lowest priority thread.
 
 * current_thread:				`A-C-A-B-A-B-A-C-A-B-A-B-A-C-A-B-A-B`
 * current_tick	:				`1-2-3-4-5-6...`
 
-This is what I had implemented before SMP, however this scales horribly on smp because there are only 3 locks (so a high chance of lock contention on big systems), and there is no 'pinning' of threads to a specific cpu. In order to optimize this for SMP systems, we assign one scheduler per logical cpu. These schedulers are put into classes to make it all more maintainable. Each scheduler has its own set of queues and locks. There will be one thread in charge of load balancing the threads across the different schedulers  (TODO). A schedulers can only have a lock contention when a thread is being added to or removed from one of its queues that he is trying to access, because of load balancing or because a thread was started, blocked... When a thread is blocked for some reason, it would be put on the blocked list of the scheduler it was using. When it's time to start the thread again, it will be awoken on the same cpu. The load balancing thread might later try to reappoint it to an other scheduler.
+This is what I had implemented before SMP, however this scales horribly on smp because there are only 3 locks (so a high chance of lock contention on big systems), and there is no 'pinning' of threads to a specific cpu. In order to optimize this for SMP systems, we assign one scheduler per logical cpu. These schedulers are put into classes to make it all more maintainable. Each scheduler has its own set of queues and locks. A schedulers can only have a lock contention when a thread is being added to or removed from one of its queues that he is trying to access, because a thread was started, blocked... When a thread is blocked for some reason, it would be put on the blocked list of the scheduler it was using. When it's time to start the thread again, it will be awoken on the same cpu. The load balancing thread might later try to reappoint it to an other scheduler.
 
 I could take it a step further and remove locks completely. When a thread is to be added or removed from a scheduler, an IPI is send to the logical cpu that holds that thread. It then disables interrupts to make sure its queues wont be accessed and then adds or removes the threads. However IPIs have quiet a big overhead (e.g. pipeline flush), but locking the bus every time the scheduler is called isn't great for performance either especially on large systems. Also note that if a thread that is being executed on a cpu x, tries to stop/start a thread that is also on cpu x, it wont have to send an IPI, just temporarily disable interrupts. So a thread blocking itself won't cause a performance hit.
 
@@ -46,6 +46,8 @@ Context switches are preformed by changing the stack pointer (rsp) to the value 
 
 When a timer interrupt fires, all the GPRs are pushed on the current stack. The function `tm_schedule` get's called by the interupt routine of the APIC timer, it requires the rsp of the current task (passed through rdi in the System V ABI). This function finds a new thread to be executed and returns the rsp of that thread (passed through rax in the System V ABI). The schedule function also sets the kernelstack field in the current tss to this new rsp, so that when the next interrupt fires this stack is used. The timer handler than continues with this new stack and pops all the GPRs, cr3 and the data selectors of this stack. The iretq instruction then pops rsp, ss, and cs.
 
+Thread Manager
+=========
 Problems
 --------
 When the stack of a thread is overrun and creates a paging fault, the entire system will crash at a timer interrupt. In order to fix this we could use a tss with a kernel stack for interrupts. However we cant just use 1 kernel stack, as our GPR/system state after a context switch will be stored on this stack. So a solution to this could be to give each thread it's own small kernelstack, and change tss.rsp0 before a task switch. However this means that every kernel stack should be mapped in every address space. Or we change the page directory and the stack inside the scheduler C function.
@@ -61,7 +63,8 @@ vmm_flush_page(KERNEL_STACK);
 
 Note how in this solution e do not have to change the rsp, nor the tss to do a context switch. Here however we run in the following problem: Imagine thread1 one core0 and thread2 on core1 sharing the same address space...
 
-
+Scheduler
+=========
 Pseudo Code
 -----------
 

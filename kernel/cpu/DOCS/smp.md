@@ -4,7 +4,7 @@ Overview
 --------
 Systems that have more than one 'logical' cpu are called smp-systems. When the system boots one logical cpu is assigned as the bootstrap processor by the BIOS. This cpu will excute the boot code and has to boot the other cpus, called ap (application processor) by sending IPIs.
 
-In order to support SMP system we have to keep in mind that two cpus can try to access critical memory at the same time. In order to prevent race conditions or two cpu trying to access the same resource at the same time we use spinlocks. More advanced implementations of a spinlock is a mutex, this is spinlock that will yield controll to an other thread while it is spinning.
+In order to support SMP system we have to keep in mind that two cpus can try to access critical memory at the same time. In order to prevent race conditions or two cpu trying to access the same resource at the same time we must implement mutual exclusion (view task/docs/mutex.md).
 
 ACPI: MADT
 ----------

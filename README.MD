@@ -11,37 +11,50 @@ Roadmap:
 I try to follow a basic roadmap to implement new features. However sometimes I jump a head and try to implement a proof of concept.
 This breaks the tedious routine of research, implementation and testing+bugfixes. I will also try to add documentation in the DOCS folders for every part of the microkernel to clarify the code and discuss algorithms i used. I will also try to include a doc-file per *.c file to quickly explain what one can expect in that file.
 
-  * 2 stage bootloader                     Done (TODO FAT32 i.o. FAT10)
-  * Long mode jump                         Done (TODO higherhalf)
-  * physical memory manager:               Done
-  * virtual memory manager                 Done
-  * Heap:                                  Done
-  * Preemptive support                     Done
-  * SMP support                            Done
-  * VFS
-  * IPC
-  * Usermode
-  * grapics (POC)
+#####Implementation list
+| Feature | Status    |
+| -------------------------------------------------  | ------ |
+| 2 stage bootloader  | Done |
+| Long mode jump  |Done  |
+| Physical memory manager  | Done |
+| Virtual memory manager  | Done |
+| Kernel heap  | Done |
+| Preemptive support  | Done |
+| SMP support  | Done |
+| Virtual File System  |  |
+| Inter Process Communication  |  |
+| Usermode  |  |
+| Graphics (POC)  |  |
 
 Repository Overview
 -------------------
 Current realease number: v0.2.
-Releases:
-* v0.1: Intial write (codenamed Hydrogen).
-* v0.2: Complete rewrite, added longmode and smp support.
-* v0.3: First driver modules.
 
-Source map:
-* /bin  :   Contains the binaries, i.e. the Floppy image, modules...
-* /boot :   Contains Pre-IPL code, i.e. stage 1 of the bootloader
-* /ipl  :   Contains the IPL code, i.e. stage 2 of the bootloader
-* /kernel:  Contains the actual kernel, mainly in C
+#####Releases:
 
-Kernel source code map:
-* /arch : Contains architecture dependant code.
-* /mm: Contains all memory managment code.
-* /tm: Contains all the code for tasking support.
-* /vga: Contains all vga/video related code.
+| Version | Description                                       |
+| ------  | ------------------------------------------------- |
+| v0.1    | Intial write, low maintainability.                |
+| v0.2    | Complete rewrite, added longmode and smp support. |
+| v0.3    | First driver modules.                             |
+
+#####Source map:
+
+| dir | description                                       |
+| ------  | ------------------------------------------------- |
+| /bin    | Contains the binaries, i.e. the Floppy image, modules...               |
+| /boot    | Contains Pre-IPL code, i.e. stage 1 of the bootloader |
+| /ipl    | Contains the IPL code, i.e. stage 2 of the bootloader    | 
+| /ipl    | Contains the actual kernel, mainly in C++  |
+
+#####Kernel source code map:
+
+| dir | description                                       |
+| ------  | ------------------------------------------------- |
+| /arch    | Contains architecture dependant code.               |
+| /mm    | Contains all memory managment code. |
+| /tm    | Contains all the preemptive code / multithreading code.    | 
+| /vga    | Contains all vga/video related code.  |
 
 Build Instructions
 ------------------

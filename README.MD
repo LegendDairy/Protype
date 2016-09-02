@@ -11,17 +11,17 @@ Roadmap:
 I try to follow a basic roadmap to implement new features. However sometimes I jump a head and try to implement a proof of concept.
 This breaks the tedious routine of research, implementation and testing+bugfixes. I will also try to add documentation in the DOCS folders for every part of the microkernel to clarify the code and discuss algorithms i used. I will also try to include a doc-file per *.c file to quickly explain what one can expect in that file.
 
-  * 2 stage bootloader                     Done (TODO FAT32 i.o FAT10)
+  * 2 stage bootloader                     Done (TODO FAT32 i.o. FAT10)
   * Long mode jump                         Done (TODO higherhalf)
-  * physical memory manager:               Done & tested
-  * virtual memory manager                 Done and test (simple version)
-  * Heap:                                  Done & tested
+  * physical memory manager:               Done
+  * virtual memory manager                 Done
+  * Heap:                                  Done
   * Preemptive support                     Done
-  * SMP support                            WIP (improving scheduler)
+  * SMP support                            Done
   * VFS
   * IPC
-  * Usermode Exec loading
-  * grapics (module)
+  * Usermode
+  * grapics (POC)
 
 Repository Overview
 -------------------
@@ -29,6 +29,7 @@ Current realease number: v0.2.
 Releases:
 * v0.1: Intial write (codenamed Hydrogen).
 * v0.2: Complete rewrite, added longmode and smp support.
+* v0.3: First driver modules.
 
 Source map:
 * /bin  :   Contains the binaries, i.e. the Floppy image, modules...

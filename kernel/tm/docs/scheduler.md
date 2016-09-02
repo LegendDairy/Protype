@@ -46,25 +46,7 @@ Context switches are preformed by changing the stack pointer (rsp) to the value 
 
 When a timer interrupt fires, all the GPRs are pushed on the current stack. The function `tm_schedule` get's called by the interupt routine of the APIC timer, it requires the rsp of the current task (passed through rdi in the System V ABI). This function finds a new thread to be executed and returns the rsp of that thread (passed through rax in the System V ABI). The schedule function also sets the kernelstack field in the current tss to this new rsp, so that when the next interrupt fires this stack is used. The timer handler than continues with this new stack and pops all the GPRs, cr3 and the data selectors of this stack. The iretq instruction then pops rsp, ss, and cs.
 
-Thread Manager
-=========
-Problems
---------
-When the stack of a thread is overrun and creates a paging fault, the entire system will crash at a timer interrupt. In order to fix this we could use a tss with a kernel stack for interrupts. However we cant just use 1 kernel stack, as our GPR/system state after a context switch will be stored on this stack. So a solution to this could be to give each thread it's own small kernelstack, and change tss.rsp0 before a task switch. However this means that every kernel stack should be mapped in every address space. Or we change the page directory and the stack inside the scheduler C function.
 
-We could also use some virtual memory magic: Each kernel stack has its own physical frame but is always mapped to the same virtual address. When swapping task all we have to do is change the mappings of that virtual address.
-
-```C
-vmm_map_frame(KERNEL_STACK, current_thread->kstack, 0x3);
-```
-```C
-vmm_flush_page(KERNEL_STACK);
-```
-
-Note how in this solution e do not have to change the rsp, nor the tss to do a context switch. Here however we run in the following problem: Imagine thread1 one core0 and thread2 on core1 sharing the same address space...
-
-Scheduler
-=========
 Pseudo Code
 -----------
 

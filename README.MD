@@ -37,8 +37,7 @@ Source map:
 * /kernel:  Contains the actual kernel, mainly in C
 
 Kernel source code map:
-* /cpu : Contains cpu-specific code
-* /hardware: Random crap goes here?
+* /arch : Contains architecture dependant code.
 * /mm: Contains all memory managment code.
 * /tm: Contains all the code for tasking support.
 * /vga: Contains all vga/video related code.

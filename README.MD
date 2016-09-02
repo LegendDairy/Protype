@@ -45,7 +45,7 @@ Current realease number: v0.2.
 | /bin    | Contains the binaries, i.e. the Floppy image, modules...               |
 | /boot    | Contains Pre-IPL code, i.e. stage 1 of the bootloader |
 | /ipl    | Contains the IPL code, i.e. stage 2 of the bootloader    | 
-| /ipl    | Contains the actual kernel, mainly in C++  |
+| /kernel    | Contains the actual kernel, mainly in C++  |
 
 #####Kernel source code map:
 

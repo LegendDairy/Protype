@@ -3,15 +3,15 @@
 # by LegendMythe	#
 
 SOURCES=\
-main.o cpu/system.o cpu/cpu.o vga/text.o vga/printf.o cpu/apic.o cpu/acpi.o tm/mutex.o hardware/idt.o hardware/interrupts.o mm/string.o mm/pmm.o mm/vmm.o mm/heap.o tm/thread.o tm/scheduler.o \
+main.o arch/system.o arch/cpu.o vga/text.o vga/printf.o arch/apic.o arch/acpi.o tm/mutex.o arch/idt.o arch/interrupts.o mm/string.o mm/pmm.o mm/vmm.o mm/heap.o tm/thread.o tm/scheduler.o \
 
 CPP = x86_64-elf-g++
 CPPFLAGS =-nostdlib -lgcc -ffreestanding -fno-exceptions -fno-rtti -mno-red-zone -fno-exceptions -std=c++11 -O2 -Wall -Wextra -Wno-unused-parameter -mcmodel=large -g \
--I./mm/include -I./cpu/include -I./vga/include -I./include/stdinc -I./include -I./hardware/include -I./tm/include\
+-I./mm/include -I./arch/include -I./vga/include -I./include/stdinc -I./include -I./tm/include\
 
 CC = x86_64-elf-g++
 CFLAGS=\-nostdlib -lgcc -ffreestanding -fno-exceptions -fno-rtti -mno-red-zone -fno-exceptions -std=c++11 -O2 -Wall -Wextra -Wno-unused-parameter -mcmodel=large -g\
--I./mm/include -I./cpu/include -I./vga/include -I./include/stdinc -I./include -I./hardware/include -I./tm/include\
+-I./mm/include -I./arch/include -I./vga/include -I./include/stdinc -I./include -I./tm/include\
 #mcmodel=kernel also possible
 
 AS = nasm

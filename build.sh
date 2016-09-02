@@ -2,7 +2,7 @@
 ./boot/build.sh
 ./ipl/build.sh
 
-nasm -f bin kernel/cpu/ap_init.asm -o bin/apbm.sys
+nasm -f bin kernel/arch/ap_init.asm -o bin/apbm.sys
 cd kernel
 make
 make clean

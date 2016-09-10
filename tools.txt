@@ -6,71 +6,54 @@ mkdir src
 cd src
 
 #Make sure everyting is installed and up to date relative to gcc version you want to build.
-sudo apt-get install build-essential
-sudo apt-get install flex
-sudo apt-get install gmp
-sudo apt-get install libgmp3-dev
-sudo apt-get install libmpfr-dev libmpfr-doc libmpfr4 libmpfr4-dbg
-sudo apt-get install g++ make gawk
-sudo apt-get install mpc
+sudo apt-get install build-essential flex libgmp3-dev  libmpfr-dev libmpfr-doc libmpfr4 libmpfr4-dbg g++ make gawk mpc
 
-wget http://ftpmirror.gnu.org/binutils/binutils-2.24.tar.gz
-wget http://ftpmirror.gnu.org/gcc/gcc-4.9.2/gcc-4.9.2.tar.gz
-wget https://www.kernel.org/pub/linux/kernel/v3.x/linux-3.17.2.tar.xz
-wget http://ftpmirror.gnu.org/glibc/glibc-2.20.tar.xz
-wget http://ftpmirror.gnu.org/mpfr/mpfr-3.1.2.tar.xz
-wget http://ftpmirror.gnu.org/gmp/gmp-6.0.0a.tar.xz
-wget http://ftpmirror.gnu.org/mpc/mpc-1.0.2.tar.gz
-wget ftp://gcc.gnu.org/pub/gcc/infrastructure/isl-0.12.2.tar.bz2
+
+http://ftp.gnu.org/gnu/binutils/binutils-2.27.tar.gz
+wget http://ftpmirror.gnu.org/gcc/gcc-6.2.0/gcc-6.2.0.tar.gz
+wget http://ftpmirror.gnu.org/glibc/glibc-2.24.tar.xz
+wget http://ftpmirror.gnu.org/mpfr/mpfr-3.1.4.tar.xz
+wget http://ftpmirror.gnu.org/gmp/gmp-6.1.1.tar.xz
+wget http://ftpmirror.gnu.org/mpc/mpc-1.0.3.tar.gz
+wget ftp://gcc.gnu.org/pub/gcc/infrastructure/isl-0.16.1.tar.bz2
 wget ftp://gcc.gnu.org/pub/gcc/infrastructure/cloog-0.18.1.tar.gz
+
+wget https://www.kernel.org/pub/linux/kernel/v3.x/linux-3.17.2.tar.xz
+
 
 for f in *.tar*; do tar xf $f; done
 
-cd gcc-4.9.2
-ln -s ../mpfr-3.1.2 mpfr
-ln -s ../gmp-6.0.0 gmp
-ln -s ../mpc-1.0.2 mpc
-ln -s ../isl-0.12.2 isl
+cd gcc-6.2.0
+ln -s ../mpfr-3.1.4 mpfr
+ln -s ../gmp-6.1.1 gmp
+ln -s ../mpc-1.0.3 mpc
+ln -s ../isl-0.16.1 isl
 ln -s ../cloog-0.18.1 cloog
 cd ..
 
 sudo mkdir -p /opt/cross
 sudo chown username /opt/cross
 
-export PREFIX="$HOME/opt/cross"
+export PREFIX="/opt/cross"
 export TARGET=x86_64-elf
 export PATH="$PREFIX/bin:$PATH"
 
 cd $HOME/src
  
-# If you wish to build these packages as part of binutils:
-mv isl-x.y.z binutils-x.y.z/isl
-mv cloog-x.y.z binutils-x.y.z/cloog
-# But reconsider: You should just get the development packages from your OS.
- 
 mkdir build-binutils
 cd build-binutils
-../binutils-x.y.z/configure --target=$TARGET --prefix="$PREFIX" --with-sysroot --disable-nls --disable-werror
+../binutils-2.27/configure --target=$TARGET --prefix="$PREFIX" --with-sysroot --disable-nls --disable-werror
 make
 make install
 
 cd $HOME/src
- 
-# If you wish to build these packages as part of gcc:
-mv libiconv-x.y.z gcc-x.y.z/libiconv # Mac OS X users
-mv gmp-x.y.z gcc-x.y.z/gmp
-mv mpfr-x.y.z gcc-x.y.z/mpfr
-mv mpc-x.y.z gcc-x.y.z/mpc
-mv isl-x.y.z gcc-x.y.z/isl
-mv cloog-x.y.z gcc-x.y.z/cloog
-# But reconsider: You should just get the development packages from your OS.
  
 # The $PREFIX/bin dir _must_ be in the PATH. We did that above.
 which -- $TARGET-as || echo $TARGET-as is not in the PATH
  
 mkdir build-gcc
 cd build-gcc
-../gcc-x.y.z/configure --target=$TARGET --prefix="$PREFIX" --disable-nls --enable-languages=c,c++ --without-headers
+../gcc-6.2.0/configure --target=$TARGET --prefix="$PREFIX" --disable-nls --enable-languages=c,c++ --without-headers
 make all-gcc
 make all-target-libgcc
 make install-gcc
@@ -83,13 +66,13 @@ export PATH="$HOME/opt/cross/bin:$PATH"
 
 #####BOCHS#######
 #Download latest version on the web
-sudo apt-get install libgtk2.0-dev libncurses5-dev libsdl1.1-dev libsdl2-dev
+sudo apt-get install libgtk2.0-dev libncurses5-dev libsdl2-dev
 ./configure --enable-smp \
               --enable-cpu-level=6 \
               --enable-all-optimizations \
               --enable-x86-64 \
               --enable-pci \
-              --enable-vmx \
+              --enable-vmx=2 \
               --enable-debugger \
               --enable-disasm \
               --enable-debugger-gui \

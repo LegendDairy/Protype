@@ -11,7 +11,7 @@ Roadmap:
 I try to follow a basic roadmap to implement new features. However sometimes I jump a head and try to implement a proof of concept.
 This breaks the tedious routine of research, implementation and testing+bugfixes. I will also try to add documentation in the DOCS folders for every part of the microkernel to clarify the code and discuss algorithms i used. I will also try to include a doc-file per *.c file to quickly explain what one can expect in that file.
 
-#####Implementation list
+##### Implementation list
 | Feature | Status    |
 | -------------------------------------------------  | ------ |
 | 2 stage bootloader  | Done |
@@ -30,7 +30,7 @@ Repository Overview
 -------------------
 Current realease number: v0.2.
 
-#####Releases:
+##### Releases:
 
 | Version | Description                                       |
 | ------  | ------------------------------------------------- |
@@ -38,7 +38,7 @@ Current realease number: v0.2.
 | v0.2    | Complete rewrite, added longmode and smp support. |
 | v0.3    | First driver modules.                             |
 
-#####Source map:
+##### Source map:
 
 | dir | description                                       |
 | ------  | ------------------------------------------------- |
@@ -47,7 +47,7 @@ Current realease number: v0.2.
 | /ipl    | Contains the IPL code, i.e. stage 2 of the bootloader    | 
 | /kernel    | Contains the actual kernel, mainly in C++  |
 
-#####Kernel source code map:
+##### Kernel source code map:
 
 | dir | description                                       |
 | ------  | ------------------------------------------------- |

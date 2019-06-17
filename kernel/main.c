@@ -24,9 +24,10 @@
 
 int thread1(uint64_t argn, char **argv)
 {
+	printf("Running on scheduler %d\n", system_c::get_current_scheduler()->get_id());
 	while(1)
 	{
-		printf("a");
+		//printf("a");
 		tm_thread_sleep(10);
 	}
 
@@ -81,10 +82,10 @@ int main(ipl_info_t *info)
 	vmm_map_frame(0x9000B000, pmm_alloc_page(), 0x3);
 
 	tm_thread_create(&thread1, 0, 0, 0x10000, 1, 30, "Thread 1", 1, (uint64_t *)0x90000F00, 0x10, 0x8, 0x10);
-	tm_thread_create(&thread2, 0, 0, 0x10000, 1, 30, "Thread 2", 1, (uint64_t *)0x90001F00, 0x10, 0x8, 0x10);
+	tm_thread_create(&thread1, 0, 0, 0x10000, 1, 30, "Thread 2", 1, (uint64_t *)0x90001F00, 0x10, 0x8, 0x10);
 	tm_thread_create(&thread1, 0, 0, 0x10000, 1, 30, "Thread 1", 1, (uint64_t *)0x90003F00, 0x10, 0x8, 0x10);
-	tm_thread_create(&thread2, 0, 0, 0x10000, 1, 30, "Thread 2", 1, (uint64_t *)0x90004F00, 0x10, 0x8, 0x10);
-	tm_thread_create(&thread3, 0, 0, 0x10000, 2, 30, "Thread 3", 1, (uint64_t *)0x90002F00, 0x10, 0x8, 0x10);
+	tm_thread_create(&thread1, 0, 0, 0x10000, 1, 30, "Thread 2", 1, (uint64_t *)0x90004F00, 0x10, 0x8, 0x10);
+	tm_thread_create(&thread1, 0, 0, 0x10000, 2, 30, "Thread 3", 1, (uint64_t *)0x90002F00, 0x10, 0x8, 0x10);
 
 	asm volatile("sti");
 	tm_kill_current_thread();

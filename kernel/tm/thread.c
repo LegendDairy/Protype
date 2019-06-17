@@ -231,7 +231,7 @@ uint32_t tm_add_thread_to_queue(thread_t *thread)
 	lapic_write(0x80, 0xFF);
 
 	/* This code might be excecuted twice at the same time, so registers. */
-	register scheduler_c *iterator = system_c::get_current_scheduler();
+	register scheduler_c *iterator = system_c::get_lowest_load_scheduler();
 
 	iterator->add_thread(thread);
 	iterator->increase_load();

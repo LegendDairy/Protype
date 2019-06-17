@@ -60,6 +60,10 @@ public:
 	/** Get current scheduler.							**/
 	static scheduler_c *get_current_scheduler(void);
 
+	/** Returns scheduler with lowest load. **/
+	static scheduler_c *get_lowest_load_scheduler(void);
+
+
 	/** Get current thread structure from the active scheduler.			**/
 	static thread_t *get_current_thread(void);
 

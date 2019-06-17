@@ -59,6 +59,19 @@ scheduler_c *system_c::get_current_scheduler(void)
 	cpu_c *curr = get_current_cpu();
 	return curr->scheduler;
 }
+scheduler_c *system_c::get_lowest_load_scheduler(void)
+{
+        cpu_c *itterator = cpu_list;
+        cpu_c *lowest_load = cpu_list;
+        while(itterator)
+        {
+                if(itterator->scheduler->get_load() < lowest_load->scheduler->get_load())
+                        lowest_load = itterator;
+                itterator = itterator->next;
+        }
+        //printf("lowest load is %d", lowest_load->get_id());
+        return lowest_load->scheduler;
+}
 
 /** Get current thread structure from the active scheduler.			**/
 thread_t * system_c::get_current_thread(void)
